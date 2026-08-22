@@ -29,11 +29,18 @@ Create a `PsdImportService` in Focale's documents data layer. It should perform 
 | Channel `-1` | Raster alpha |
 | Channel `-2` and mask rectangle | Mask asset and `maskOffset` |
 | `openFolder` / `closedFolder` and `boundingDivider` | `GroupLayer` boundaries |
-| `TySh`, adjustment, fill, vector-mask, and effects blocks | Corresponding semantic Focale layer data where supported |
+| `layer.typeTool?.content.text` | `TextContent.text` |
+| `PsdTextStyleRun` | `TextStyleRange` |
+| Font family, size, faux bold/italic, decorations | Corresponding `TextContent` and `TextStyleRange` properties |
+| `PsdTextColor.argb` | Focale text color |
+| Tracking, leading, orientation, and paragraph alignment | Corresponding text-layout properties where available |
+| Adjustment, fill, vector-mask, and effects blocks | Corresponding semantic Focale layer data where supported |
 
 `PsdPixels.decodeLayer(document, layer)` provides straight-alpha RGBA bytes for an initial raster adapter. Register the resulting `ui.Image` through `ImageEngine.adoptImage`. PSD layer records and Focale child ids both use topmost-first paint order, but group divider records must be consumed rather than exposed as visible layers.
 
 For best round-trip fidelity, Focale should retain the original `PsdImageResource` list and unsupported `PsdTaggedBlock` values in import metadata. When an imported feature remains unchanged, export its retained block. When Focale edits a feature it understands, regenerate that block from Focale's semantic model.
+
+For imported text, retain the complete `PsdTypeTool`. If only the characters change, call `typeTool.withText(newText)`; this preserves unknown Adobe engine keys and extends or truncates the final style and paragraph runs as needed. If formatting changes, map Focale's style ranges to `PsdTextContent` and call `typeTool.withContent(content)`.
 
 ## Export pipeline
 
@@ -49,6 +56,8 @@ Create a `PsdExportService` in Focale's export data layer:
 8. Run `PsdCodec.encode` in an isolate and let Focale's file store perform the final atomic write.
 
 PsdKit requires the merged image explicitly because compositing belongs to Focale's renderer. This keeps blend-mode and adjustment rendering consistent with what the user sees instead of embedding a second compositor in the file-format package.
+
+For a new Focale text layer, create `PsdTextContent`, call `PsdTypeTool.fromText`, and attach it with `PsdLayer.withTypeTool`. The PSD layer must still contain Focale-rendered RGB/alpha preview channels, and the document merged image must include the rendered text. Photoshop uses those pixels when editable text cannot be rendered locally, while `TySh` keeps the content editable.
 
 ## Initial rollout
 
