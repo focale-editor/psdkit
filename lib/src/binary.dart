@@ -82,6 +82,14 @@ final class PsdBinaryReader {
     return value;
   }
 
+  /// Reads a big-endian single-precision floating-point value.
+  double readFloat32() {
+    _require(4);
+    final double value = _data.getFloat32(_offset);
+    _offset += 4;
+    return value;
+  }
+
   /// Reads a big-endian double-precision floating-point value.
   double readFloat64() {
     _require(8);
@@ -169,6 +177,9 @@ final class PsdBinaryWriter {
 
   /// Writes a signed 64-bit integer.
   void writeInt64(int value) => _writeNumber(8, (data) => data.setInt64(0, value));
+
+  /// Writes a big-endian single-precision floating-point value.
+  void writeFloat32(double value) => _writeNumber(4, (data) => data.setFloat32(0, value));
 
   /// Writes a big-endian double-precision floating-point value.
   void writeFloat64(double value) => _writeNumber(8, (data) => data.setFloat64(0, value));

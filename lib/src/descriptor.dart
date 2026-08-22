@@ -225,6 +225,164 @@ final class PsdListValue extends PsdDescriptorValue {
   String get type => 'VlLs';
 }
 
+/// An ordered Photoshop object reference.
+final class PsdReferenceValue extends PsdDescriptorValue {
+  /// Ordered reference forms, from the broadest to the most specific.
+  final List<PsdDescriptorValue> values;
+
+  /// Creates an object-reference descriptor value.
+  PsdReferenceValue(this.values);
+
+  @override
+  String get type => 'obj ';
+}
+
+/// A property form inside a Photoshop object reference.
+final class PsdPropertyValue extends PsdDescriptorValue {
+  /// Human-readable class name.
+  final String name;
+
+  /// Photoshop class identifier.
+  final String classId;
+
+  /// Referenced property identifier.
+  final String keyId;
+
+  /// Whether [classId] used the compact zero-length representation.
+  final bool _compactClassId;
+
+  /// Whether [keyId] used the compact zero-length representation.
+  final bool _compactKeyId;
+
+  /// Creates a property-reference form.
+  PsdPropertyValue({required this.name, required this.classId, required this.keyId, this._compactClassId = true, this._compactKeyId = true});
+
+  @override
+  String get type => 'prop';
+}
+
+/// A class form inside a Photoshop object reference.
+final class PsdReferenceClassValue extends PsdDescriptorValue {
+  /// Human-readable class name.
+  final String name;
+
+  /// Photoshop class identifier.
+  final String classId;
+
+  /// Whether [classId] used the compact zero-length representation.
+  final bool _compactClassId;
+
+  /// Creates a class-reference form.
+  PsdReferenceClassValue({required this.name, required this.classId, this._compactClassId = true});
+
+  @override
+  String get type => 'Clss';
+}
+
+/// An enumerated form inside a Photoshop object reference.
+final class PsdEnumeratedReferenceValue extends PsdDescriptorValue {
+  /// Human-readable class name.
+  final String name;
+
+  /// Photoshop class identifier.
+  final String classId;
+
+  /// Enumeration type identifier.
+  final String typeId;
+
+  /// Selected enumeration identifier.
+  final String value;
+
+  /// Whether [classId] used the compact zero-length representation.
+  final bool _compactClassId;
+
+  /// Whether [typeId] used the compact zero-length representation.
+  final bool _compactTypeId;
+
+  /// Whether [value] used the compact zero-length representation.
+  final bool _compactValue;
+
+  /// Creates an enumerated-reference form.
+  PsdEnumeratedReferenceValue({
+    required this.name,
+    required this.classId,
+    required this.typeId,
+    required this.value,
+    this._compactClassId = true,
+    this._compactTypeId = true,
+    this._compactValue = true,
+  });
+
+  @override
+  String get type => 'Enmr';
+}
+
+/// An offset form inside a Photoshop object reference.
+final class PsdOffsetValue extends PsdDescriptorValue {
+  /// Human-readable class name.
+  final String name;
+
+  /// Photoshop class identifier.
+  final String classId;
+
+  /// Relative offset.
+  final int value;
+
+  /// Whether [classId] used the compact zero-length representation.
+  final bool _compactClassId;
+
+  /// Creates an offset-reference form.
+  PsdOffsetValue({required this.name, required this.classId, required this.value, this._compactClassId = true});
+
+  @override
+  String get type => 'rele';
+}
+
+/// An integer identifier form inside a Photoshop object reference.
+final class PsdIdentifierValue extends PsdDescriptorValue {
+  /// Identifier payload.
+  final int value;
+
+  /// Creates an identifier-reference form.
+  PsdIdentifierValue(this.value);
+
+  @override
+  String get type => 'Idnt';
+}
+
+/// An integer index form inside a Photoshop object reference.
+final class PsdIndexValue extends PsdDescriptorValue {
+  /// Index payload.
+  final int value;
+
+  /// Creates an index-reference form.
+  PsdIndexValue(this.value);
+
+  @override
+  String get type => 'indx';
+}
+
+/// A Unicode name form inside a Photoshop object reference.
+final class PsdNameValue extends PsdDescriptorValue {
+  /// Human-readable class name.
+  final String name;
+
+  /// Photoshop class identifier.
+  final String classId;
+
+  /// Referenced object name.
+  final String value;
+
+  /// Whether [classId] used the compact zero-length representation.
+  final bool _compactClassId;
+
+  /// Creates a name-reference form.
+  PsdNameValue({required this.name, required this.classId, required this.value, this._compactClassId = true});
+
+  @override
+  String get type => 'name';
+}
+
 /// Opaque length-prefixed descriptor data.
 final class PsdRawValue extends PsdDescriptorValue {
   /// Opaque bytes.
@@ -247,6 +405,18 @@ final class PsdAliasValue extends PsdDescriptorValue {
 
   @override
   String get type => 'alis';
+}
+
+/// Opaque length-prefixed Photoshop descriptor path data.
+final class PsdPathValue extends PsdDescriptorValue {
+  /// Opaque path bytes.
+  final Uint8List value;
+
+  /// Creates a descriptor path value.
+  PsdPathValue(this.value);
+
+  @override
+  String get type => 'Pth ';
 }
 
 /// A Photoshop class name and identifier.
@@ -329,8 +499,19 @@ PsdDescriptorValue _readValue(PsdBinaryReader reader, String type) => switch (ty
   'VlLs' => PsdListValue(<PsdDescriptorValue>[
     for (int index = 0, count = reader.readUint32(); index < count; index++) _readValue(reader, reader.readString(4)),
   ]),
+  'obj ' => PsdReferenceValue(<PsdDescriptorValue>[
+    for (int index = 0, count = reader.readUint32(); index < count; index++) _readValue(reader, reader.readString(4)),
+  ]),
+  'prop' => _readPropertyValue(reader),
+  'Clss' => _readReferenceClassValue(reader),
+  'Enmr' => _readEnumeratedReferenceValue(reader),
+  'rele' => _readOffsetValue(reader),
+  'Idnt' => PsdIdentifierValue(reader.readInt32()),
+  'indx' => PsdIndexValue(reader.readInt32()),
+  'name' => _readNameValue(reader),
   'tdta' => PsdRawValue(reader.readBytes(reader.readLength(wide: false, label: 'descriptor raw data'))),
   'alis' => PsdAliasValue(reader.readBytes(reader.readLength(wide: false, label: 'descriptor alias'))),
+  'Pth ' => PsdPathValue(reader.readBytes(reader.readLength(wide: false, label: 'descriptor path'))),
   'type' => _readClassValue(reader, global: false),
   'GlbC' => _readClassValue(reader, global: true),
   _ => throw PsdFormatException('Unsupported action-descriptor type "$type"', reader.bytes, reader.baseOffset + reader.offset - 4),
@@ -382,11 +563,45 @@ void _writeValue(PsdBinaryWriter writer, PsdDescriptorValue value) {
         writer.writeString(item.type);
         _writeValue(writer, item);
       }
+    case PsdReferenceValue():
+      writer.writeUint32(value.values.length);
+      for (final PsdDescriptorValue item in value.values) {
+        writer.writeString(item.type);
+        _writeValue(writer, item);
+      }
+    case PsdPropertyValue():
+      _writeUnicodeString(writer, value.name);
+      _writeId(writer, value.classId, compact: value._compactClassId);
+      _writeId(writer, value.keyId, compact: value._compactKeyId);
+    case PsdReferenceClassValue():
+      _writeUnicodeString(writer, value.name);
+      _writeId(writer, value.classId, compact: value._compactClassId);
+    case PsdEnumeratedReferenceValue():
+      _writeUnicodeString(writer, value.name);
+      _writeId(writer, value.classId, compact: value._compactClassId);
+      _writeId(writer, value.typeId, compact: value._compactTypeId);
+      _writeId(writer, value.value, compact: value._compactValue);
+    case PsdOffsetValue():
+      _writeUnicodeString(writer, value.name);
+      _writeId(writer, value.classId, compact: value._compactClassId);
+      writer.writeUint32(value.value);
+    case PsdIdentifierValue():
+      writer.writeInt32(value.value);
+    case PsdIndexValue():
+      writer.writeInt32(value.value);
+    case PsdNameValue():
+      _writeUnicodeString(writer, value.name);
+      _writeId(writer, value.classId, compact: value._compactClassId);
+      _writeUnicodeString(writer, value.value);
     case PsdRawValue():
       writer
         ..writeUint32(value.value.length)
         ..writeBytes(value.value);
     case PsdAliasValue():
+      writer
+        ..writeUint32(value.value.length)
+        ..writeBytes(value.value);
+    case PsdPathValue():
       writer
         ..writeUint32(value.value.length)
         ..writeBytes(value.value);
@@ -450,6 +665,58 @@ PsdClassValue _readClassValue(PsdBinaryReader reader, {required bool global}) {
   final String name = _readUnicodeString(reader);
   final ({String value, bool compact}) classId = _readId(reader);
   return PsdClassValue(name: name, classId: classId.value, global: global, compactClassId: classId.compact);
+}
+
+/// Reads a property reference and preserves both identifier encodings.
+PsdPropertyValue _readPropertyValue(PsdBinaryReader reader) {
+  final String name = _readUnicodeString(reader);
+  final ({String value, bool compact}) classId = _readId(reader);
+  final ({String value, bool compact}) keyId = _readId(reader);
+  return PsdPropertyValue(
+    name: name,
+    classId: classId.value,
+    keyId: keyId.value,
+    compactClassId: classId.compact,
+    compactKeyId: keyId.compact,
+  );
+}
+
+/// Reads a class reference and preserves its identifier encoding.
+PsdReferenceClassValue _readReferenceClassValue(PsdBinaryReader reader) {
+  final String name = _readUnicodeString(reader);
+  final ({String value, bool compact}) classId = _readId(reader);
+  return PsdReferenceClassValue(name: name, classId: classId.value, compactClassId: classId.compact);
+}
+
+/// Reads an enumerated reference and preserves its identifier encodings.
+PsdEnumeratedReferenceValue _readEnumeratedReferenceValue(PsdBinaryReader reader) {
+  final String name = _readUnicodeString(reader);
+  final ({String value, bool compact}) classId = _readId(reader);
+  final ({String value, bool compact}) typeId = _readId(reader);
+  final ({String value, bool compact}) value = _readId(reader);
+  return PsdEnumeratedReferenceValue(
+    name: name,
+    classId: classId.value,
+    typeId: typeId.value,
+    value: value.value,
+    compactClassId: classId.compact,
+    compactTypeId: typeId.compact,
+    compactValue: value.compact,
+  );
+}
+
+/// Reads an offset reference and preserves its class identifier encoding.
+PsdOffsetValue _readOffsetValue(PsdBinaryReader reader) {
+  final String name = _readUnicodeString(reader);
+  final ({String value, bool compact}) classId = _readId(reader);
+  return PsdOffsetValue(name: name, classId: classId.value, value: reader.readUint32(), compactClassId: classId.compact);
+}
+
+/// Reads a name reference and preserves its class identifier encoding.
+PsdNameValue _readNameValue(PsdBinaryReader reader) {
+  final String name = _readUnicodeString(reader);
+  final ({String value, bool compact}) classId = _readId(reader);
+  return PsdNameValue(name: name, classId: classId.value, value: _readUnicodeString(reader), compactClassId: classId.compact);
 }
 
 /// Writes a required four-character descriptor code.

@@ -69,9 +69,27 @@ void _printDescriptor(PsdDescriptor descriptor, String indent) {
             _printDescriptor(value, '$indent    ');
           }
         }
+      case PsdReferenceValue(:final List<PsdDescriptorValue> values):
+        stdout.writeln(' reference[${values.length}]');
+      case PsdPropertyValue(:final String classId, :final String keyId):
+        stdout.writeln(' $classId/$keyId');
+      case PsdReferenceClassValue(:final String classId):
+        stdout.writeln(' $classId');
+      case PsdEnumeratedReferenceValue(:final String classId, :final String typeId, :final String value):
+        stdout.writeln(' $classId/$typeId/$value');
+      case PsdOffsetValue(:final String classId, :final int value):
+        stdout.writeln(' $classId+$value');
+      case PsdIdentifierValue(:final int value):
+        stdout.writeln(' $value');
+      case PsdIndexValue(:final int value):
+        stdout.writeln(' $value');
+      case PsdNameValue(:final String classId, :final String value):
+        stdout.writeln(' $classId/"$value"');
       case PsdRawValue(:final Uint8List value):
         stdout.writeln(' ${value.length} bytes');
       case PsdAliasValue(:final Uint8List value):
+        stdout.writeln(' ${value.length} bytes');
+      case PsdPathValue(:final Uint8List value):
         stdout.writeln(' ${value.length} bytes');
       case PsdClassValue(:final String classId):
         stdout.writeln(' $classId');
