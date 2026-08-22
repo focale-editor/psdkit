@@ -14,8 +14,11 @@ final class PsdDescriptor {
   /// Ordered descriptor items.
   final List<PsdDescriptorItem> items;
 
+  /// Whether [classId] used the compact zero-length representation.
+  final bool _compactClassId;
+
   /// Creates an action descriptor.
-  const PsdDescriptor({required this.name, required this.classId, this.items = const <PsdDescriptorItem>[]});
+  const PsdDescriptor({required this.name, required this.classId, this.items = const <PsdDescriptorItem>[], this._compactClassId = true});
 
   /// Returns the last item matching [key], when present.
   PsdDescriptorValue? value(String key) {
@@ -31,14 +34,14 @@ final class PsdDescriptor {
     bool replaced = false;
     for (final PsdDescriptorItem item in items) {
       if (item.key == key) {
-        if (!replaced) updated.add(PsdDescriptorItem(key: key, value: value));
+        if (!replaced) updated.add(PsdDescriptorItem(key: key, value: value, compactKey: item._compactKey));
         replaced = true;
       } else {
         updated.add(item);
       }
     }
     if (!replaced) updated.add(PsdDescriptorItem(key: key, value: value));
-    return PsdDescriptor(name: name, classId: classId, items: updated);
+    return PsdDescriptor(name: name, classId: classId, items: updated, compactClassId: _compactClassId);
   }
 }
 
@@ -50,8 +53,11 @@ final class PsdDescriptorItem {
   /// Typed value associated with [key].
   final PsdDescriptorValue value;
 
+  /// Whether [key] used the compact zero-length representation.
+  final bool _compactKey;
+
   /// Creates a keyed descriptor item.
-  const PsdDescriptorItem({required this.key, required this.value});
+  const PsdDescriptorItem({required this.key, required this.value, this._compactKey = true});
 }
 
 /// Base type for Photoshop action-descriptor values.
@@ -143,8 +149,14 @@ final class PsdEnumeratedValue extends PsdDescriptorValue {
   /// Selected enumeration identifier.
   final String value;
 
+  /// Whether [typeId] used the compact zero-length representation.
+  final bool _compactTypeId;
+
+  /// Whether [value] used the compact zero-length representation.
+  final bool _compactValue;
+
   /// Creates an enumerated descriptor value.
-  PsdEnumeratedValue({required this.typeId, required this.value});
+  PsdEnumeratedValue({required this.typeId, required this.value, this._compactTypeId = true, this._compactValue = true});
 
   @override
   String get type => 'enum';
@@ -212,8 +224,11 @@ final class PsdClassValue extends PsdDescriptorValue {
   /// Whether this uses the global-class OSType.
   final bool global;
 
+  /// Whether [classId] used the compact zero-length representation.
+  final bool _compactClassId;
+
   /// Creates a class descriptor value.
-  PsdClassValue({required this.name, required this.classId, this.global = false});
+  PsdClassValue({required this.name, required this.classId, this.global = false, this._compactClassId = true});
 
   @override
   String get type => global ? 'GlbC' : 'type';
@@ -248,15 +263,15 @@ abstract final class PsdDescriptorCodec {
 /// Reads one action descriptor from [reader].
 PsdDescriptor _readDescriptor(PsdBinaryReader reader) {
   final String name = _readUnicodeString(reader);
-  final String classId = _readId(reader);
+  final ({String value, bool compact}) classId = _readId(reader);
   final int count = reader.readUint32();
   final List<PsdDescriptorItem> items = <PsdDescriptorItem>[];
   for (int index = 0; index < count; index++) {
-    final String key = _readId(reader);
+    final ({String value, bool compact}) key = _readId(reader);
     final String type = reader.readString(4);
-    items.add(PsdDescriptorItem(key: key, value: _readValue(reader, type)));
+    items.add(PsdDescriptorItem(key: key.value, value: _readValue(reader, type), compactKey: key.compact));
   }
-  return PsdDescriptor(name: name, classId: classId, items: items);
+  return PsdDescriptor(name: name, classId: classId.value, items: items, compactClassId: classId.compact);
 }
 
 /// Reads a descriptor value whose OSType is [type].
@@ -267,7 +282,7 @@ PsdDescriptorValue _readValue(PsdBinaryReader reader, String type) => switch (ty
   'doub' => PsdDoubleValue(reader.readFloat64()),
   'UntF' => PsdUnitFloatValue(unit: reader.readString(4), value: reader.readFloat64()),
   'TEXT' => PsdStringValue(_readUnicodeString(reader)),
-  'enum' => PsdEnumeratedValue(typeId: _readId(reader), value: _readId(reader)),
+  'enum' => _readEnumeratedValue(reader),
   'Objc' => PsdObjectValue(_readDescriptor(reader)),
   'GlbO' => PsdObjectValue(_readDescriptor(reader), global: true),
   'VlLs' => PsdListValue(<PsdDescriptorValue>[
@@ -275,18 +290,18 @@ PsdDescriptorValue _readValue(PsdBinaryReader reader, String type) => switch (ty
   ]),
   'tdta' => PsdRawValue(reader.readBytes(reader.readLength(wide: false, label: 'descriptor raw data'))),
   'alis' => PsdAliasValue(reader.readBytes(reader.readLength(wide: false, label: 'descriptor alias'))),
-  'type' => PsdClassValue(name: _readUnicodeString(reader), classId: _readId(reader)),
-  'GlbC' => PsdClassValue(name: _readUnicodeString(reader), classId: _readId(reader), global: true),
+  'type' => _readClassValue(reader, global: false),
+  'GlbC' => _readClassValue(reader, global: true),
   _ => throw PsdFormatException('Unsupported action-descriptor type "$type"', reader.bytes, reader.baseOffset + reader.offset - 4),
 };
 
 /// Writes [descriptor] without an outer version or length field.
 void _writeDescriptor(PsdBinaryWriter writer, PsdDescriptor descriptor) {
   _writeUnicodeString(writer, descriptor.name);
-  _writeId(writer, descriptor.classId);
+  _writeId(writer, descriptor.classId, compact: descriptor._compactClassId);
   writer.writeUint32(descriptor.items.length);
   for (final PsdDescriptorItem item in descriptor.items) {
-    _writeId(writer, item.key);
+    _writeId(writer, item.key, compact: item._compactKey);
     writer.writeString(item.value.type);
     _writeValue(writer, item.value);
   }
@@ -309,8 +324,8 @@ void _writeValue(PsdBinaryWriter writer, PsdDescriptorValue value) {
     case PsdStringValue():
       _writeUnicodeString(writer, value.value);
     case PsdEnumeratedValue():
-      _writeId(writer, value.typeId);
-      _writeId(writer, value.value);
+      _writeId(writer, value.typeId, compact: value._compactTypeId);
+      _writeId(writer, value.value, compact: value._compactValue);
     case PsdObjectValue():
       _writeDescriptor(writer, value.value);
     case PsdListValue():
@@ -329,7 +344,7 @@ void _writeValue(PsdBinaryWriter writer, PsdDescriptorValue value) {
         ..writeBytes(value.value);
     case PsdClassValue():
       _writeUnicodeString(writer, value.name);
-      _writeId(writer, value.classId);
+      _writeId(writer, value.classId, compact: value._compactClassId);
   }
 }
 
@@ -349,14 +364,14 @@ void _writeUnicodeString(PsdBinaryWriter writer, String value) {
 }
 
 /// Reads a variable-length Photoshop identifier.
-String _readId(PsdBinaryReader reader) {
+({String value, bool compact}) _readId(PsdBinaryReader reader) {
   final int length = reader.readUint32();
-  return reader.readString(length == 0 ? 4 : length);
+  return (value: reader.readString(length == 0 ? 4 : length), compact: length == 0);
 }
 
-/// Writes a compact four-byte or length-prefixed Photoshop identifier.
-void _writeId(PsdBinaryWriter writer, String value) {
-  if (value.length == 4 && value.codeUnits.every((unit) => unit <= 0xff)) {
+/// Writes a four-byte or length-prefixed Photoshop identifier.
+void _writeId(PsdBinaryWriter writer, String value, {required bool compact}) {
+  if (compact && value.length == 4 && value.codeUnits.every((unit) => unit <= 0xff)) {
     writer
       ..writeUint32(0)
       ..writeString(value);
@@ -366,6 +381,25 @@ void _writeId(PsdBinaryWriter writer, String value) {
   writer
     ..writeUint32(value.length)
     ..writeString(value);
+}
+
+/// Reads both identifiers in an enumerated descriptor value.
+PsdEnumeratedValue _readEnumeratedValue(PsdBinaryReader reader) {
+  final ({String value, bool compact}) typeId = _readId(reader);
+  final ({String value, bool compact}) value = _readId(reader);
+  return PsdEnumeratedValue(
+    typeId: typeId.value,
+    value: value.value,
+    compactTypeId: typeId.compact,
+    compactValue: value.compact,
+  );
+}
+
+/// Reads a class descriptor value and its identifier representation.
+PsdClassValue _readClassValue(PsdBinaryReader reader, {required bool global}) {
+  final String name = _readUnicodeString(reader);
+  final ({String value, bool compact}) classId = _readId(reader);
+  return PsdClassValue(name: name, classId: classId.value, global: global, compactClassId: classId.compact);
 }
 
 /// Writes a required four-character descriptor code.

@@ -28,19 +28,22 @@ Future<void> main(List<String> arguments) async {
     if (text != null) {
       stdout.writeln('    text: ${text.text.replaceAll('\r', r'\r').replaceAll('\n', r'\n')}');
       stdout.writeln('    descriptor keys: ${text.textDescriptor.items.map((item) => item.key).join(', ')}');
-    } else if (layer.taggedBlock('TySh') case final PsdTaggedBlock block) {
-      try {
-        PsdTypeToolCodec.decode(block.data);
-      } on Object catch (error) {
-        stdout.writeln('    text decode error: $error');
-        final ({PsdDescriptor descriptor, int bytesRead}) textDescriptor = PsdDescriptorCodec.decodePrefix(Uint8List.sublistView(block.data, 56));
-        final int warpOffset = 56 + textDescriptor.bytesRead + 6;
-        final ({PsdDescriptor descriptor, int bytesRead}) warpDescriptor = PsdDescriptorCodec.decodePrefix(Uint8List.sublistView(block.data, warpOffset));
+      final PsdTextContent content = text.content;
+      for (final PsdTextStyleRun run in content.styleRuns) {
         stdout.writeln(
-          '    TySh bytes: ${block.data.length}, text descriptor: ${textDescriptor.bytesRead}, '
-          'warp descriptor: ${warpDescriptor.bytesRead}, bounds bytes: ${block.data.length - warpOffset - warpDescriptor.bytesRead}',
+          '    style ${run.start}..${run.start + run.length}: '
+          '${run.style.fontFamily ?? '-'} ${run.style.fontSize ?? '-'} pt, '
+          'ARGB ${run.style.color?.argb.toRadixString(16).padLeft(8, '0') ?? '-'}',
         );
       }
+      for (final PsdTextParagraph paragraph in content.paragraphs) {
+        stdout.writeln(
+          '    paragraph ${paragraph.start}..${paragraph.start + paragraph.length}: '
+          '${paragraph.justification.name}',
+        );
+      }
+    } else if (layer.taggedBlock('TySh') != null) {
+      stdout.writeln('    text: unsupported or malformed TySh payload');
     }
   }
 }
