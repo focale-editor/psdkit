@@ -4,29 +4,6 @@ PsdKit is a pure Dart reader and writer for Adobe Photoshop PSD and PSB files. I
 
 The implementation follows Adobe's [Photoshop File Formats Specification](https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/).
 
-## Supported data
-
-| Feature                                                           | Read | Write | Notes                                                                                                 |
-|-------------------------------------------------------------------|-----:|------:|-------------------------------------------------------------------------------------------------------|
-| PSD and PSB containers                                            |  Yes |   Yes | Version-specific 32/64-bit lengths                                                                    |
-| 1, 8, 16, and 32-bit channels                                     |  Yes |   Yes | Samples remain planar and lossless                                                                    |
-| Bitmap, grayscale, indexed, RGB, CMYK, multichannel, duotone, Lab |  Yes |   Yes | RGBA preview conversion is included                                                                   |
-| RAW, PackBits RLE, ZIP, ZIP prediction                            |  Yes |   Yes | ZIP uses the pure-Dart `zcodec` implementation                                                        |
-| Raster layers and transparency                                    |  Yes |   Yes | Negative coordinates are supported                                                                    |
-| Raster-mask metadata and channels                                 |  Yes |   Yes | Complete mask payloads are retained                                                                   |
-| Groups                                                            |  Yes |   Yes | Exposed through `PsdLayer.sectionType`                                                                |
-| Unicode names and layer ids                                       |  Yes |   Yes | `luni`, `lyid`, `lsct`, and `lsdk` helpers                                                            |
-| Editable text layers                                              |  Yes |   Yes | Unicode, transforms, bounds, orientation, fonts, sizes, colors, style ranges, and paragraph alignment |
-| Layer effects                                                     |  Yes |   Yes | Modern `lfx2`/`lmfx`, legacy `lrFX`, repeated effects, and complete descriptor preservation           |
-| Vector masks and document paths                                   |  Yes |   Yes | Open/closed cubic Bézier paths, Boolean operations, fill rules, and unknown record preservation       |
-| Fill and adjustment layers                                        |  Yes |   Yes | Typed common adjustments, descriptor-backed modern settings, and raw fallback preservation            |
-| Smart objects and linked files                                    |  Yes |   Yes | Modern and legacy placed layers; embedded, external, and alias resources                              |
-| Image resources                                                   |  Yes |   Yes | Typed standard resources; external, private, and unknown payloads remain losslessly accessible        |
-
-Unknown image resources and tagged layer blocks are deliberately retained. Reading and rewriting a document therefore does not discard Photoshop-specific information merely because PsdKit does not interpret it yet.
-
-“Yes” above means that PsdKit semantically exposes the listed structures and can write them back. It does not mean that every Photoshop resource is interpreted or rasterized: undocumented and currently unsupported image resources, tagged blocks, descriptor variants, smart filters, and application rendering remain opaque but loss-preserved. This distinction is intentional; the public Adobe specification describes many structures without defining their visual interpretation.
-
 ## Usage
 
 ```dart
@@ -250,11 +227,32 @@ final withoutXmp = edited.withoutImageResource(PsdImageResourceIds.xmp);
 
 Formats governed by separate standards, including IPTC and EXIF, are exposed as `PsdBinaryMetadataResource`; ICC profiles additionally expose their standard header fields. Plug-in resources, undocumented identifiers, and malformed standard payloads use `PsdRawImageResource`. Both retain their complete bytes, resource name, and signature when the enclosing block is left unchanged.
 
+## Supported data
+
+| Feature                                                           | Read | Write | Notes                                                                                                 |
+|-------------------------------------------------------------------|-----:|------:|-------------------------------------------------------------------------------------------------------|
+| PSD and PSB containers                                            |  Yes |   Yes | Version-specific 32/64-bit lengths                                                                    |
+| 1, 8, 16, and 32-bit channels                                     |  Yes |   Yes | Samples remain planar and lossless                                                                    |
+| Bitmap, grayscale, indexed, RGB, CMYK, multichannel, duotone, Lab |  Yes |   Yes | RGBA preview conversion is included                                                                   |
+| RAW, PackBits RLE, ZIP, ZIP prediction                            |  Yes |   Yes | ZIP uses the pure-Dart `zcodec` implementation                                                        |
+| Raster layers and transparency                                    |  Yes |   Yes | Negative coordinates are supported                                                                    |
+| Raster-mask metadata and channels                                 |  Yes |   Yes | Complete mask payloads are retained                                                                   |
+| Groups                                                            |  Yes |   Yes | Exposed through `PsdLayer.sectionType`                                                                |
+| Unicode names and layer ids                                       |  Yes |   Yes | `luni`, `lyid`, `lsct`, and `lsdk` helpers                                                            |
+| Editable text layers                                              |  Yes |   Yes | Unicode, transforms, bounds, orientation, fonts, sizes, colors, style ranges, and paragraph alignment |
+| Layer effects                                                     |  Yes |   Yes | Modern `lfx2`/`lmfx`, legacy `lrFX`, repeated effects, and complete descriptor preservation           |
+| Vector masks and document paths                                   |  Yes |   Yes | Open/closed cubic Bézier paths, Boolean operations, fill rules, and unknown record preservation       |
+| Fill and adjustment layers                                        |  Yes |   Yes | Typed common adjustments, descriptor-backed modern settings, and raw fallback preservation            |
+| Smart objects and linked files                                    |  Yes |   Yes | Modern and legacy placed layers; embedded, external, and alias resources                              |
+| Image resources                                                   |  Yes |   Yes | Typed standard resources; external, private, and unknown payloads remain losslessly accessible        |
+
+Unknown image resources and tagged layer blocks are deliberately retained. Reading and rewriting a document therefore does not discard Photoshop-specific information merely because PsdKit does not interpret it yet.
+
+“Yes” above means that PsdKit semantically exposes the listed structures and can write them back. It does not mean that every Photoshop resource is interpreted or rasterized: undocumented and currently unsupported image resources, tagged blocks, descriptor variants, smart filters, and application rendering remain opaque but loss-preserved. This distinction is intentional; the public Adobe specification describes many structures without defining their visual interpretation.
+
 ## Safety and platforms
 
 `PsdReadOptions` limits canvas area, layer count, and decoded allocation size when opening untrusted files. All variable-length sections are parsed through bounded readers, and ZIP output is capped while it is being decompressed rather than after allocation.
-
-RAW and RLE work on every Dart platform. ZIP reading and writing use `dart:io` through a conditional import; on platforms without `dart:io`, ZIP operations throw `UnsupportedError`. RLE is the portable write default.
 
 ## Development
 
