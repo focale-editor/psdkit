@@ -1,0 +1,9 @@
+# PsdKit changelog
+
+## 0.1.0
+
+- Add dependency-free PSD and PSB decoding and encoding.
+- Support RAW, PackBits RLE, ZIP, and ZIP-prediction channel data.
+- Preserve image resources, masks, and unknown tagged layer information.
+- Add Unicode names, layer ids, group markers, and RGBA pixel conversion.
+- Add defensive read limits, interoperability tools, and Focale integration guidance.
