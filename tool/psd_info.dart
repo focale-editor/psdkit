@@ -55,5 +55,14 @@ Future<void> main(List<String> arguments) async {
         );
       }
     }
+    final PsdVectorMask? vectorMask = layer.vectorMask;
+    if (vectorMask != null) {
+      stdout.writeln(
+        '    vector mask: ${vectorMask.path.subpaths.length} subpaths, '
+        '${vectorMask.path.subpaths.fold<int>(0, (count, subpath) => count + subpath.knots.length)} knots, '
+        'inverted=${vectorMask.inverted}, disabled=${vectorMask.disabled}',
+      );
+    }
   }
+  stdout.writeln('  named paths: ${document.namedPaths.length}');
 }

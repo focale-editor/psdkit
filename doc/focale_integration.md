@@ -38,7 +38,11 @@ Create a `PsdImportService` in Focale's documents data layer. It should perform 
 | `PsdLayerEffectType` | Shadow, glow, stroke, overlay, bevel, and satin effect types |
 | Effect color, opacity, blend mode, size, angle, distance, spread, and noise | Corresponding Focale effect properties |
 | `PsdEffectGradient` and `PsdEffectPattern` | Gradient and pattern effect resources |
-| Adjustment, fill, and vector-mask blocks | Corresponding semantic Focale layer data where supported |
+| `PsdLayer.vectorMask?.path.subpaths` | Focale vector mask contours |
+| `PsdBezierKnot.anchor`, `incoming`, and `outgoing` | Focale cubic path nodes and control handles |
+| `PsdSubpath.operationType` | Focale combine/subtract/intersect/exclude path operation |
+| `PsdDocument.namedPaths` | Saved document paths |
+| Adjustment and fill blocks | Corresponding semantic Focale layer data where supported |
 
 `PsdPixels.decodeLayer(document, layer)` provides straight-alpha RGBA bytes for an initial raster adapter. Register the resulting `ui.Image` through `ImageEngine.adoptImage`. PSD layer records and Focale child ids both use topmost-first paint order, but group divider records must be consumed rather than exposed as visible layers.
 
@@ -47,6 +51,8 @@ For best round-trip fidelity, Focale should retain the original `PsdImageResourc
 For imported text, retain the complete `PsdTypeTool`. If only the characters change, call `typeTool.withText(newText)`; this preserves unknown Adobe engine keys and extends or truncates the final style and paragraph runs as needed. If formatting changes, map Focale's style ranges to `PsdTextContent` and call `typeTool.withContent(content)`.
 
 For imported effects, retain the complete `PsdLayerEffects` and each effect's `descriptor`. Common properties are exposed directly and can be updated with `withEnabled`, `withOpacity`, `withColor`, or `withProperty`. Call `layer.withEffects(updatedEffects)` only when the Focale effect model changed; untouched `lfx2`, `lmfx`, and `lrFX` blocks remain byte-stable.
+
+PSD path coordinates are normalized against the complete document canvas, not the layer rectangle. Use `point.pixelX(document.width)` and `point.pixelY(document.height)` on import, and `PsdPathPoint.fromPixels` on export. Retain `PsdVectorPath.records` when geometry is unchanged so fill, clipboard, and future record selectors survive exactly.
 
 ## Export pipeline
 
@@ -67,6 +73,8 @@ For a new Focale text layer, create `PsdTextContent`, call `PsdTypeTool.fromText
 
 For new layer effects, create one or more `PsdLayerEffect` values, group them with `PsdLayerEffects.create`, and attach them through `PsdLayer.withEffects`. Multiple effects of the same family are emitted through Photoshop's multi-effect descriptor keys automatically. As with text, Focale should render the resulting appearance into the layer channels and merged image.
 
+For a vector mask, convert Focale contours to `PsdSubpath` and control points to `PsdBezierKnot`, create a `PsdVectorPath.fromSubpaths`, then attach `PsdVectorMask` with `PsdLayer.withVectorMask`. Saved paths that are not attached to a layer belong in `PsdDocument.withNamedPaths` with unique resource ids from 2000 through 2997.
+
 ## Initial rollout
 
-An incremental integration can first import every visible record as a raster layer while retaining all opaque blocks. A second phase can map groups and masks, followed by editable text and layer effects, then shapes and adjustments. The retained blocks keep unsupported features available for later semantic support and reduce destructive round trips during that rollout.
+An incremental integration can first import every visible record as a raster layer while retaining all opaque blocks. A second phase can map groups, raster/vector masks, editable text, and layer effects, then shapes and adjustments. The retained blocks keep unsupported features available for later semantic support and reduce destructive round trips during that rollout.

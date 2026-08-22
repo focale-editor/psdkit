@@ -10,4 +10,6 @@
   `EngineData`, fonts, colors, style ranges, and paragraph alignment.
 - Add modern and legacy layer-effect import/export, repeated effects, shadows,
   glows, strokes, overlays, gradients, patterns, bevels, and satin.
+- Add vector-mask and named-path import/export with cubic Bézier knots,
+  Boolean operations, fill records, and normalized coordinate conversion.
 - Add defensive read limits, interoperability tools, and Focale integration guidance.

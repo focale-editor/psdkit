@@ -6,5 +6,6 @@ export 'src/descriptor.dart';
 export 'src/effects.dart';
 export 'src/exceptions.dart';
 export 'src/model.dart';
+export 'src/paths.dart';
 export 'src/pixels.dart';
 export 'src/text.dart';

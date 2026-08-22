@@ -18,8 +18,9 @@ The implementation follows Adobe's [Photoshop File Formats Specification](https:
 | Unicode names and layer ids                                       |       Yes |       Yes | `luni`, `lyid`, `lsct`, and `lsdk` helpers                                                            |
 | Editable text layers                                              |       Yes |       Yes | Unicode, transforms, bounds, orientation, fonts, sizes, colors, style ranges, and paragraph alignment |
 | Layer effects                                                     |       Yes |       Yes | Modern `lfx2`/`lmfx`, legacy `lrFX`, repeated effects, and complete descriptor preservation            |
+| Vector masks and document paths                                  |       Yes |       Yes | Open/closed cubic Bézier paths, Boolean operations, fill rules, and unknown record preservation        |
 | Image resources                                                   | Preserved | Preserved | Including unknown resources                                                                           |
-| Vector paths, adjustments, smart objects                          | Preserved | Preserved | Available as opaque tagged blocks; semantic decoding is future work                                   |
+| Adjustments and smart objects                                     | Preserved | Preserved | Available as opaque tagged blocks; semantic decoding is future work                                   |
 
 Unknown image resources and tagged layer blocks are deliberately retained. Reading and rewriting a document therefore does not discard Photoshop-specific information merely because PsdKit does not interpret it yet.
 
@@ -128,6 +129,40 @@ final editedLayer = layer.withEffects(
 
 Unchanged modern and legacy blocks round-trip byte for byte. Editing a legacy `lrFX` record upgrades it to modern `lfx2`, avoiding the limitations of the historical fixed structures. PsdKit stores effect definitions but does not rasterize them; the application remains responsible for matching layer preview channels and the merged image.
 
+## Vector paths
+
+`PsdLayer.vectorMask` exposes `vmsk` and `vsms` layer masks. `PsdDocument.namedPaths` exposes saved document paths from Photoshop image resources. Both use `PsdVectorPath`, with semantic subpaths and exact 26-byte source records:
+
+```dart
+final mask = layer.vectorMask;
+for (final subpath in mask?.path.subpaths ?? const <PsdSubpath>[]) {
+  for (final knot in subpath.knots) {
+    print('anchor: ${knot.anchor.x}, ${knot.anchor.y}');
+  }
+}
+```
+
+Coordinates are normalized against the PSD canvas. `PsdPathPoint.fromPixels`, `pixelX`, and `pixelY` convert to and from application coordinates. Paths can contain open or closed contours, linked or independent cubic Bézier handles, and combine/subtract/intersect/exclude operations:
+
+```dart
+final path = PsdVectorPath.fromSubpaths(
+  subpaths: const [
+    PsdSubpath(
+      closed: true,
+      operation: 1,
+      knots: [
+        PsdBezierKnot.corner(PsdPathPoint(x: 0.1, y: 0.1)),
+        PsdBezierKnot.corner(PsdPathPoint(x: 0.9, y: 0.1)),
+        PsdBezierKnot.corner(PsdPathPoint(x: 0.9, y: 0.9)),
+      ],
+    ),
+  ],
+);
+final editedLayer = layer.withVectorMask(PsdVectorMask(path: path));
+```
+
+Use `PsdDocument.withNamedPaths` for saved document paths. Clipboard, fill-rule, initial-fill, and unknown path records are retained so unchanged masks and resources can round-trip byte for byte.
+
 ## Safety and platforms
 
 `PsdReadOptions` limits canvas area, layer count, and decoded allocation size when opening untrusted files. All variable-length sections are parsed through bounded readers.
@@ -142,6 +177,7 @@ dart test
 dart run tool/quality_check.dart
 dart run tool/text_corpus_check.dart /path/to/psd-corpus
 dart run tool/effects_corpus_check.dart /path/to/psd-corpus
+dart run tool/paths_corpus_check.dart /path/to/psd-corpus
 ```
 
 The quality check enforces Dartdoc on public and private declarations and the project member order: fields, constructors, then methods.

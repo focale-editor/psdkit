@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:psdkit/src/effects.dart';
+import 'package:psdkit/src/exceptions.dart';
+import 'package:psdkit/src/paths.dart';
 import 'package:psdkit/src/text.dart';
 
 /// Selects the classic PSD or large-document PSB container.
@@ -290,6 +292,20 @@ final class PsdLayer {
     return null;
   }
 
+  /// Decoded layer vector mask, preferring the primary `vmsk` block.
+  PsdVectorMask? get vectorMask {
+    for (final String key in const <String>['vmsk', 'vsms']) {
+      final PsdTaggedBlock? block = taggedBlock(key);
+      if (block != null) {
+        final PsdVectorMask? decoded = PsdVectorMaskCodec.tryDecode(block.data, key: key);
+        if (decoded != null) {
+          return decoded;
+        }
+      }
+    }
+    return null;
+  }
+
   /// Stable Photoshop layer id, when the `lyid` block is present.
   int? get id {
     final PsdTaggedBlock? block = taggedBlock('lyid');
@@ -386,6 +402,27 @@ final class PsdLayer {
       additionalInfo: blocks,
     );
   }
+
+  /// Returns a copy whose vector-mask block contains [mask].
+  PsdLayer withVectorMask(PsdVectorMask mask) {
+    final List<PsdTaggedBlock> blocks = <PsdTaggedBlock>[
+      for (final PsdTaggedBlock block in additionalInfo)
+        if (block.key != 'vmsk' && block.key != 'vsms') block,
+      PsdTaggedBlock(key: mask.blockKey, data: PsdVectorMaskCodec.encode(mask)),
+    ];
+    return PsdLayer(
+      rectangle: rectangle,
+      name: name,
+      channels: channels,
+      blendMode: blendMode,
+      opacity: opacity,
+      clipping: clipping,
+      flags: flags,
+      mask: this.mask,
+      blendingRanges: blendingRanges,
+      additionalInfo: blocks,
+    );
+  }
 }
 
 /// An in-memory PSD or PSB document.
@@ -450,6 +487,60 @@ final class PsdDocument {
     this.additionalLayerInfo = const [],
   }) : colorModeData = colorModeData ?? Uint8List(0),
        globalLayerMaskData = globalLayerMaskData ?? Uint8List(0);
+
+  /// Named document paths stored in image-resource ids 2000 through 2997.
+  List<PsdNamedPath> get namedPaths {
+    final List<PsdNamedPath> result = <PsdNamedPath>[];
+    for (final PsdImageResource resource in imageResources) {
+      if (resource.id < 2000 || resource.id > 2997) {
+        continue;
+      }
+      final PsdVectorPath? path = PsdVectorPathCodec.tryDecode(resource.data);
+      if (path != null) {
+        result.add(PsdNamedPath(resourceId: resource.id, name: resource.name, path: path, signature: resource.signature));
+      }
+    }
+    return result;
+  }
+
+  /// Returns a copy whose document path resources are [paths].
+  PsdDocument withNamedPaths(List<PsdNamedPath> paths) {
+    final Set<int> ids = <int>{};
+    for (final PsdNamedPath path in paths) {
+      if (path.resourceId < 2000 || path.resourceId > 2997) {
+        throw PsdWriteException('Named path resource id ${path.resourceId} must be from 2000 through 2997');
+      }
+      if (!ids.add(path.resourceId)) {
+        throw PsdWriteException('Duplicate named path resource id ${path.resourceId}');
+      }
+    }
+    return PsdDocument(
+      version: version,
+      width: width,
+      height: height,
+      channels: channels,
+      depth: depth,
+      colorMode: colorMode,
+      colorModeData: colorModeData,
+      imageResources: <PsdImageResource>[
+        for (final PsdImageResource resource in imageResources)
+          if (resource.id < 2000 || resource.id > 2997) resource,
+        for (final PsdNamedPath path in paths)
+          PsdImageResource(
+            id: path.resourceId,
+            name: path.name,
+            signature: path.signature,
+            data: PsdVectorPathCodec.encode(path.path),
+          ),
+      ],
+      layers: layers,
+      mergedImage: mergedImage,
+      mergedImageCompression: mergedImageCompression,
+      mergedTransparency: mergedTransparency,
+      globalLayerMaskData: globalLayerMaskData,
+      additionalLayerInfo: additionalLayerInfo,
+    );
+  }
 }
 
 /// Limits untrusted input before allocating decoded image buffers.
