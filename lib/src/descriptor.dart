@@ -135,6 +135,21 @@ final class PsdUnitFloatValue extends PsdDescriptorValue {
   String get type => 'UntF';
 }
 
+/// A list of double-precision values sharing a Photoshop unit code.
+final class PsdUnitFloatsValue extends PsdDescriptorValue {
+  /// Four-character unit such as `#Pxl` or `#Pnt`.
+  final String unit;
+
+  /// Numeric payloads expressed in [unit].
+  final List<double> values;
+
+  /// Creates a unit-floats descriptor value.
+  PsdUnitFloatsValue({required this.unit, required this.values});
+
+  @override
+  String get type => 'UnFl';
+}
+
 /// A UTF-16 Photoshop descriptor string.
 final class PsdStringValue extends PsdDescriptorValue {
   /// String payload.
@@ -181,6 +196,21 @@ final class PsdObjectValue extends PsdDescriptorValue {
 
   @override
   String get type => global ? 'GlbO' : 'Objc';
+}
+
+/// A descriptor-shaped object array with an explicit element count.
+final class PsdObjectArrayValue extends PsdDescriptorValue {
+  /// Number of logical array elements described by [value].
+  final int itemsCount;
+
+  /// Descriptor containing the array's column-oriented values.
+  final PsdDescriptor value;
+
+  /// Creates an object-array descriptor value.
+  PsdObjectArrayValue({required this.itemsCount, required this.value});
+
+  @override
+  String get type => 'ObAr';
 }
 
 /// An ordered list of independently typed descriptor values.
@@ -287,10 +317,15 @@ PsdDescriptorValue _readValue(PsdBinaryReader reader, String type) => switch (ty
   'comp' => PsdLargeIntegerValue(reader.readInt64()),
   'doub' => PsdDoubleValue(reader.readFloat64()),
   'UntF' => PsdUnitFloatValue(unit: reader.readString(4), value: reader.readFloat64()),
+  'UnFl' => PsdUnitFloatsValue(
+    unit: reader.readString(4),
+    values: <double>[for (int index = 0, count = reader.readUint32(); index < count; index++) reader.readFloat64()],
+  ),
   'TEXT' => PsdStringValue(_readUnicodeString(reader)),
   'enum' => _readEnumeratedValue(reader),
   'Objc' => PsdObjectValue(_readDescriptor(reader)),
   'GlbO' => PsdObjectValue(_readDescriptor(reader), global: true),
+  'ObAr' => PsdObjectArrayValue(itemsCount: reader.readUint32(), value: _readDescriptor(reader)),
   'VlLs' => PsdListValue(<PsdDescriptorValue>[
     for (int index = 0, count = reader.readUint32(); index < count; index++) _readValue(reader, reader.readString(4)),
   ]),
@@ -327,12 +362,19 @@ void _writeValue(PsdBinaryWriter writer, PsdDescriptorValue value) {
     case PsdUnitFloatValue():
       _writeFourCharacters(writer, value.unit, 'descriptor unit');
       writer.writeFloat64(value.value);
+    case PsdUnitFloatsValue():
+      _writeFourCharacters(writer, value.unit, 'descriptor unit');
+      writer.writeUint32(value.values.length);
+      value.values.forEach(writer.writeFloat64);
     case PsdStringValue():
       _writeUnicodeString(writer, value.value);
     case PsdEnumeratedValue():
       _writeId(writer, value.typeId, compact: value._compactTypeId);
       _writeId(writer, value.value, compact: value._compactValue);
     case PsdObjectValue():
+      _writeDescriptor(writer, value.value);
+    case PsdObjectArrayValue():
+      writer.writeUint32(value.itemsCount);
       _writeDescriptor(writer, value.value);
     case PsdListValue():
       writer.writeUint32(value.values.length);

@@ -50,12 +50,17 @@ void _printDescriptor(PsdDescriptor descriptor, String indent) {
         stdout.writeln(' $value');
       case PsdUnitFloatValue(:final String unit, :final double value):
         stdout.writeln(' $value $unit');
+      case PsdUnitFloatsValue(:final String unit, :final List<double> values):
+        stdout.writeln(' $values $unit');
       case PsdStringValue(:final String value):
         stdout.writeln(' "$value"');
       case PsdEnumeratedValue(:final String typeId, :final String value):
         stdout.writeln(' $typeId/$value');
       case PsdObjectValue(:final PsdDescriptor value):
         stdout.writeln();
+        _printDescriptor(value, '$indent    ');
+      case PsdObjectArrayValue(:final int itemsCount, :final PsdDescriptor value):
+        stdout.writeln(' [$itemsCount]');
         _printDescriptor(value, '$indent    ');
       case PsdListValue(:final List<PsdDescriptorValue> values):
         stdout.writeln(' [${values.length}]');
