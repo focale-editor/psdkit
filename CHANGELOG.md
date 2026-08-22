@@ -12,4 +12,7 @@
   glows, strokes, overlays, gradients, patterns, bevels, and satin.
 - Add vector-mask and named-path import/export with cubic Bézier knots,
   Boolean operations, fill records, and normalized coordinate conversion.
+- Add semantic fill and adjustment-layer import/export for curves, levels,
+  exposure, hue/saturation, color balance, channel mixing, photo filters,
+  selective color, descriptor-backed settings, and simple tonal adjustments.
 - Add defensive read limits, interoperability tools, and Focale integration guidance.

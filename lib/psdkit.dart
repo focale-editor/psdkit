@@ -1,6 +1,7 @@
 /// A dependency-free reader and writer for Photoshop PSD and PSB files.
 library;
 
+export 'src/adjustments.dart';
 export 'src/codec.dart';
 export 'src/descriptor.dart';
 export 'src/effects.dart';

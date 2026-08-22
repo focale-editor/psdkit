@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:psdkit/src/adjustments.dart';
 import 'package:psdkit/src/effects.dart';
 import 'package:psdkit/src/exceptions.dart';
 import 'package:psdkit/src/paths.dart';
@@ -272,6 +273,16 @@ final class PsdLayer {
   /// Whether the layer is visible.
   bool get visible => flags & 0x02 == 0;
 
+  /// Decoded fill or adjustment settings, when the layer contains them.
+  PsdAdjustment? get adjustment {
+    for (final PsdTaggedBlock block in additionalInfo.reversed) {
+      if (psdAdjustmentKeys.contains(block.key)) {
+        return PsdAdjustmentCodec.tryDecode(block.data, key: block.key);
+      }
+    }
+    return null;
+  }
+
   /// Decoded Photoshop type-tool data, when this is a supported text layer.
   PsdTypeTool? get typeTool {
     final PsdTaggedBlock? block = taggedBlock('TySh');
@@ -388,6 +399,30 @@ final class PsdLayer {
       for (final PsdTaggedBlock block in additionalInfo)
         if (block.key != 'lfx2' && block.key != 'lmfx' && block.key != 'lrFX') block,
       PsdTaggedBlock(key: effects.blockKey, data: PsdLayerEffectsCodec.encode(effects)),
+    ];
+    return PsdLayer(
+      rectangle: rectangle,
+      name: name,
+      channels: channels,
+      blendMode: blendMode,
+      opacity: opacity,
+      clipping: clipping,
+      flags: flags,
+      mask: mask,
+      blendingRanges: blendingRanges,
+      additionalInfo: blocks,
+    );
+  }
+
+  /// Returns a copy whose fill or adjustment block contains [adjustment].
+  ///
+  /// Existing adjustment blocks are removed to prevent Photoshop from choosing
+  /// a stale conflicting representation.
+  PsdLayer withAdjustment(PsdAdjustment adjustment) {
+    final List<PsdTaggedBlock> blocks = <PsdTaggedBlock>[
+      for (final PsdTaggedBlock block in additionalInfo)
+        if (!psdAdjustmentKeys.contains(block.key)) block,
+      PsdTaggedBlock(key: adjustment.blockKey, data: PsdAdjustmentCodec.encode(adjustment)),
     ];
     return PsdLayer(
       rectangle: rectangle,

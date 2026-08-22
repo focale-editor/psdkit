@@ -17,10 +17,11 @@ The implementation follows Adobe's [Photoshop File Formats Specification](https:
 | Groups                                                            |       Yes |       Yes | Exposed through `PsdLayer.sectionType`                                                                |
 | Unicode names and layer ids                                       |       Yes |       Yes | `luni`, `lyid`, `lsct`, and `lsdk` helpers                                                            |
 | Editable text layers                                              |       Yes |       Yes | Unicode, transforms, bounds, orientation, fonts, sizes, colors, style ranges, and paragraph alignment |
-| Layer effects                                                     |       Yes |       Yes | Modern `lfx2`/`lmfx`, legacy `lrFX`, repeated effects, and complete descriptor preservation            |
-| Vector masks and document paths                                  |       Yes |       Yes | Open/closed cubic Bézier paths, Boolean operations, fill rules, and unknown record preservation        |
+| Layer effects                                                     |       Yes |       Yes | Modern `lfx2`/`lmfx`, legacy `lrFX`, repeated effects, and complete descriptor preservation           |
+| Vector masks and document paths                                   |       Yes |       Yes | Open/closed cubic Bézier paths, Boolean operations, fill rules, and unknown record preservation       |
+| Fill and adjustment layers                                        |       Yes |       Yes | Typed common adjustments, descriptor-backed modern settings, and raw fallback preservation            |
 | Image resources                                                   | Preserved | Preserved | Including unknown resources                                                                           |
-| Adjustments and smart objects                                     | Preserved | Preserved | Available as opaque tagged blocks; semantic decoding is future work                                   |
+| Smart objects                                                     | Preserved | Preserved | Available as opaque tagged blocks                                                                      |
 
 Unknown image resources and tagged layer blocks are deliberately retained. Reading and rewriting a document therefore does not discard Photoshop-specific information merely because PsdKit does not interpret it yet.
 
@@ -163,6 +164,32 @@ final editedLayer = layer.withVectorMask(PsdVectorMask(path: path));
 
 Use `PsdDocument.withNamedPaths` for saved document paths. Clipboard, fill-rule, initial-fill, and unknown path records are retained so unchanged masks and resources can round-trip byte for byte.
 
+## Fill and adjustment layers
+
+`PsdLayer.adjustment` recognizes Photoshop's fill and adjustment keys. Brightness/contrast, levels, curves, exposure, hue/saturation, color balance, photo filter, channel mixer, invert, posterize, threshold, and selective color have typed models. Solid color, gradient, pattern, vibrance, black and white, and color lookup expose their complete action descriptor:
+
+```dart
+final adjustment = layer.adjustment;
+if (adjustment case PsdCurvesAdjustment(:final curves)) {
+  for (final curve in curves) {
+    print('channel ${curve.channel}: ${curve.points.length} points');
+  }
+}
+```
+
+Create or replace an adjustment with `PsdLayer.withAdjustment`. For example, this makes a threshold layer while preserving unrelated layer metadata:
+
+```dart
+final editedLayer = layer.withAdjustment(
+  PsdSingleValueAdjustment(
+    type: PsdAdjustmentType.threshold,
+    value: 128,
+  ),
+);
+```
+
+Unknown legacy hue/saturation and gradient-map variants are returned as `PsdRawAdjustment`; their exact payload remains writable. Descriptor-backed values retain unknown Adobe properties and can be changed with `PsdDescriptorAdjustment.withProperty`. PsdKit stores the editable settings but does not render their visual result, so Focale remains responsible for the preview channels and merged image.
+
 ## Safety and platforms
 
 `PsdReadOptions` limits canvas area, layer count, and decoded allocation size when opening untrusted files. All variable-length sections are parsed through bounded readers.
@@ -178,6 +205,7 @@ dart run tool/quality_check.dart
 dart run tool/text_corpus_check.dart /path/to/psd-corpus
 dart run tool/effects_corpus_check.dart /path/to/psd-corpus
 dart run tool/paths_corpus_check.dart /path/to/psd-corpus
+dart run tool/adjustments_corpus_check.dart /path/to/psd-corpus
 ```
 
 The quality check enforces Dartdoc on public and private declarations and the project member order: fields, constructors, then methods.

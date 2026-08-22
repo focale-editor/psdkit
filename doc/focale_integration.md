@@ -42,7 +42,9 @@ Create a `PsdImportService` in Focale's documents data layer. It should perform 
 | `PsdBezierKnot.anchor`, `incoming`, and `outgoing` | Focale cubic path nodes and control handles |
 | `PsdSubpath.operationType` | Focale combine/subtract/intersect/exclude path operation |
 | `PsdDocument.namedPaths` | Saved document paths |
-| Adjustment and fill blocks | Corresponding semantic Focale layer data where supported |
+| `PsdLayer.adjustment` | Corresponding semantic Focale adjustment or fill layer |
+| Typed adjustment values, curves, level records, and corrections | Corresponding Focale adjustment parameters |
+| `PsdDescriptorAdjustment.descriptor` | Advanced fill, vibrance, black-and-white, and lookup properties |
 
 `PsdPixels.decodeLayer(document, layer)` provides straight-alpha RGBA bytes for an initial raster adapter. Register the resulting `ui.Image` through `ImageEngine.adoptImage`. PSD layer records and Focale child ids both use topmost-first paint order, but group divider records must be consumed rather than exposed as visible layers.
 
@@ -53,6 +55,8 @@ For imported text, retain the complete `PsdTypeTool`. If only the characters cha
 For imported effects, retain the complete `PsdLayerEffects` and each effect's `descriptor`. Common properties are exposed directly and can be updated with `withEnabled`, `withOpacity`, `withColor`, or `withProperty`. Call `layer.withEffects(updatedEffects)` only when the Focale effect model changed; untouched `lfx2`, `lmfx`, and `lrFX` blocks remain byte-stable.
 
 PSD path coordinates are normalized against the complete document canvas, not the layer rectangle. Use `point.pixelX(document.width)` and `point.pixelY(document.height)` on import, and `PsdPathPoint.fromPixels` on export. Retain `PsdVectorPath.records` when geometry is unchanged so fill, clipboard, and future record selectors survive exactly.
+
+For imported adjustments, retain the complete `PsdAdjustment`. Map typed subclasses to Focale parameters and call `layer.withAdjustment(updatedAdjustment)` only after an edit. `PsdDescriptorAdjustment` retains unknown descriptor properties, while `PsdRawAdjustment` keeps undocumented legacy variants lossless even when Focale cannot expose their controls yet.
 
 ## Export pipeline
 
@@ -74,6 +78,8 @@ For a new Focale text layer, create `PsdTextContent`, call `PsdTypeTool.fromText
 For new layer effects, create one or more `PsdLayerEffect` values, group them with `PsdLayerEffects.create`, and attach them through `PsdLayer.withEffects`. Multiple effects of the same family are emitted through Photoshop's multi-effect descriptor keys automatically. As with text, Focale should render the resulting appearance into the layer channels and merged image.
 
 For a vector mask, convert Focale contours to `PsdSubpath` and control points to `PsdBezierKnot`, create a `PsdVectorPath.fromSubpaths`, then attach `PsdVectorMask` with `PsdLayer.withVectorMask`. Saved paths that are not attached to a layer belong in `PsdDocument.withNamedPaths` with unique resource ids from 2000 through 2997.
+
+For a new adjustment layer, create the matching typed `PsdAdjustment` and attach it with `PsdLayer.withAdjustment`. Focale must also render the adjustment into `PsdDocument.mergedImage`; PSD adjustment channel data is not a substitute for the composite preview.
 
 ## Initial rollout
 
