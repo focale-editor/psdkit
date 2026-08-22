@@ -45,6 +45,9 @@ Create a `PsdImportService` in Focale's documents data layer. It should perform 
 | `PsdLayer.adjustment` | Corresponding semantic Focale adjustment or fill layer |
 | Typed adjustment values, curves, level records, and corrections | Corresponding Focale adjustment parameters |
 | `PsdDescriptorAdjustment.descriptor` | Advanced fill, vibrance, black-and-white, and lookup properties |
+| `PsdLayer.smartObject` | Focale smart-object layer metadata and corner transform |
+| `PsdDocument.linkedResourceFor(layer)` | Embedded or external source asset |
+| `PsdLinkedResource.data` | Nested PSD/PSB, raster, SVG, or other embedded source bytes |
 
 `PsdPixels.decodeLayer(document, layer)` provides straight-alpha RGBA bytes for an initial raster adapter. Register the resulting `ui.Image` through `ImageEngine.adoptImage`. PSD layer records and Focale child ids both use topmost-first paint order, but group divider records must be consumed rather than exposed as visible layers.
 
@@ -57,6 +60,8 @@ For imported effects, retain the complete `PsdLayerEffects` and each effect's `d
 PSD path coordinates are normalized against the complete document canvas, not the layer rectangle. Use `point.pixelX(document.width)` and `point.pixelY(document.height)` on import, and `PsdPathPoint.fromPixels` on export. Retain `PsdVectorPath.records` when geometry is unchanged so fill, clipboard, and future record selectors survive exactly.
 
 For imported adjustments, retain the complete `PsdAdjustment`. Map typed subclasses to Focale parameters and call `layer.withAdjustment(updatedAdjustment)` only after an edit. `PsdDescriptorAdjustment` retains unknown descriptor properties, while `PsdRawAdjustment` keeps undocumented legacy variants lossless even when Focale cannot expose their controls yet.
+
+For a smart object, retain both its `PsdSmartObjectLayerData` and matching `PsdLinkedResource`. Embedded PSD and PSB bytes can be passed recursively to `PsdCodec.decode`; other file types should enter Focale's regular asset import pipeline. Resolve external descriptors through Focale's file-permission layer rather than letting the format package access arbitrary paths. Preserve the original linked-resource block when neither placement nor source content changed.
 
 ## Export pipeline
 
@@ -80,6 +85,8 @@ For new layer effects, create one or more `PsdLayerEffect` values, group them wi
 For a vector mask, convert Focale contours to `PsdSubpath` and control points to `PsdBezierKnot`, create a `PsdVectorPath.fromSubpaths`, then attach `PsdVectorMask` with `PsdLayer.withVectorMask`. Saved paths that are not attached to a layer belong in `PsdDocument.withNamedPaths` with unique resource ids from 2000 through 2997.
 
 For a new adjustment layer, create the matching typed `PsdAdjustment` and attach it with `PsdLayer.withAdjustment`. Focale must also render the adjustment into `PsdDocument.mergedImage`; PSD adjustment channel data is not a substitute for the composite preview.
+
+For an embedded smart object, create a `PsdLinkedResource` with type `embedded`, add it through `PsdDocument.withLinkedResources`, and attach a `PsdDescriptorSmartObject` carrying the same identifier through `PsdLayer.withSmartObject`. Focale remains responsible for rendering the nested document into the parent layer channels and merged image.
 
 ## Initial rollout
 

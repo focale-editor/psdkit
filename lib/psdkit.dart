@@ -9,4 +9,5 @@ export 'src/exceptions.dart';
 export 'src/model.dart';
 export 'src/paths.dart';
 export 'src/pixels.dart';
+export 'src/smart_objects.dart';
 export 'src/text.dart';

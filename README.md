@@ -20,8 +20,8 @@ The implementation follows Adobe's [Photoshop File Formats Specification](https:
 | Layer effects                                                     |       Yes |       Yes | Modern `lfx2`/`lmfx`, legacy `lrFX`, repeated effects, and complete descriptor preservation           |
 | Vector masks and document paths                                   |       Yes |       Yes | Open/closed cubic Bézier paths, Boolean operations, fill rules, and unknown record preservation       |
 | Fill and adjustment layers                                        |       Yes |       Yes | Typed common adjustments, descriptor-backed modern settings, and raw fallback preservation            |
+| Smart objects and linked files                                    |       Yes |       Yes | Modern and legacy placed layers; embedded, external, and alias resources                               |
 | Image resources                                                   | Preserved | Preserved | Including unknown resources                                                                           |
-| Smart objects                                                     | Preserved | Preserved | Available as opaque tagged blocks                                                                      |
 
 Unknown image resources and tagged layer blocks are deliberately retained. Reading and rewriting a document therefore does not discard Photoshop-specific information merely because PsdKit does not interpret it yet.
 
@@ -190,6 +190,35 @@ final editedLayer = layer.withAdjustment(
 
 Unknown legacy hue/saturation and gradient-map variants are returned as `PsdRawAdjustment`; their exact payload remains writable. Descriptor-backed values retain unknown Adobe properties and can be changed with `PsdDescriptorAdjustment.withProperty`. PsdKit stores the editable settings but does not render their visual result, so Focale remains responsible for the preview channels and merged image.
 
+## Smart objects
+
+`PsdLayer.smartObject` decodes modern `SoLd`/`SoLE` descriptors and historical `plLd` records. It exposes the linked-resource identifier, affine and non-affine corner transforms, warp metadata, page information, and the complete Adobe descriptor:
+
+```dart
+final smartObject = layer.smartObject;
+final linkedFile = document.linkedResourceFor(layer);
+print('${linkedFile?.name}: ${linkedFile?.data?.length ?? 0} embedded bytes');
+```
+
+`PsdDocument.linkedResources` decodes `lnkD`, `lnk2`, and `lnk3` blocks. Embedded `liFD` resources expose their complete file bytes; external `liFE` resources expose their descriptor, timestamp, and expected file size; historical `liFA` aliases remain available as exact bytes. Embedded PSD or PSB content can be opened recursively:
+
+```dart
+final bytes = linkedFile?.data;
+if (bytes != null &&
+    bytes.length >= 4 &&
+    bytes[0] == 0x38 &&
+    bytes[1] == 0x42 &&
+    bytes[2] == 0x50 &&
+    bytes[3] == 0x53) {
+  final nested = PsdCodec.decode(bytes);
+  print('${nested.width} x ${nested.height}');
+}
+```
+
+Use `PsdDescriptorSmartObject.withLinkedResourceId`, `withTransform`, and `withProperty` to edit placed-layer metadata. Use `PsdLinkedResource.withData` to replace embedded content, then attach the updated resource list with `PsdDocument.withLinkedResources`. Exact original block grouping can instead be retained through `linkedResourceBlocks` and `withLinkedResourceBlocks`.
+
+PsdKit deliberately does not access paths found in external-link descriptors. Focale should resolve those paths through its own permission and file-storage layer. Photoshop rendering, smart filters, and live re-rasterization also remain application responsibilities; the PSD structures and nested files are imported and exported without loss.
+
 ## Safety and platforms
 
 `PsdReadOptions` limits canvas area, layer count, and decoded allocation size when opening untrusted files. All variable-length sections are parsed through bounded readers.
@@ -206,6 +235,7 @@ dart run tool/text_corpus_check.dart /path/to/psd-corpus
 dart run tool/effects_corpus_check.dart /path/to/psd-corpus
 dart run tool/paths_corpus_check.dart /path/to/psd-corpus
 dart run tool/adjustments_corpus_check.dart /path/to/psd-corpus
+dart run tool/smart_objects_corpus_check.dart /path/to/psd-corpus
 ```
 
 The quality check enforces Dartdoc on public and private declarations and the project member order: fields, constructors, then methods.

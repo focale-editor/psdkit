@@ -4,6 +4,7 @@ import 'package:psdkit/src/adjustments.dart';
 import 'package:psdkit/src/effects.dart';
 import 'package:psdkit/src/exceptions.dart';
 import 'package:psdkit/src/paths.dart';
+import 'package:psdkit/src/smart_objects.dart';
 import 'package:psdkit/src/text.dart';
 
 /// Selects the classic PSD or large-document PSB container.
@@ -317,6 +318,20 @@ final class PsdLayer {
     return null;
   }
 
+  /// Decoded modern or legacy smart-object metadata for this layer.
+  PsdSmartObjectLayerData? get smartObject {
+    for (final String key in const <String>['SoLE', 'SoLd', 'plLd']) {
+      final PsdTaggedBlock? block = taggedBlock(key);
+      if (block != null) {
+        final PsdSmartObjectLayerData? decoded = PsdSmartObjectCodec.tryDecode(block.data, key: key);
+        if (decoded != null) {
+          return decoded;
+        }
+      }
+    }
+    return null;
+  }
+
   /// Stable Photoshop layer id, when the `lyid` block is present.
   int? get id {
     final PsdTaggedBlock? block = taggedBlock('lyid');
@@ -458,6 +473,30 @@ final class PsdLayer {
       additionalInfo: blocks,
     );
   }
+
+  /// Returns a copy whose smart-object block contains [smartObject].
+  ///
+  /// Older and newer placed-layer blocks are removed to prevent Photoshop from
+  /// selecting stale metadata for the same layer.
+  PsdLayer withSmartObject(PsdSmartObjectLayerData smartObject) {
+    final List<PsdTaggedBlock> blocks = <PsdTaggedBlock>[
+      for (final PsdTaggedBlock block in additionalInfo)
+        if (!psdSmartObjectLayerKeys.contains(block.key)) block,
+      PsdTaggedBlock(key: smartObject.blockKey, data: PsdSmartObjectCodec.encode(smartObject)),
+    ];
+    return PsdLayer(
+      rectangle: rectangle,
+      name: name,
+      channels: channels,
+      blendMode: blendMode,
+      opacity: opacity,
+      clipping: clipping,
+      flags: flags,
+      mask: mask,
+      blendingRanges: blendingRanges,
+      additionalInfo: blocks,
+    );
+  }
 }
 
 /// An in-memory PSD or PSB document.
@@ -538,6 +577,26 @@ final class PsdDocument {
     return result;
   }
 
+  /// Decoded document-level linked-resource blocks in file order.
+  List<PsdLinkedResourceBlock> get linkedResourceBlocks {
+    final List<PsdLinkedResourceBlock> result = <PsdLinkedResourceBlock>[];
+    for (final PsdTaggedBlock block in additionalLayerInfo) {
+      if (!psdLinkedResourceKeys.contains(block.key)) {
+        continue;
+      }
+      final PsdLinkedResourceBlock? decoded = PsdLinkedResourceCodec.tryDecode(block.data, key: block.key);
+      if (decoded != null) {
+        result.add(decoded);
+      }
+    }
+    return result;
+  }
+
+  /// All semantically decoded embedded, external, and alias resources.
+  List<PsdLinkedResource> get linkedResources => <PsdLinkedResource>[
+    for (final PsdLinkedResourceBlock block in linkedResourceBlocks) ...block.resources,
+  ];
+
   /// Returns a copy whose document path resources are [paths].
   PsdDocument withNamedPaths(List<PsdNamedPath> paths) {
     final Set<int> ids = <int>{};
@@ -576,6 +635,47 @@ final class PsdDocument {
       additionalLayerInfo: additionalLayerInfo,
     );
   }
+
+  /// Returns the resource referenced by [layer]'s smart-object identifier.
+  PsdLinkedResource? linkedResourceFor(PsdLayer layer) {
+    final String? id = layer.smartObject?.linkedResourceId;
+    if (id == null) {
+      return null;
+    }
+    for (final PsdLinkedResource resource in linkedResources) {
+      if (resource.id == id) {
+        return resource;
+      }
+    }
+    return null;
+  }
+
+  /// Returns a copy whose linked-resource blocks are [blocks].
+  PsdDocument withLinkedResourceBlocks(List<PsdLinkedResourceBlock> blocks) => PsdDocument(
+    version: version,
+    width: width,
+    height: height,
+    channels: channels,
+    depth: depth,
+    colorMode: colorMode,
+    colorModeData: colorModeData,
+    imageResources: imageResources,
+    layers: layers,
+    mergedImage: mergedImage,
+    mergedImageCompression: mergedImageCompression,
+    mergedTransparency: mergedTransparency,
+    globalLayerMaskData: globalLayerMaskData,
+    additionalLayerInfo: <PsdTaggedBlock>[
+      for (final PsdTaggedBlock block in additionalLayerInfo)
+        if (!psdLinkedResourceKeys.contains(block.key)) block,
+      for (final PsdLinkedResourceBlock block in blocks) PsdTaggedBlock(key: block.blockKey, data: PsdLinkedResourceCodec.encode(block)),
+    ],
+  );
+
+  /// Returns a copy containing [resources] in one modern `lnk2` block.
+  PsdDocument withLinkedResources(List<PsdLinkedResource> resources) => withLinkedResourceBlocks(
+    resources.isEmpty ? const <PsdLinkedResourceBlock>[] : <PsdLinkedResourceBlock>[PsdLinkedResourceBlock(entries: resources)],
+  );
 }
 
 /// Limits untrusted input before allocating decoded image buffers.
