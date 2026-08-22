@@ -19,6 +19,10 @@ Future<void> main(List<String> arguments) async {
     '${document.version.name.toUpperCase()} ${document.width}x${document.height} '
     '${document.depth}-bit ${document.colorMode.name}, ${document.layers.length} layers, ${document.channels} merged channels',
   );
+  stdout.writeln(
+    '  document tagged blocks: '
+    '${document.additionalLayerInfo.map((block) => '${block.key}:${block.data.length}').join(', ')}',
+  );
   final PsdRgbaImage preview = PsdPixels.decodeMerged(document);
   stdout.writeln('  first RGBA pixel: ${preview.bytes.take(4).join(', ')}');
   for (final PsdLayer layer in document.layers) {

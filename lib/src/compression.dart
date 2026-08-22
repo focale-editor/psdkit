@@ -25,13 +25,29 @@ Uint8List decodePsdChannel({
   final Uint8List decoded = switch (compression) {
     PsdCompression.raw => payload,
     PsdCompression.rle => _decodeRle(payload, rowBytes, height, wideRowLengths),
-    PsdCompression.zip => psdZlibDecode(payload),
-    PsdCompression.zipPrediction => _undoPrediction(psdZlibDecode(payload), width, height, depth),
+    PsdCompression.zip => _decodeZip(payload, expected),
+    PsdCompression.zipPrediction => _undoPrediction(
+      _decodeZip(payload, expected),
+      width,
+      height,
+      depth,
+    ),
   };
   if (decoded.length != expected) {
     throw PsdFormatException('Decoded channel has ${decoded.length} bytes; expected $expected');
   }
   return Uint8List.fromList(decoded);
+}
+
+/// Inflates [input] with an exact allocation bound and normalizes failures.
+Uint8List _decodeZip(Uint8List input, int expectedBytes) {
+  try {
+    return psdZlibDecode(input, maxOutputBytes: expectedBytes);
+  } on UnsupportedError {
+    rethrow;
+  } on Object catch (error) {
+    throw PsdFormatException('Invalid ZIP channel data: $error');
+  }
 }
 
 /// Encodes uncompressed samples without their two-byte compression marker.
@@ -78,9 +94,9 @@ List<Uint8List> decodePsdMergedImage({
     case PsdCompression.rle:
       decoded = _decodeRle(payload, psdRowBytes(width, depth), height * channels, wideRowLengths);
     case PsdCompression.zip:
-      decoded = psdZlibDecode(payload);
+      decoded = _decodeZip(payload, totalSize);
     case PsdCompression.zipPrediction:
-      final Uint8List predicted = psdZlibDecode(payload);
+      final Uint8List predicted = _decodeZip(payload, totalSize);
       if (predicted.length != totalSize) {
         throw PsdFormatException('Decoded merged image has ${predicted.length} bytes; expected $totalSize');
       }
@@ -226,7 +242,8 @@ Uint8List _encodePackBits(Uint8List row) {
       if (run >= 3) {
         break;
       }
-      offset += run;
+      final int remaining = 128 - (offset - literalStart);
+      offset += run.clamp(1, remaining);
     }
     final int count = offset - literalStart;
     output.add(<int>[count - 1]);
@@ -246,6 +263,9 @@ Uint8List _undoPrediction(Uint8List input, int width, int height, int depth) {
   if (output.length != rowBytes * height) {
     return output;
   }
+  if (depth == 32) {
+    return _undoFloatPrediction(output, width, height);
+  }
   final ByteData values = ByteData.sublistView(output);
   for (int row = 0; row < height; row++) {
     final int start = row * rowBytes;
@@ -257,8 +277,6 @@ Uint8List _undoPrediction(Uint8List input, int width, int height, int depth) {
           output[offset] = (output[offset] + output[previous]) & 0xff;
         case 16:
           values.setUint16(offset, (values.getUint16(offset) + values.getUint16(previous)) & 0xffff);
-        case 32:
-          values.setUint32(offset, (values.getUint32(offset) + values.getUint32(previous)) & 0xffffffff);
       }
     }
   }
@@ -269,6 +287,9 @@ Uint8List _undoPrediction(Uint8List input, int width, int height, int depth) {
 Uint8List _applyPrediction(Uint8List input, int width, int height, int depth) {
   if (depth == 1) {
     throw const PsdWriteException('ZIP prediction is not valid for 1-bit data');
+  }
+  if (depth == 32) {
+    return _applyFloatPrediction(input, width, height);
   }
   final Uint8List output = Uint8List.fromList(input);
   final int bytesPerSample = depth ~/ 8;
@@ -285,9 +306,45 @@ Uint8List _applyPrediction(Uint8List input, int width, int height, int depth) {
           output[offset] = (input[offset] - input[previous]) & 0xff;
         case 16:
           values.setUint16(offset, (source.getUint16(offset) - source.getUint16(previous)) & 0xffff);
-        case 32:
-          values.setUint32(offset, (source.getUint32(offset) - source.getUint32(previous)) & 0xffffffff);
       }
+    }
+  }
+  return output;
+}
+
+/// Reverses Photoshop's byte-plane shuffle and byte predictor for 32-bit rows.
+Uint8List _undoFloatPrediction(Uint8List input, int width, int height) {
+  final int rowBytes = width * 4;
+  final Uint8List predicted = Uint8List.fromList(input);
+  final Uint8List output = Uint8List(input.length);
+  for (int row = 0; row < height; row++) {
+    final int rowStart = row * rowBytes;
+    final int rowEnd = rowStart + rowBytes;
+    for (int offset = rowStart + 1; offset < rowEnd; offset++) {
+      predicted[offset] = (predicted[offset] + predicted[offset - 1]) & 0xff;
+    }
+    for (int pixel = 0; pixel < width; pixel++) {
+      for (int byte = 0; byte < 4; byte++) {
+        output[rowStart + pixel * 4 + byte] = predicted[rowStart + byte * width + pixel];
+      }
+    }
+  }
+  return output;
+}
+
+/// Applies Photoshop's byte-plane shuffle and byte predictor to 32-bit rows.
+Uint8List _applyFloatPrediction(Uint8List input, int width, int height) {
+  final int rowBytes = width * 4;
+  final Uint8List output = Uint8List(input.length);
+  for (int row = 0; row < height; row++) {
+    final int rowStart = row * rowBytes;
+    for (int byte = 0; byte < 4; byte++) {
+      for (int pixel = 0; pixel < width; pixel++) {
+        output[rowStart + byte * width + pixel] = input[rowStart + pixel * 4 + byte];
+      }
+    }
+    for (int offset = rowStart + rowBytes - 1; offset > rowStart; offset--) {
+      output[offset] = (output[offset] - output[offset - 1]) & 0xff;
     }
   }
   return output;

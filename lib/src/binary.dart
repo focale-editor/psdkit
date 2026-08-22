@@ -104,10 +104,18 @@ final class PsdBinaryReader {
     return Uint8List.fromList(value);
   }
 
+  /// Reads a zero-copy view of the next [length] bytes.
+  Uint8List readView(int length) {
+    _require(length);
+    final Uint8List value = Uint8List.sublistView(bytes, _offset, _offset + length);
+    _offset += length;
+    return value;
+  }
+
   /// Creates a bounded reader for the next [length] bytes.
   PsdBinaryReader readReader(int length) {
     final int absoluteOffset = baseOffset + _offset;
-    return PsdBinaryReader(readBytes(length), baseOffset: absoluteOffset);
+    return PsdBinaryReader(readView(length), baseOffset: absoluteOffset);
   }
 
   /// Advances over [length] bytes.

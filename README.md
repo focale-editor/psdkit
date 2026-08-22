@@ -20,10 +20,12 @@ The implementation follows Adobe's [Photoshop File Formats Specification](https:
 | Layer effects                                                     |       Yes |       Yes | Modern `lfx2`/`lmfx`, legacy `lrFX`, repeated effects, and complete descriptor preservation           |
 | Vector masks and document paths                                   |       Yes |       Yes | Open/closed cubic Bézier paths, Boolean operations, fill rules, and unknown record preservation       |
 | Fill and adjustment layers                                        |       Yes |       Yes | Typed common adjustments, descriptor-backed modern settings, and raw fallback preservation            |
-| Smart objects and linked files                                    |       Yes |       Yes | Modern and legacy placed layers; embedded, external, and alias resources                               |
+| Smart objects and linked files                                    |       Yes |       Yes | Modern and legacy placed layers; embedded, external, and alias resources                              |
 | Image resources                                                   | Preserved | Preserved | Including unknown resources                                                                           |
 
 Unknown image resources and tagged layer blocks are deliberately retained. Reading and rewriting a document therefore does not discard Photoshop-specific information merely because PsdKit does not interpret it yet.
+
+“Yes” above means that PsdKit semantically exposes the listed structures and can write them back. It does not mean that every Photoshop resource is interpreted or rasterized: undocumented and currently unsupported image resources, tagged blocks, descriptor variants, smart filters, and application rendering remain opaque but loss-preserved. This distinction is intentional; the public Adobe specification describes many structures without defining their visual interpretation.
 
 ## Usage
 
@@ -221,7 +223,7 @@ PsdKit deliberately does not access paths found in external-link descriptors. Fo
 
 ## Safety and platforms
 
-`PsdReadOptions` limits canvas area, layer count, and decoded allocation size when opening untrusted files. All variable-length sections are parsed through bounded readers.
+`PsdReadOptions` limits canvas area, layer count, and decoded allocation size when opening untrusted files. All variable-length sections are parsed through bounded readers, and ZIP output is capped while it is being decompressed rather than after allocation.
 
 RAW and RLE work on every Dart platform. ZIP reading and writing use `dart:io` through a conditional import; on platforms without `dart:io`, ZIP operations throw `UnsupportedError`. RLE is the portable write default.
 
@@ -231,6 +233,7 @@ RAW and RLE work on every Dart platform. ZIP reading and writing use `dart:io` t
 dart analyze
 dart test
 dart run tool/quality_check.dart
+dart run tool/document_corpus_check.dart /path/to/psd-corpus
 dart run tool/text_corpus_check.dart /path/to/psd-corpus
 dart run tool/effects_corpus_check.dart /path/to/psd-corpus
 dart run tool/paths_corpus_check.dart /path/to/psd-corpus

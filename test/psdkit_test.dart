@@ -1,6 +1,9 @@
+import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:psdkit/psdkit.dart';
+import 'package:psdkit/src/compression.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -65,6 +68,59 @@ void main() {
       expect(decoded.additionalLayerInfo.single.data, orderedEquals(<int>[1, 2, 3]));
     });
 
+    test('regenerates depth-specific alternative layer information', () {
+      final List<Uint8List> merged = <Uint8List>[
+        _uint16(<int>[1, 2]),
+        _uint16(<int>[3, 4]),
+        _uint16(<int>[5, 6]),
+      ];
+      final PsdDocument source = PsdDocument(
+        width: 2,
+        height: 1,
+        channels: 3,
+        depth: 16,
+        colorMode: PsdColorMode.rgb,
+        layers: <PsdLayer>[
+          PsdLayer(
+            rectangle: const PsdRectangle.fromSize(width: 2, height: 1),
+            name: '16-bit layer',
+            channels: <PsdChannel>[
+              PsdChannel(id: 0, data: _uint16(<int>[10, 20])),
+              PsdChannel(id: 1, data: _uint16(<int>[30, 40])),
+              PsdChannel(id: 2, data: _uint16(<int>[50, 60])),
+              PsdChannel(id: -1, data: _uint16(<int>[65535, 32768])),
+            ],
+          ),
+        ],
+        mergedImage: merged,
+        additionalLayerInfo: <PsdTaggedBlock>[
+          PsdTaggedBlock(key: 'Lr16', data: Uint8List.fromList(<int>[1, 2, 3])),
+          PsdTaggedBlock(key: 'cust', data: Uint8List.fromList(<int>[9, 8, 7])),
+        ],
+      );
+
+      final PsdDocument decoded = PsdCodec.decode(PsdCodec.encode(source));
+
+      expect(decoded.layers, hasLength(1));
+      expect(decoded.layers.single.name, '16-bit layer');
+      expect(decoded.layers.single.channel(-1)?.data, orderedEquals(_uint16(<int>[65535, 32768])));
+      expect(decoded.additionalLayerInfo.map((block) => block.key), orderedEquals(<String>['Lr16', 'cust']));
+      expect(decoded.additionalLayerInfo.first.data, isNot(orderedEquals(<int>[1, 2, 3])));
+
+      final PsdDocument withoutLayers = PsdDocument(
+        width: 2,
+        height: 1,
+        channels: 3,
+        depth: 16,
+        colorMode: PsdColorMode.rgb,
+        mergedImage: merged,
+        additionalLayerInfo: decoded.additionalLayerInfo,
+      );
+      final PsdDocument emptyDecoded = PsdCodec.decode(PsdCodec.encode(withoutLayers));
+      expect(emptyDecoded.layers, isEmpty);
+      expect(emptyDecoded.additionalLayerInfo.map((block) => block.key), orderedEquals(<String>['cust']));
+    });
+
     test('rejects malformed and oversized input', () {
       final Uint8List encoded = PsdCodec.encode(_document());
       encoded[0] = 0;
@@ -74,6 +130,140 @@ void main() {
         () => PsdCodec.decode(PsdCodec.encode(_document()), options: const PsdReadOptions(maxPixels: 2)),
         throwsA(isA<PsdFormatException>()),
       );
+    });
+
+    test('bounds ZIP expansion before accepting decoded channel bytes', () {
+      final Uint8List compressed = Uint8List.fromList(zlib.encode(Uint8List(1024 * 1024)));
+
+      expect(
+        () => decodePsdChannel(
+          compression: PsdCompression.zip,
+          payload: compressed,
+          width: 1,
+          height: 1,
+          depth: 8,
+          wideRowLengths: false,
+          maxDecodedBytes: 1,
+        ),
+        throwsA(isA<PsdFormatException>()),
+      );
+    });
+
+    test('uses Photoshop byte-plane prediction for 32-bit channels', () {
+      final Uint8List samples = Uint8List.fromList(<int>[
+        0x3f,
+        0x80,
+        0x00,
+        0x00,
+        0x40,
+        0x00,
+        0x00,
+        0x00,
+        0x40,
+        0x40,
+        0x00,
+        0x00,
+      ]);
+      final Uint8List predicted = Uint8List.fromList(<int>[
+        0x3f,
+        0x01,
+        0x00,
+        0x40,
+        0x80,
+        0x40,
+        0xc0,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+      ]);
+
+      final Uint8List encoded = encodePsdChannel(
+        compression: PsdCompression.zipPrediction,
+        data: samples,
+        width: 3,
+        height: 1,
+        depth: 32,
+        wideRowLengths: false,
+      );
+      expect(zlib.decode(encoded), orderedEquals(predicted));
+      expect(
+        decodePsdChannel(
+          compression: PsdCompression.zipPrediction,
+          payload: Uint8List.fromList(zlib.encode(predicted)),
+          width: 3,
+          height: 1,
+          depth: 32,
+          wideRowLengths: false,
+          maxDecodedBytes: samples.length,
+        ),
+        orderedEquals(samples),
+      );
+    });
+
+    test('splits PackBits literals at exactly 128 bytes', () {
+      final Uint8List samples = Uint8List.fromList(<int>[
+        for (int index = 0; index < 513; index++) (index ~/ 2) & 0xff,
+      ]);
+
+      final Uint8List encoded = encodePsdChannel(
+        compression: PsdCompression.rle,
+        data: samples,
+        width: samples.length,
+        height: 1,
+        depth: 8,
+        wideRowLengths: false,
+      );
+      expect(
+        decodePsdChannel(
+          compression: PsdCompression.rle,
+          payload: encoded,
+          width: samples.length,
+          height: 1,
+          depth: 8,
+          wideRowLengths: false,
+          maxDecodedBytes: samples.length,
+        ),
+        orderedEquals(samples),
+      );
+    });
+
+    test('round-trips compression boundaries at every sample depth', () {
+      final Random random = Random(42);
+      for (final int depth in <int>[1, 8, 16, 32]) {
+        for (final int width in <int>[1, 2, 127, 128, 129, 257]) {
+          final Uint8List samples = Uint8List.fromList(<int>[
+            for (int index = 0; index < psdRowBytes(width, depth) * 3; index++) random.nextInt(256),
+          ]);
+          for (final PsdCompression compression in PsdCompression.values) {
+            if (depth == 1 && compression == PsdCompression.zipPrediction) {
+              continue;
+            }
+            final Uint8List encoded = encodePsdChannel(
+              compression: compression,
+              data: samples,
+              width: width,
+              height: 3,
+              depth: depth,
+              wideRowLengths: false,
+            );
+            expect(
+              decodePsdChannel(
+                compression: compression,
+                payload: encoded,
+                width: width,
+                height: 3,
+                depth: depth,
+                wideRowLengths: false,
+                maxDecodedBytes: samples.length,
+              ),
+              orderedEquals(samples),
+              reason: '$compression at $width x 3 x $depth-bit',
+            );
+          }
+        }
+      }
     });
   });
 

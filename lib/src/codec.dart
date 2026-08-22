@@ -57,7 +57,7 @@ abstract final class PsdCodec {
     final PsdCompression mergedCompression = _enumByCode(PsdCompression.values, reader.readUint16(), 'merged image compression', reader);
     final List<Uint8List> mergedImage = decodePsdMergedImage(
       compression: mergedCompression,
-      payload: reader.readBytes(reader.remaining),
+      payload: reader.readView(reader.remaining),
       channels: channelCount,
       width: width,
       height: height,
@@ -158,6 +158,18 @@ final class _LayerSection {
   });
 }
 
+/// Collects records and transparency state from one layer-info payload.
+final class _DecodedLayerInfo {
+  /// Decoded flat layer records.
+  final List<PsdLayer> layers;
+
+  /// Whether the signed layer count advertises merged transparency.
+  final bool mergedTransparency;
+
+  /// Creates decoded layer-info state.
+  const _DecodedLayerInfo({required this.layers, required this.mergedTransparency});
+}
+
 /// Holds a layer record until its channel payloads can be decoded.
 final class _LayerRecord {
   /// Layer metadata and placeholder channel ids.
@@ -212,7 +224,28 @@ _LayerSection _readLayerAndMask(PsdBinaryReader reader, {required PsdVersion ver
     return _LayerSection(layers: const <PsdLayer>[], mergedTransparency: false, globalMask: Uint8List(0), additionalInfo: const <PsdTaggedBlock>[]);
   }
   final int layerInfoLength = reader.readLength(wide: version == PsdVersion.psb, label: 'layer info');
-  final PsdBinaryReader layerInfo = reader.readReader(layerInfoLength);
+  _DecodedLayerInfo decoded = _readLayerInfo(reader.readReader(layerInfoLength), version: version, depth: depth, options: options);
+
+  Uint8List globalMask = Uint8List(0);
+  if (reader.remaining >= 4) {
+    final int length = reader.readLength(wide: false, label: 'global layer mask');
+    globalMask = reader.readBytes(length);
+  }
+  final List<PsdTaggedBlock> additionalInfo = _readTaggedBlocks(reader, version);
+  final PsdTaggedBlock? alternative = _alternativeLayerInfo(additionalInfo, depth);
+  if (alternative != null) {
+    decoded = _readLayerInfo(PsdBinaryReader(alternative.data), version: version, depth: depth, options: options);
+  }
+  return _LayerSection(
+    layers: decoded.layers,
+    mergedTransparency: decoded.mergedTransparency,
+    globalMask: globalMask,
+    additionalInfo: additionalInfo,
+  );
+}
+
+/// Reads records and channel payloads from one primary or alternative layer info.
+_DecodedLayerInfo _readLayerInfo(PsdBinaryReader layerInfo, {required PsdVersion version, required int depth, required PsdReadOptions options}) {
   bool mergedTransparency = false;
   final List<PsdLayer> layers = <PsdLayer>[];
   if (!layerInfo.isAtEnd) {
@@ -239,7 +272,7 @@ _LayerSection _readLayerAndMask(PsdBinaryReader reader, {required PsdVersion ver
         final PsdRectangle rectangle = _channelRectangle(record.layer, descriptor.id);
         final Uint8List decoded = decodePsdChannel(
           compression: compression,
-          payload: encoded.readBytes(encoded.remaining),
+          payload: encoded.readView(encoded.remaining),
           width: rectangle.width,
           height: rectangle.height,
           depth: depth,
@@ -259,14 +292,22 @@ _LayerSection _readLayerAndMask(PsdBinaryReader reader, {required PsdVersion ver
       }
     }
   }
+  return _DecodedLayerInfo(layers: layers, mergedTransparency: mergedTransparency);
+}
 
-  Uint8List globalMask = Uint8List(0);
-  if (reader.remaining >= 4) {
-    final int length = reader.readLength(wide: false, label: 'global layer mask');
-    globalMask = reader.readBytes(length);
+/// Selects the depth-specific layer-info block, when Photoshop stored one.
+PsdTaggedBlock? _alternativeLayerInfo(List<PsdTaggedBlock> blocks, int depth) {
+  final String key = switch (depth) {
+    16 => 'Lr16',
+    32 => 'Lr32',
+    _ => 'Layr',
+  };
+  for (final PsdTaggedBlock block in blocks.reversed) {
+    if (block.key == key) {
+      return block;
+    }
   }
-  final List<PsdTaggedBlock> additionalInfo = _readTaggedBlocks(reader, version);
-  return _LayerSection(layers: layers, mergedTransparency: mergedTransparency, globalMask: globalMask, additionalInfo: additionalInfo);
+  return null;
 }
 
 /// Reads one layer record without consuming its later channel payloads.
@@ -420,14 +461,53 @@ Uint8List _writeLayerAndMask(PsdDocument document, {required PsdVersion version,
     return Uint8List(0);
   }
   final PsdBinaryWriter writer = PsdBinaryWriter();
-  final Uint8List layerInfo = _writeLayerInfo(document, version: version, compressionOverride: compressionOverride);
+  final PsdTaggedBlock? existingAlternative = _alternativeLayerInfo(document.additionalLayerInfo, document.depth);
+  final bool alternativeLayers = document.layers.isNotEmpty && (document.depth == 16 || document.depth == 32 || existingAlternative != null);
+  final Uint8List encodedLayers = _writeLayerInfo(document, version: version, compressionOverride: compressionOverride);
+  final Uint8List layerInfo = alternativeLayers ? Uint8List(0) : encodedLayers;
+  final String alternativeKey = switch (document.depth) {
+    16 => 'Lr16',
+    32 => 'Lr32',
+    _ => 'Layr',
+  };
+  final List<PsdTaggedBlock> additionalInfo = alternativeLayers
+      ? _replaceAlternativeLayerInfo(document.additionalLayerInfo, key: alternativeKey, data: encodedLayers)
+      : existingAlternative != null && document.layers.isEmpty
+      ? _removeAlternativeLayerInfo(document.additionalLayerInfo, alternativeKey)
+      : document.additionalLayerInfo;
   writer
     ..writeLength(layerInfo.length, wide: version == PsdVersion.psb)
     ..writeBytes(layerInfo)
     ..writeUint32(document.globalLayerMaskData.length)
     ..writeBytes(document.globalLayerMaskData)
-    ..writeBytes(_writeTaggedBlocks(document.additionalLayerInfo, version));
+    ..writeBytes(_writeTaggedBlocks(additionalInfo, version));
   return writer.takeBytes();
+}
+
+/// Removes a depth-specific layer block after all model layers were deleted.
+List<PsdTaggedBlock> _removeAlternativeLayerInfo(List<PsdTaggedBlock> blocks, String key) => <PsdTaggedBlock>[
+  for (final PsdTaggedBlock block in blocks)
+    if (block.key != key) block,
+];
+
+/// Replaces stale alternative layer blocks with one freshly encoded payload.
+List<PsdTaggedBlock> _replaceAlternativeLayerInfo(List<PsdTaggedBlock> blocks, {required String key, required Uint8List data}) {
+  final List<PsdTaggedBlock> result = <PsdTaggedBlock>[];
+  bool inserted = false;
+  for (final PsdTaggedBlock block in blocks) {
+    if (block.key == 'Layr' || block.key == 'Lr16' || block.key == 'Lr32') {
+      if (!inserted) {
+        result.add(PsdTaggedBlock(key: key, signature: block.signature, data: data));
+        inserted = true;
+      }
+    } else {
+      result.add(block);
+    }
+  }
+  if (!inserted) {
+    result.add(PsdTaggedBlock(key: key, data: data));
+  }
+  return result;
 }
 
 /// Serializes layer records followed by their encoded planar channels.
