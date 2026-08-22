@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:psdkit/src/exceptions.dart';
 import 'package:psdkit/src/model.dart';
-import 'package:psdkit/src/zlib_backend.dart';
+import 'package:psdkit/src/zlib.dart';
 
 /// Returns the number of stored bytes in one planar row.
 int psdRowBytes(int width, int depth) => (width * depth + 7) ~/ 8;

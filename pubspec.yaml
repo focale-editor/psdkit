@@ -6,6 +6,10 @@ homepage: https://github.com/focale-editor/psdkit
 environment:
   sdk: '>=3.13.0 <4.0.0'
 
+dependencies:
+  zcodec:
+    git: https://github.com/focale-editor/zcodec.git
+
 dev_dependencies:
   analyzer: ^14.1.0
   lints: ^6.1.0
