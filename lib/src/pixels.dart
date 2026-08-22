@@ -40,7 +40,9 @@ abstract final class PsdPixels {
       result[0][pixel] = image.bytes[offset];
       result[1][pixel] = image.bytes[offset + 1];
       result[2][pixel] = image.bytes[offset + 2];
-      if (includeAlpha) result[3][pixel] = image.bytes[offset + 3];
+      if (includeAlpha) {
+        result[3][pixel] = image.bytes[offset + 3];
+      }
     }
     return result;
   }
@@ -62,11 +64,15 @@ abstract final class PsdPixels {
     final List<Uint8List> components = <Uint8List>[];
     for (int id = 0; id < baseChannels; id++) {
       final PsdChannel? channel = layer.channel(id);
-      if (channel == null) throw PsdFormatException('Layer "${layer.name}" is missing color channel $id');
+      if (channel == null) {
+        throw PsdFormatException('Layer "${layer.name}" is missing color channel $id');
+      }
       components.add(channel.data);
     }
     final PsdChannel? alpha = layer.channel(-1);
-    if (alpha != null) components.add(alpha.data);
+    if (alpha != null) {
+      components.add(alpha.data);
+    }
     return _decode(
       width: layer.rectangle.width,
       height: layer.rectangle.height,
@@ -140,7 +146,9 @@ int _sample(Uint8List bytes, int pixel, int width, int depth, {bool bitmap = fal
       return (ByteData.sublistView(bytes).getUint16(pixel * 2) * 255 / 65535).round();
     case 32:
       final double value = ByteData.sublistView(bytes).getFloat32(pixel * 4);
-      if (!value.isFinite) return 0;
+      if (!value.isFinite) {
+        return 0;
+      }
       return (value.clamp(0.0, 1.0) * 255).round();
   }
   throw PsdFormatException('Unsupported sample depth $depth');
@@ -151,7 +159,9 @@ List<int> _gray(int value) => <int>[value, value, value];
 
 /// Resolves an indexed-colour [index] through the planar [palette].
 List<int> _indexed(Uint8List palette, int index) {
-  if (palette.length < 768) throw const PsdFormatException('Indexed color data must contain a 768-byte palette');
+  if (palette.length < 768) {
+    throw const PsdFormatException('Indexed color data must contain a 768-byte palette');
+  }
   return <int>[palette[index], palette[256 + index], palette[512 + index]];
 }
 

@@ -68,7 +68,9 @@ List<Uint8List> decodePsdMergedImage({
 }) {
   final int channelSize = psdRowBytes(width, depth) * height;
   final int totalSize = channelSize * channels;
-  if (totalSize > maxDecodedBytes) throw PsdFormatException('Decoded merged image size $totalSize exceeds the configured limit');
+  if (totalSize > maxDecodedBytes) {
+    throw PsdFormatException('Decoded merged image size $totalSize exceeds the configured limit');
+  }
   late final Uint8List decoded;
   switch (compression) {
     case PsdCompression.raw:
@@ -79,14 +81,18 @@ List<Uint8List> decodePsdMergedImage({
       decoded = psdZlibDecode(payload);
     case PsdCompression.zipPrediction:
       final Uint8List predicted = psdZlibDecode(payload);
-      if (predicted.length != totalSize) throw PsdFormatException('Decoded merged image has ${predicted.length} bytes; expected $totalSize');
+      if (predicted.length != totalSize) {
+        throw PsdFormatException('Decoded merged image has ${predicted.length} bytes; expected $totalSize');
+      }
       final BytesBuilder result = BytesBuilder(copy: false);
       for (int channel = 0; channel < channels; channel++) {
         result.add(_undoPrediction(Uint8List.sublistView(predicted, channel * channelSize, (channel + 1) * channelSize), width, height, depth));
       }
       decoded = result.takeBytes();
   }
-  if (decoded.length != totalSize) throw PsdFormatException('Decoded merged image has ${decoded.length} bytes; expected $totalSize');
+  if (decoded.length != totalSize) {
+    throw PsdFormatException('Decoded merged image has ${decoded.length} bytes; expected $totalSize');
+  }
   return <Uint8List>[
     for (int channel = 0; channel < channels; channel++) Uint8List.fromList(Uint8List.sublistView(decoded, channel * channelSize, (channel + 1) * channelSize)),
   ];
@@ -103,7 +109,9 @@ Uint8List encodePsdMergedImage({
 }) {
   final int channelSize = psdRowBytes(width, depth) * height;
   for (final Uint8List channel in channels) {
-    if (channel.length != channelSize) throw PsdWriteException('Merged channel has ${channel.length} bytes; expected $channelSize');
+    if (channel.length != channelSize) {
+      throw PsdWriteException('Merged channel has ${channel.length} bytes; expected $channelSize');
+    }
   }
   final BytesBuilder joined = BytesBuilder(copy: false);
   if (compression == PsdCompression.zipPrediction) {
@@ -111,9 +119,7 @@ Uint8List encodePsdMergedImage({
       joined.add(_applyPrediction(channel, width, height, depth));
     }
   } else {
-    for (final Uint8List channel in channels) {
-      joined.add(channel);
-    }
+    channels.forEach(joined.add);
   }
   final Uint8List data = joined.takeBytes();
   return switch (compression) {
@@ -126,34 +132,46 @@ Uint8List encodePsdMergedImage({
 /// Decodes [height] PackBits rows after their shared length table.
 Uint8List _decodeRle(Uint8List input, int rowBytes, int height, bool wide) {
   final int tableSize = height * (wide ? 4 : 2);
-  if (input.length < tableSize) throw const PsdFormatException('Truncated RLE row-length table');
+  if (input.length < tableSize) {
+    throw const PsdFormatException('Truncated RLE row-length table');
+  }
   final ByteData lengths = ByteData.sublistView(input, 0, tableSize);
   final Uint8List output = Uint8List(rowBytes * height);
   int inputOffset = tableSize;
   for (int row = 0; row < height; row++) {
     final int encodedLength = wide ? lengths.getUint32(row * 4) : lengths.getUint16(row * 2);
     final int end = inputOffset + encodedLength;
-    if (end > input.length) throw const PsdFormatException('Truncated PackBits row');
+    if (end > input.length) {
+      throw const PsdFormatException('Truncated PackBits row');
+    }
     int outputOffset = row * rowBytes;
     final int outputEnd = outputOffset + rowBytes;
     while (inputOffset < end && outputOffset < outputEnd) {
       final int header = input[inputOffset++];
       if (header <= 127) {
         final int count = header + 1;
-        if (inputOffset + count > end || outputOffset + count > outputEnd) throw const PsdFormatException('Invalid PackBits literal run');
+        if (inputOffset + count > end || outputOffset + count > outputEnd) {
+          throw const PsdFormatException('Invalid PackBits literal run');
+        }
         output.setRange(outputOffset, outputOffset + count, input, inputOffset);
         inputOffset += count;
         outputOffset += count;
       } else if (header >= 129) {
         final int count = 257 - header;
-        if (inputOffset >= end || outputOffset + count > outputEnd) throw const PsdFormatException('Invalid PackBits repeated run');
+        if (inputOffset >= end || outputOffset + count > outputEnd) {
+          throw const PsdFormatException('Invalid PackBits repeated run');
+        }
         output.fillRange(outputOffset, outputOffset + count, input[inputOffset++]);
         outputOffset += count;
       }
     }
-    if (outputOffset != outputEnd || inputOffset != end) throw const PsdFormatException('PackBits row does not match its declared width');
+    if (outputOffset != outputEnd || inputOffset != end) {
+      throw const PsdFormatException('PackBits row does not match its declared width');
+    }
   }
-  if (inputOffset != input.length) throw const PsdFormatException('Unexpected bytes after PackBits rows');
+  if (inputOffset != input.length) {
+    throw const PsdFormatException('Unexpected bytes after PackBits rows');
+  }
   return output;
 }
 
@@ -170,7 +188,9 @@ Uint8List _encodeRle(Uint8List input, int rowBytes, int height, bool wide) {
   int offset = height * lengthSize;
   for (int row = 0; row < height; row++) {
     final int length = rows[row].length;
-    if (!wide && length > 0xffff) throw const PsdWriteException('A PSD PackBits row exceeds 65535 encoded bytes; use PSB or ZIP');
+    if (!wide && length > 0xffff) {
+      throw const PsdWriteException('A PSD PackBits row exceeds 65535 encoded bytes; use PSB or ZIP');
+    }
     if (wide) {
       table.setUint32(row * 4, length);
     } else {
@@ -203,7 +223,9 @@ Uint8List _encodePackBits(Uint8List row) {
       while (offset + run < row.length && run < 128 && row[offset + run] == row[offset]) {
         run++;
       }
-      if (run >= 3) break;
+      if (run >= 3) {
+        break;
+      }
       offset += run;
     }
     final int count = offset - literalStart;
@@ -215,11 +237,15 @@ Uint8List _encodePackBits(Uint8List row) {
 
 /// Reverses horizontal sample differencing on decompressed bytes.
 Uint8List _undoPrediction(Uint8List input, int width, int height, int depth) {
-  if (depth == 1) throw const PsdFormatException('ZIP prediction is not valid for 1-bit data');
+  if (depth == 1) {
+    throw const PsdFormatException('ZIP prediction is not valid for 1-bit data');
+  }
   final Uint8List output = Uint8List.fromList(input);
   final int bytesPerSample = depth ~/ 8;
   final int rowBytes = width * bytesPerSample;
-  if (output.length != rowBytes * height) return output;
+  if (output.length != rowBytes * height) {
+    return output;
+  }
   final ByteData values = ByteData.sublistView(output);
   for (int row = 0; row < height; row++) {
     final int start = row * rowBytes;
@@ -241,7 +267,9 @@ Uint8List _undoPrediction(Uint8List input, int width, int height, int depth) {
 
 /// Applies horizontal sample differencing before ZIP compression.
 Uint8List _applyPrediction(Uint8List input, int width, int height, int depth) {
-  if (depth == 1) throw const PsdWriteException('ZIP prediction is not valid for 1-bit data');
+  if (depth == 1) {
+    throw const PsdWriteException('ZIP prediction is not valid for 1-bit data');
+  }
   final Uint8List output = Uint8List.fromList(input);
   final int bytesPerSample = depth ~/ 8;
   final int rowBytes = width * bytesPerSample;

@@ -199,7 +199,9 @@ extension<T> on Iterable<T> {
   Iterable<T> whereIndexed(bool Function(int index, T value) predicate) sync* {
     int index = 0;
     for (final T value in this) {
-      if (predicate(index++, value)) yield value;
+      if (predicate(index++, value)) {
+        yield value;
+      }
     }
   }
 }

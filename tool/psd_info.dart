@@ -45,5 +45,15 @@ Future<void> main(List<String> arguments) async {
     } else if (layer.taggedBlock('TySh') != null) {
       stdout.writeln('    text: unsupported or malformed TySh payload');
     }
+    final PsdLayerEffects? effects = layer.effects;
+    if (effects != null) {
+      stdout.writeln('    effects: ${effects.effects.length}, enabled=${effects.enabled}, scale=${effects.scale}');
+      for (final PsdLayerEffect effect in effects.effects) {
+        stdout.writeln(
+          '      ${effect.type.name}: enabled=${effect.enabled}, blend=${effect.blendMode}, '
+          'opacity=${effect.opacity}, color=${effect.color?.argb.toRadixString(16) ?? '-'}, size=${effect.size ?? '-'}',
+        );
+      }
+    }
   }
 }

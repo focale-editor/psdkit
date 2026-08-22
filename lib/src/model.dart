@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:psdkit/src/effects.dart';
 import 'package:psdkit/src/text.dart';
 
 /// Selects the classic PSD or large-document PSB container.
@@ -275,17 +276,35 @@ final class PsdLayer {
     return block == null ? null : PsdTypeToolCodec.tryDecode(block.data);
   }
 
+  /// Decoded Photoshop layer effects, preferring the modern descriptor block.
+  PsdLayerEffects? get effects {
+    for (final String key in const <String>['lfx2', 'lmfx', 'lrFX']) {
+      final PsdTaggedBlock? block = taggedBlock(key);
+      if (block != null) {
+        final PsdLayerEffects? decoded = PsdLayerEffectsCodec.tryDecode(block.data, key: key);
+        if (decoded != null) {
+          return decoded;
+        }
+      }
+    }
+    return null;
+  }
+
   /// Stable Photoshop layer id, when the `lyid` block is present.
   int? get id {
     final PsdTaggedBlock? block = taggedBlock('lyid');
-    if (block == null || block.data.length < 4) return null;
+    if (block == null || block.data.length < 4) {
+      return null;
+    }
     return ByteData.sublistView(block.data).getUint32(0);
   }
 
   /// Group marker represented by the `lsct` or `lsdk` block.
   PsdSectionType get sectionType {
     final PsdTaggedBlock? block = taggedBlock('lsct') ?? taggedBlock('lsdk');
-    if (block == null || block.data.length < 4) return PsdSectionType.other;
+    if (block == null || block.data.length < 4) {
+      return PsdSectionType.other;
+    }
     final int code = ByteData.sublistView(block.data).getUint32(0);
     return PsdSectionType.values.firstWhere(
       (value) => value.code == code,
@@ -296,7 +315,9 @@ final class PsdLayer {
   /// Returns the last tagged block matching [key].
   PsdTaggedBlock? taggedBlock(String key) {
     for (final PsdTaggedBlock block in additionalInfo.reversed) {
-      if (block.key == key) return block;
+      if (block.key == key) {
+        return block;
+      }
     }
     return null;
   }
@@ -304,7 +325,9 @@ final class PsdLayer {
   /// Returns the channel with [id], when present.
   PsdChannel? channel(int id) {
     for (final PsdChannel channel in channels) {
-      if (channel.id == id) return channel;
+      if (channel.id == id) {
+        return channel;
+      }
     }
     return null;
   }
@@ -315,13 +338,41 @@ final class PsdLayer {
     bool replaced = false;
     for (final PsdTaggedBlock block in additionalInfo) {
       if (block.key == 'TySh') {
-        if (!replaced) blocks.add(PsdTaggedBlock(key: 'TySh', data: PsdTypeToolCodec.encode(typeTool)));
+        if (!replaced) {
+          blocks.add(PsdTaggedBlock(key: 'TySh', data: PsdTypeToolCodec.encode(typeTool)));
+        }
         replaced = true;
       } else {
         blocks.add(block);
       }
     }
-    if (!replaced) blocks.add(PsdTaggedBlock(key: 'TySh', data: PsdTypeToolCodec.encode(typeTool)));
+    if (!replaced) {
+      blocks.add(PsdTaggedBlock(key: 'TySh', data: PsdTypeToolCodec.encode(typeTool)));
+    }
+    return PsdLayer(
+      rectangle: rectangle,
+      name: name,
+      channels: channels,
+      blendMode: blendMode,
+      opacity: opacity,
+      clipping: clipping,
+      flags: flags,
+      mask: mask,
+      blendingRanges: blendingRanges,
+      additionalInfo: blocks,
+    );
+  }
+
+  /// Returns a copy whose effect blocks contain [effects].
+  ///
+  /// Replacing effects removes stale modern and legacy effect blocks so that
+  /// Photoshop cannot select an older conflicting representation.
+  PsdLayer withEffects(PsdLayerEffects effects) {
+    final List<PsdTaggedBlock> blocks = <PsdTaggedBlock>[
+      for (final PsdTaggedBlock block in additionalInfo)
+        if (block.key != 'lfx2' && block.key != 'lmfx' && block.key != 'lrFX') block,
+      PsdTaggedBlock(key: effects.blockKey, data: PsdLayerEffectsCodec.encode(effects)),
+    ];
     return PsdLayer(
       rectangle: rectangle,
       name: name,

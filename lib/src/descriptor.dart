@@ -23,7 +23,9 @@ final class PsdDescriptor {
   /// Returns the last item matching [key], when present.
   PsdDescriptorValue? value(String key) {
     for (final PsdDescriptorItem item in items.reversed) {
-      if (item.key == key) return item.value;
+      if (item.key == key) {
+        return item.value;
+      }
     }
     return null;
   }
@@ -34,13 +36,17 @@ final class PsdDescriptor {
     bool replaced = false;
     for (final PsdDescriptorItem item in items) {
       if (item.key == key) {
-        if (!replaced) updated.add(PsdDescriptorItem(key: key, value: value, compactKey: item._compactKey));
+        if (!replaced) {
+          updated.add(PsdDescriptorItem(key: key, value: value, compactKey: item._compactKey));
+        }
         replaced = true;
       } else {
         updated.add(item);
       }
     }
-    if (!replaced) updated.add(PsdDescriptorItem(key: key, value: value));
+    if (!replaced) {
+      updated.add(PsdDescriptorItem(key: key, value: value));
+    }
     return PsdDescriptor(name: name, classId: classId, items: updated, compactClassId: _compactClassId);
   }
 }
@@ -351,16 +357,16 @@ void _writeValue(PsdBinaryWriter writer, PsdDescriptorValue value) {
 /// Reads a length-prefixed big-endian UTF-16 string.
 String _readUnicodeString(PsdBinaryReader reader) {
   final int length = reader.readUint32();
-  if (length > reader.remaining ~/ 2) throw const PsdFormatException('Truncated descriptor Unicode string');
+  if (length > reader.remaining ~/ 2) {
+    throw const PsdFormatException('Truncated descriptor Unicode string');
+  }
   return String.fromCharCodes(<int>[for (int index = 0; index < length; index++) reader.readUint16()]);
 }
 
 /// Writes [value] as a length-prefixed big-endian UTF-16 string.
 void _writeUnicodeString(PsdBinaryWriter writer, String value) {
   writer.writeUint32(value.codeUnits.length);
-  for (final int unit in value.codeUnits) {
-    writer.writeUint16(unit);
-  }
+  value.codeUnits.forEach(writer.writeUint16);
 }
 
 /// Reads a variable-length Photoshop identifier.
@@ -377,7 +383,9 @@ void _writeId(PsdBinaryWriter writer, String value, {required bool compact}) {
       ..writeString(value);
     return;
   }
-  if (value.codeUnits.any((unit) => unit > 0xff)) throw const PsdWriteException('Descriptor identifiers must contain one-byte characters');
+  if (value.codeUnits.any((unit) => unit > 0xff)) {
+    throw const PsdWriteException('Descriptor identifiers must contain one-byte characters');
+  }
   writer
     ..writeUint32(value.length)
     ..writeString(value);
@@ -404,6 +412,8 @@ PsdClassValue _readClassValue(PsdBinaryReader reader, {required bool global}) {
 
 /// Writes a required four-character descriptor code.
 void _writeFourCharacters(PsdBinaryWriter writer, String value, String label) {
-  if (value.length != 4 || value.codeUnits.any((unit) => unit > 0xff)) throw PsdWriteException('$label must contain four one-byte characters');
+  if (value.length != 4 || value.codeUnits.any((unit) => unit > 0xff)) {
+    throw PsdWriteException('$label must contain four one-byte characters');
+  }
   writer.writeString(value);
 }

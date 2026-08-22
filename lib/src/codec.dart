@@ -27,10 +27,14 @@ abstract final class PsdCodec {
   /// Decodes [bytes] into an editable, loss-preserving document model.
   static PsdDocument decode(Uint8List bytes, {PsdReadOptions options = const PsdReadOptions()}) {
     final PsdBinaryReader reader = PsdBinaryReader(bytes);
-    if (reader.readString(4) != '8BPS') throw PsdFormatException('Invalid file signature', bytes, 0);
+    if (reader.readString(4) != '8BPS') {
+      throw PsdFormatException('Invalid file signature', bytes, 0);
+    }
     final int versionCode = reader.readUint16();
     final PsdVersion version = _enumByCode(PsdVersion.values, versionCode, 'PSD version', reader);
-    if (reader.readBytes(6).any((value) => value != 0)) throw PsdFormatException('Reserved header bytes must be zero', bytes, 6);
+    if (reader.readBytes(6).any((value) => value != 0)) {
+      throw PsdFormatException('Reserved header bytes must be zero', bytes, 6);
+    }
     final int channelCount = reader.readUint16();
     final int height = reader.readUint32();
     final int width = reader.readUint32();
@@ -47,7 +51,9 @@ abstract final class PsdCodec {
       options: options,
     );
 
-    if (reader.remaining < 2) throw PsdFormatException('Missing merged image data', bytes, reader.offset);
+    if (reader.remaining < 2) {
+      throw PsdFormatException('Missing merged image data', bytes, reader.offset);
+    }
     final PsdCompression mergedCompression = _enumByCode(PsdCompression.values, reader.readUint16(), 'merged image compression', reader);
     final List<Uint8List> mergedImage = decodePsdMergedImage(
       compression: mergedCompression,
@@ -180,15 +186,21 @@ final class _EncodedLayer {
 List<PsdImageResource> _readImageResources(PsdBinaryReader reader) {
   final List<PsdImageResource> result = <PsdImageResource>[];
   while (!reader.isAtEnd) {
-    if (reader.remaining < 12) throw PsdFormatException('Truncated image resource block', reader.bytes, reader.baseOffset + reader.offset);
+    if (reader.remaining < 12) {
+      throw PsdFormatException('Truncated image resource block', reader.bytes, reader.baseOffset + reader.offset);
+    }
     final String signature = reader.readString(4);
     final int id = reader.readUint16();
     final int nameLength = reader.readUint8();
     final String name = reader.readString(nameLength);
-    if ((nameLength + 1).isOdd) reader.skip(1);
+    if ((nameLength + 1).isOdd) {
+      reader.skip(1);
+    }
     final int dataLength = reader.readUint32();
     final Uint8List data = reader.readBytes(dataLength);
-    if (dataLength.isOdd) reader.skip(1);
+    if (dataLength.isOdd) {
+      reader.skip(1);
+    }
     result.add(PsdImageResource(id: id, name: name, signature: signature, data: data));
   }
   return result;
@@ -207,7 +219,9 @@ _LayerSection _readLayerAndMask(PsdBinaryReader reader, {required PsdVersion ver
     final int signedCount = layerInfo.readInt16();
     mergedTransparency = signedCount < 0;
     final int count = signedCount.abs();
-    if (count > options.maxLayers) throw PsdFormatException('Layer count $count exceeds the configured limit');
+    if (count > options.maxLayers) {
+      throw PsdFormatException('Layer count $count exceeds the configured limit');
+    }
     final List<_LayerRecord> records = <_LayerRecord>[];
     for (int index = 0; index < count; index++) {
       records.add(_readLayerRecord(layerInfo, version));
@@ -217,7 +231,9 @@ _LayerSection _readLayerAndMask(PsdBinaryReader reader, {required PsdVersion ver
       for (int index = 0; index < record.channelLengths.length; index++) {
         final PsdChannel descriptor = record.layer.channels[index];
         final int encodedLength = record.channelLengths[index];
-        if (encodedLength < 2) throw const PsdFormatException('Layer channel length is smaller than its compression marker');
+        if (encodedLength < 2) {
+          throw const PsdFormatException('Layer channel length is smaller than its compression marker');
+        }
         final PsdBinaryReader encoded = layerInfo.readReader(encodedLength);
         final PsdCompression compression = _enumByCode(PsdCompression.values, encoded.readUint16(), 'layer channel compression', encoded);
         final PsdRectangle rectangle = _channelRectangle(record.layer, descriptor.id);
@@ -263,7 +279,9 @@ _LayerRecord _readLayerRecord(PsdBinaryReader reader, PsdVersion version) {
     channelDescriptors.add(PsdChannel(id: reader.readInt16(), data: Uint8List(0)));
     channelLengths.add(version == PsdVersion.psb ? reader.readUint64() : reader.readUint32());
   }
-  if (reader.readString(4) != '8BIM') throw PsdFormatException('Invalid layer blend-mode signature', reader.bytes, reader.baseOffset + reader.offset - 4);
+  if (reader.readString(4) != '8BIM') {
+    throw PsdFormatException('Invalid layer blend-mode signature', reader.bytes, reader.baseOffset + reader.offset - 4);
+  }
   final String blendMode = reader.readString(4);
   final int opacity = reader.readUint8();
   final int clipping = reader.readUint8();
@@ -300,7 +318,9 @@ _LayerRecord _readLayerRecord(PsdBinaryReader reader, PsdVersion version) {
 
 /// Parses stable fields from a layer-mask payload while retaining all bytes.
 PsdLayerMask _readMask(Uint8List data) {
-  if (data.length < 18) throw const PsdFormatException('Layer mask data is shorter than 18 bytes');
+  if (data.length < 18) {
+    throw const PsdFormatException('Layer mask data is shorter than 18 bytes');
+  }
   final PsdBinaryReader reader = PsdBinaryReader(data);
   final PsdRectangle rectangle = _readRectangle(reader);
   final int defaultColor = reader.readUint8();
@@ -330,7 +350,9 @@ List<PsdTaggedBlock> _readTaggedBlocks(PsdBinaryReader reader, PsdVersion versio
   final List<PsdTaggedBlock> result = <PsdTaggedBlock>[];
   while (reader.remaining >= 12) {
     _skipTaggedPadding(reader);
-    if (reader.remaining < 12) break;
+    if (reader.remaining < 12) {
+      break;
+    }
     final String signature = reader.readString(4);
     if (signature != '8BIM' && signature != '8B64') {
       throw PsdFormatException('Invalid tagged-block signature "$signature"', reader.bytes, reader.baseOffset + reader.offset - 4);
@@ -339,12 +361,16 @@ List<PsdTaggedBlock> _readTaggedBlocks(PsdBinaryReader reader, PsdVersion versio
     final bool wide = version == PsdVersion.psb && _widePsbTaggedBlocks.contains(key);
     final int length = reader.readLength(wide: wide, label: '$key tagged block');
     final Uint8List data = reader.readBytes(length);
-    if (length.isOdd) reader.skip(1);
+    if (length.isOdd) {
+      reader.skip(1);
+    }
     result.add(PsdTaggedBlock(key: key, signature: signature, data: data));
   }
   if (reader.remaining != 0) {
     final Uint8List padding = reader.readBytes(reader.remaining);
-    if (padding.any((value) => value != 0)) throw const PsdFormatException('Non-zero trailing bytes after tagged blocks');
+    if (padding.any((value) => value != 0)) {
+      throw const PsdFormatException('Non-zero trailing bytes after tagged blocks');
+    }
   }
   return result;
 }
@@ -366,18 +392,24 @@ Uint8List _writeImageResources(List<PsdImageResource> resources) {
   final PsdBinaryWriter writer = PsdBinaryWriter();
   for (final PsdImageResource resource in resources) {
     _requireFourCharacters(resource.signature, 'image-resource signature');
-    if (resource.id < 0 || resource.id > 0xffff) throw PsdWriteException('Image resource id ${resource.id} is outside 0...65535');
+    if (resource.id < 0 || resource.id > 0xffff) {
+      throw PsdWriteException('Image resource id ${resource.id} is outside 0...65535');
+    }
     final Uint8List name = _legacyName(resource.name);
     writer
       ..writeString(resource.signature)
       ..writeUint16(resource.id)
       ..writeUint8(name.length)
       ..writeBytes(name);
-    if ((name.length + 1).isOdd) writer.writeUint8(0);
+    if ((name.length + 1).isOdd) {
+      writer.writeUint8(0);
+    }
     writer
       ..writeUint32(resource.data.length)
       ..writeBytes(resource.data);
-    if (resource.data.length.isOdd) writer.writeUint8(0);
+    if (resource.data.length.isOdd) {
+      writer.writeUint8(0);
+    }
   }
   return writer.takeBytes();
 }
@@ -400,8 +432,12 @@ Uint8List _writeLayerAndMask(PsdDocument document, {required PsdVersion version,
 
 /// Serializes layer records followed by their encoded planar channels.
 Uint8List _writeLayerInfo(PsdDocument document, {required PsdVersion version, required PsdCompression? compressionOverride}) {
-  if (document.layers.isEmpty) return Uint8List(0);
-  if (document.layers.length > 0x7fff) throw const PsdWriteException('PSD supports at most 32767 layer records');
+  if (document.layers.isEmpty) {
+    return Uint8List(0);
+  }
+  if (document.layers.length > 0x7fff) {
+    throw const PsdWriteException('PSD supports at most 32767 layer records');
+  }
   final List<_EncodedLayer> encodedLayers = <_EncodedLayer>[];
   for (final PsdLayer layer in document.layers) {
     final List<Uint8List> channels = <Uint8List>[];
@@ -452,11 +488,11 @@ Uint8List _writeLayerInfo(PsdDocument document, {required PsdVersion version, re
       ..writeBytes(extra);
   }
   for (final _EncodedLayer layer in encodedLayers) {
-    for (final Uint8List channel in layer.channels) {
-      writer.writeBytes(channel);
-    }
+    layer.channels.forEach(writer.writeBytes);
   }
-  if (writer.length.isOdd) writer.writeUint8(0);
+  if (writer.length.isOdd) {
+    writer.writeUint8(0);
+  }
   return writer.takeBytes();
 }
 
@@ -496,7 +532,9 @@ Uint8List _writeTaggedBlocks(List<PsdTaggedBlock> blocks, PsdVersion version) {
       ..writeString(block.key)
       ..writeLength(block.data.length, wide: wide)
       ..writeBytes(block.data);
-    if (block.data.length.isOdd) writer.writeUint8(0);
+    if (block.data.length.isOdd) {
+      writer.writeUint8(0);
+    }
   }
   return writer.takeBytes();
 }
@@ -504,10 +542,14 @@ Uint8List _writeTaggedBlocks(List<PsdTaggedBlock> blocks, PsdVersion version) {
 /// Decodes the last well-formed Unicode layer-name block, when present.
 String? _unicodeLayerName(List<PsdTaggedBlock> blocks) {
   for (final PsdTaggedBlock block in blocks.reversed) {
-    if (block.key != 'luni' || block.data.length < 4) continue;
+    if (block.key != 'luni' || block.data.length < 4) {
+      continue;
+    }
     final PsdBinaryReader reader = PsdBinaryReader(block.data);
     final int units = reader.readUint32();
-    if (units > reader.remaining ~/ 2) throw const PsdFormatException('Truncated Unicode layer name');
+    if (units > reader.remaining ~/ 2) {
+      throw const PsdFormatException('Truncated Unicode layer name');
+    }
     final List<int> codeUnits = <int>[for (int index = 0; index < units; index++) reader.readUint16()];
     return String.fromCharCodes(codeUnits);
   }
@@ -517,9 +559,7 @@ String? _unicodeLayerName(List<PsdTaggedBlock> blocks) {
 /// Encodes [value] as a length-prefixed big-endian UTF-16 string.
 Uint8List _writeUnicodeString(String value) {
   final PsdBinaryWriter writer = PsdBinaryWriter()..writeUint32(value.codeUnits.length);
-  for (final int unit in value.codeUnits) {
-    writer.writeUint16(unit);
-  }
+  value.codeUnits.forEach(writer.writeUint16);
   return writer.takeBytes();
 }
 
@@ -546,8 +586,12 @@ void _writeRectangle(PsdBinaryWriter writer, PsdRectangle rectangle) {
 
 /// Resolves the sample bounds belonging to [channelId] on [layer].
 PsdRectangle _channelRectangle(PsdLayer layer, int channelId) {
-  if (channelId == -2 && layer.mask != null) return layer.mask!.rectangle;
-  if (channelId == -3 && layer.mask?.realRectangle != null) return layer.mask!.realRectangle!;
+  if (channelId == -2 && layer.mask != null) {
+    return layer.mask!.rectangle;
+  }
+  if (channelId == -3 && layer.mask?.realRectangle != null) {
+    return layer.mask!.realRectangle!;
+  }
   return layer.rectangle;
 }
 
@@ -574,7 +618,9 @@ T _enumByCode<T>(List<T> values, int code, String label, PsdBinaryReader reader)
       PsdCompression(code: final int itemCode) => itemCode,
       _ => -1,
     };
-    if (valueCode == code) return value;
+    if (valueCode == code) {
+      return value;
+    }
   }
   throw PsdFormatException('Unsupported $label $code', reader.bytes, reader.baseOffset + reader.offset);
 }
@@ -590,16 +636,24 @@ void _validateHeader({
   required bool writing,
 }) {
   final void Function(String message) fail = writing ? (message) => throw PsdWriteException(message) : (message) => throw PsdFormatException(message);
-  if (channels < 1 || channels > 56) fail('Channel count must be between 1 and 56');
+  if (channels < 1 || channels > 56) {
+    fail('Channel count must be between 1 and 56');
+  }
   final int dimensionLimit = version == PsdVersion.psd ? 30000 : 300000;
   if (width < 1 || height < 1 || width > dimensionLimit || height > dimensionLimit) {
     fail('${version.name.toUpperCase()} dimensions must be between 1 and $dimensionLimit pixels');
   }
-  if (width * height > maxPixels) fail('Canvas area ${width * height} exceeds the configured limit $maxPixels');
-  if (depth != 1 && depth != 8 && depth != 16 && depth != 32) fail('Depth must be 1, 8, 16, or 32 bits');
+  if (width * height > maxPixels) {
+    fail('Canvas area ${width * height} exceeds the configured limit $maxPixels');
+  }
+  if (depth != 1 && depth != 8 && depth != 16 && depth != 32) {
+    fail('Depth must be 1, 8, 16, or 32 bits');
+  }
 }
 
 /// Ensures that [value] fits a four-byte Photoshop signature field.
 void _requireFourCharacters(String value, String label) {
-  if (value.length != 4 || value.codeUnits.any((unit) => unit > 0xff)) throw PsdWriteException('$label must contain exactly four one-byte characters');
+  if (value.length != 4 || value.codeUnits.any((unit) => unit > 0xff)) {
+    throw PsdWriteException('$label must contain exactly four one-byte characters');
+  }
 }

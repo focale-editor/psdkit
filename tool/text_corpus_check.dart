@@ -28,13 +28,17 @@ Future<void> main(List<String> arguments) async {
   int styledBlocks = 0;
   int editableBlocks = 0;
   await for (final FileSystemEntity entity in root.list(recursive: true, followLinks: false)) {
-    if (entity is! File || !_isPhotoshopPath(entity.path)) continue;
+    if (entity is! File || !_isPhotoshopPath(entity.path)) {
+      continue;
+    }
     documents++;
     try {
       final PsdDocument document = PsdCodec.decode(await entity.readAsBytes());
       for (final PsdLayer layer in document.layers) {
         final PsdTaggedBlock? block = layer.taggedBlock('TySh');
-        if (block == null) continue;
+        if (block == null) {
+          continue;
+        }
         textBlocks++;
         final PsdTypeTool? typeTool = PsdTypeToolCodec.tryDecode(block.data);
         if (typeTool == null) {
@@ -53,7 +57,9 @@ Future<void> main(List<String> arguments) async {
             '${_hexWindow(block.data, difference)} -> ${_hexWindow(encoded, difference)}',
           );
         }
-        if (typeTool.content.styleRuns.isNotEmpty) styledBlocks++;
+        if (typeTool.content.styleRuns.isNotEmpty) {
+          styledBlocks++;
+        }
         const String replacement =
             r'PsdKit (UTF-16) \ 😀'
             '\rDeuxième ligne';
@@ -74,7 +80,9 @@ Future<void> main(List<String> arguments) async {
     'textBlocks=$textBlocks decoded=$decodedBlocks byteStable=$stableBlocks '
     'styled=$styledBlocks editable=$editableBlocks',
   );
-  if (documentFailures != 0 || decodedBlocks != textBlocks || stableBlocks != decodedBlocks || editableBlocks != decodedBlocks) exitCode = 1;
+  if (documentFailures != 0 || decodedBlocks != textBlocks || stableBlocks != decodedBlocks || editableBlocks != decodedBlocks) {
+    exitCode = 1;
+  }
 }
 
 /// Whether [path] has a PSD or PSB extension.
@@ -85,9 +93,13 @@ bool _isPhotoshopPath(String path) {
 
 /// Whether [first] and [second] contain identical bytes.
 bool _equalBytes(Uint8List first, Uint8List second) {
-  if (first.length != second.length) return false;
+  if (first.length != second.length) {
+    return false;
+  }
   for (int index = 0; index < first.length; index++) {
-    if (first[index] != second[index]) return false;
+    if (first[index] != second[index]) {
+      return false;
+    }
   }
   return true;
 }
@@ -96,7 +108,9 @@ bool _equalBytes(Uint8List first, Uint8List second) {
 int _firstDifference(Uint8List first, Uint8List second) {
   final int length = first.length < second.length ? first.length : second.length;
   for (int index = 0; index < length; index++) {
-    if (first[index] != second[index]) return index;
+    if (first[index] != second[index]) {
+      return index;
+    }
   }
   return length;
 }

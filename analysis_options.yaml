@@ -17,6 +17,7 @@ analyzer:
 linter:
   rules:
     - always_declare_return_types
+    - always_put_control_body_on_new_line
     # - always_specify_types
     - always_use_package_imports
     - annotate_redeclares
@@ -54,6 +55,7 @@ linter:
     - prefer_expression_function_bodies
     - prefer_final_in_for_each
     - prefer_final_locals
+    - prefer_foreach
     - prefer_if_elements_to_conditional_expressions
     - prefer_mixin
     - prefer_null_aware_method_calls

@@ -3,6 +3,7 @@ library;
 
 export 'src/codec.dart';
 export 'src/descriptor.dart';
+export 'src/effects.dart';
 export 'src/exceptions.dart';
 export 'src/model.dart';
 export 'src/pixels.dart';

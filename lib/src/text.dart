@@ -150,7 +150,9 @@ final class PsdTextContent {
   /// Returns the most specific style covering [offset], when available.
   PsdTextStyle? styleAt(int offset) {
     for (final PsdTextStyleRun run in styleRuns.reversed) {
-      if (offset >= run.start && offset < run.start + run.length) return run.style;
+      if (offset >= run.start && offset < run.start + run.length) {
+        return run.style;
+      }
     }
     return null;
   }
@@ -426,7 +428,9 @@ abstract final class PsdTypeToolCodec {
 abstract final class PsdTextEngine {
   /// Extracts semantic text information from opaque Adobe [engineData].
   static PsdTextContent decode(Uint8List? engineData, {required String fallbackText, required PsdTextOrientation orientation}) {
-    if (engineData == null) return PsdTextContent(text: fallbackText, orientation: orientation);
+    if (engineData == null) {
+      return PsdTextContent(text: fallbackText, orientation: orientation);
+    }
     try {
       final Object? rootValue = _PsdEngineParser(engineData).parse();
       final _PsdEngineDictionary? root = _dictionary(rootValue);
@@ -454,7 +458,9 @@ abstract final class PsdTextEngine {
     final List<String> fonts = <String>[];
     for (final _PsdNormalizedStyleRun run in styles) {
       final String font = run.style.fontFamily ?? 'ArialMT';
-      if (!fonts.contains(font)) fonts.add(font);
+      if (!fonts.contains(font)) {
+        fonts.add(font);
+      }
     }
     final _PsdEngineWriter writer = _PsdEngineWriter()
       ..ascii('<< /EngineDict << /Editor << /Text ')
@@ -479,7 +485,9 @@ abstract final class PsdTextEngine {
         '/Tracking ${_engineNumber(style.tracking ?? 0)} '
         '/AutoLeading ${style.lineHeight == null} ',
       );
-      if (style.lineHeight != null) writer.ascii('/Leading ${_engineNumber(style.lineHeight!)} ');
+      if (style.lineHeight != null) {
+        writer.ascii('/Leading ${_engineNumber(style.lineHeight!)} ');
+      }
       writer.ascii(
         '/FillColor << /Type 1 /Values [ ${_engineColor(color.alpha)} ${_engineColor(color.red)} '
         '${_engineColor(color.green)} ${_engineColor(color.blue)} ] >> >> >> >> ',
@@ -503,7 +511,9 @@ abstract final class PsdTextEngine {
   /// Replaces the PostScript string assigned to `/Text` in [engineData].
   static Uint8List replaceText(Uint8List engineData, String text) {
     final ({int start, int end, Uint8List value})? target = _findTextString(engineData);
-    if (target == null) return engineData;
+    if (target == null) {
+      return engineData;
+    }
     final int oldLength = _withoutTerminalNull(_decodeEngineString(_PsdEngineString(target.value)) ?? '').length;
     final Uint8List encoded = _encodeEngineString(text, target.value);
     final BytesBuilder output = BytesBuilder(copy: false)
@@ -542,26 +552,40 @@ abstract final class PsdTextEngine {
 
   /// Adjusts one engine run-length array after the text length changes.
   static Uint8List _replaceRunLengths(Uint8List source, String section, {required int oldLength, required int newLength}) {
-    if (oldLength == newLength) return source;
+    if (oldLength == newLength) {
+      return source;
+    }
     final int sectionOffset = _findName(source, section);
-    if (sectionOffset < 0) return source;
+    if (sectionOffset < 0) {
+      return source;
+    }
     final int lengthsOffset = _findName(source, 'RunLengthArray', start: sectionOffset + section.length + 1);
-    if (lengthsOffset < 0) return source;
+    if (lengthsOffset < 0) {
+      return source;
+    }
     int opening = lengthsOffset + 'RunLengthArray'.length + 1;
     while (opening < source.length && _isWhitespace(source[opening])) {
       opening++;
     }
-    if (opening >= source.length || source[opening] != 0x5b) return source;
+    if (opening >= source.length || source[opening] != 0x5b) {
+      return source;
+    }
     final int closing = source.indexOf(0x5d, opening + 1);
-    if (closing < 0) return source;
+    if (closing < 0) {
+      return source;
+    }
     final String contents = String.fromCharCodes(Uint8List.sublistView(source, opening + 1, closing));
     final List<int> lengths = RegExp(r'-?\d+').allMatches(contents).map((match) => int.parse(match.group(0)!)).toList();
-    if (lengths.isEmpty) return source;
+    if (lengths.isEmpty) {
+      return source;
+    }
     final int target = newLength + 1;
     final List<int> adjusted = <int>[];
     int remaining = target;
     for (final int length in lengths) {
-      if (remaining <= 0) break;
+      if (remaining <= 0) {
+        break;
+      }
       final int kept = length.clamp(0, remaining);
       adjusted.add(kept);
       remaining -= kept;
@@ -581,7 +605,9 @@ abstract final class PsdTextEngine {
   /// Reads font names from the engine resource dictionary.
   static List<String> _readFonts(_PsdEngineDictionary? resources) {
     final List<Object?>? fontSet = _list(resources?['FontSet']);
-    if (fontSet == null) return const <String>[];
+    if (fontSet == null) {
+      return const <String>[];
+    }
     return <String>[
       for (final Object? entry in fontSet)
         if (_decodeEngineString(_dictionary(entry)?['Name']) case final String name) _withoutTerminalNull(name),
@@ -593,13 +619,17 @@ abstract final class PsdTextEngine {
     final _PsdEngineDictionary? runs = _dictionary(engine?['StyleRun']);
     final List<Object?>? lengths = _list(runs?['RunLengthArray']);
     final List<Object?>? values = _list(runs?['RunArray']);
-    if (lengths == null || values == null) return const <PsdTextStyleRun>[];
+    if (lengths == null || values == null) {
+      return const <PsdTextStyleRun>[];
+    }
     final List<PsdTextStyleRun> result = <PsdTextStyleRun>[];
     int start = 0;
     for (int index = 0; index < lengths.length && index < values.length && start < textLength; index++) {
       final int storedLength = _integer(lengths[index]) ?? 0;
       final int length = storedLength.clamp(0, textLength - start);
-      if (length == 0) break;
+      if (length == 0) {
+        break;
+      }
       final _PsdEngineDictionary? run = _dictionary(values[index]);
       final _PsdEngineDictionary? sheet = _dictionary(run?['StyleSheet']);
       final _PsdEngineDictionary? data = _dictionary(sheet?['StyleSheetData']);
@@ -631,13 +661,17 @@ abstract final class PsdTextEngine {
     final _PsdEngineDictionary? runs = _dictionary(engine?['ParagraphRun']);
     final List<Object?>? lengths = _list(runs?['RunLengthArray']);
     final List<Object?>? values = _list(runs?['RunArray']);
-    if (lengths == null || values == null) return const <PsdTextParagraph>[];
+    if (lengths == null || values == null) {
+      return const <PsdTextParagraph>[];
+    }
     final List<PsdTextParagraph> result = <PsdTextParagraph>[];
     int start = 0;
     for (int index = 0; index < lengths.length && index < values.length && start < textLength; index++) {
       final int storedLength = _integer(lengths[index]) ?? 0;
       final int length = storedLength.clamp(0, textLength - start);
-      if (length == 0) break;
+      if (length == 0) {
+        break;
+      }
       final _PsdEngineDictionary? run = _dictionary(values[index]);
       final _PsdEngineDictionary? sheet = _dictionary(run?['ParagraphSheet']);
       final _PsdEngineDictionary? data = _dictionary(sheet?['Properties']) ?? _dictionary(sheet?['DefaultStyleSheet']);
@@ -657,7 +691,9 @@ abstract final class PsdTextEngine {
   /// Converts an Adobe color dictionary into 8-bit RGBA components.
   static PsdTextColor? _readColor(Object? value) {
     final List<Object?>? components = _list(_dictionary(value)?['Values']);
-    if (components == null || components.length < 4) return null;
+    if (components == null || components.length < 4) {
+      return null;
+    }
     int channel(int index) => ((_number(components[index]) ?? 0).clamp(0, 1) * 255).round();
     return PsdTextColor(alpha: channel(0), red: channel(1), green: channel(2), blue: channel(3));
   }
@@ -676,7 +712,9 @@ abstract final class PsdTextEngine {
   static Uint8List _escapePostScript(Uint8List value) {
     final BytesBuilder bytes = BytesBuilder(copy: false);
     for (final int byte in value) {
-      if (byte == 0x28 || byte == 0x29 || byte == 0x5c) bytes.addByte(0x5c);
+      if (byte == 0x28 || byte == 0x29 || byte == 0x5c) {
+        bytes.addByte(0x5c);
+      }
       bytes.addByte(byte);
     }
     return bytes.takeBytes();
@@ -808,21 +846,31 @@ PsdObjectValue _createBoundsValue(PsdTextBounds bounds) => PsdObjectValue(
 /// Normalizes sparse semantic [runs] into contiguous Photoshop style runs.
 List<_PsdNormalizedStyleRun> _normalizeStyles(List<PsdTextStyleRun> runs, int textLength) {
   const PsdTextStyle fallback = PsdTextStyle(fontFamily: 'ArialMT', fontSize: 12, color: PsdTextColor(alpha: 255, red: 0, green: 0, blue: 0));
-  if (runs.isEmpty || textLength == 0) return <_PsdNormalizedStyleRun>[_PsdNormalizedStyleRun(textLength + 1, runs.isEmpty ? fallback : runs.first.style)];
+  if (runs.isEmpty || textLength == 0) {
+    return <_PsdNormalizedStyleRun>[_PsdNormalizedStyleRun(textLength + 1, runs.isEmpty ? fallback : runs.first.style)];
+  }
   final List<PsdTextStyleRun> sorted = List<PsdTextStyleRun>.of(runs)..sort((left, right) => left.start.compareTo(right.start));
   final List<_PsdNormalizedStyleRun> result = <_PsdNormalizedStyleRun>[];
   PsdTextStyle current = sorted.first.style;
   int offset = 0;
   for (final PsdTextStyleRun run in sorted) {
     final int start = run.start.clamp(offset, textLength);
-    if (start > offset) result.add(_PsdNormalizedStyleRun(start - offset, current));
+    if (start > offset) {
+      result.add(_PsdNormalizedStyleRun(start - offset, current));
+    }
     final int end = (run.start + run.length).clamp(start, textLength);
-    if (end > start) result.add(_PsdNormalizedStyleRun(end - start, run.style));
+    if (end > start) {
+      result.add(_PsdNormalizedStyleRun(end - start, run.style));
+    }
     current = run.style;
     offset = end;
   }
-  if (offset < textLength) result.add(_PsdNormalizedStyleRun(textLength - offset, current));
-  if (result.isEmpty) result.add(_PsdNormalizedStyleRun(textLength, current));
+  if (offset < textLength) {
+    result.add(_PsdNormalizedStyleRun(textLength - offset, current));
+  }
+  if (result.isEmpty) {
+    result.add(_PsdNormalizedStyleRun(textLength, current));
+  }
   final _PsdNormalizedStyleRun last = result.removeLast();
   result.add(_PsdNormalizedStyleRun(last.length + 1, last.style));
   return result;
@@ -839,14 +887,22 @@ List<_PsdNormalizedParagraph> _normalizeParagraphs(List<PsdTextParagraph> paragr
   int offset = 0;
   for (final PsdTextParagraph paragraph in sorted) {
     final int start = paragraph.start.clamp(offset, textLength);
-    if (start > offset) result.add(_PsdNormalizedParagraph(start - offset, current));
+    if (start > offset) {
+      result.add(_PsdNormalizedParagraph(start - offset, current));
+    }
     final int end = (paragraph.start + paragraph.length).clamp(start, textLength);
-    if (end > start) result.add(_PsdNormalizedParagraph(end - start, paragraph.justification));
+    if (end > start) {
+      result.add(_PsdNormalizedParagraph(end - start, paragraph.justification));
+    }
     current = paragraph.justification;
     offset = end;
   }
-  if (offset < textLength) result.add(_PsdNormalizedParagraph(textLength - offset, current));
-  if (result.isEmpty) result.add(_PsdNormalizedParagraph(textLength, current));
+  if (offset < textLength) {
+    result.add(_PsdNormalizedParagraph(textLength - offset, current));
+  }
+  if (result.isEmpty) {
+    result.add(_PsdNormalizedParagraph(textLength, current));
+  }
   final _PsdNormalizedParagraph last = result.removeLast();
   result.add(_PsdNormalizedParagraph(last.length + 1, last.justification));
   return result;
@@ -854,7 +910,9 @@ List<_PsdNormalizedParagraph> _normalizeParagraphs(List<PsdTextParagraph> paragr
 
 /// Formats a finite text-engine number without unnecessary decimal zeros.
 String _engineNumber(double value) {
-  if (!value.isFinite) return '0';
+  if (!value.isFinite) {
+    return '0';
+  }
   return value == value.roundToDouble() ? value.toInt().toString() : value.toString();
 }
 
@@ -918,18 +976,26 @@ final class _PsdEngineParser {
 
   /// Reads a literal string at the current offset.
   _PsdEngineString readLiteralString() {
-    if (_offset >= _bytes.length || _bytes[_offset] != 0x28) throw const FormatException('Expected EngineData string');
+    if (_offset >= _bytes.length || _bytes[_offset] != 0x28) {
+      throw const FormatException('Expected EngineData string');
+    }
     _offset++;
     int depth = 1;
     final BytesBuilder value = BytesBuilder(copy: false);
     while (_offset < _bytes.length) {
       final int byte = _bytes[_offset++];
       if (byte == 0x5c) {
-        if (_offset >= _bytes.length) throw const FormatException('Truncated EngineData escape');
+        if (_offset >= _bytes.length) {
+          throw const FormatException('Truncated EngineData escape');
+        }
         final int escaped = _bytes[_offset++];
-        if (escaped == 0x0a) continue;
+        if (escaped == 0x0a) {
+          continue;
+        }
         if (escaped == 0x0d) {
-          if (_offset < _bytes.length && _bytes[_offset] == 0x0a) _offset++;
+          if (_offset < _bytes.length && _bytes[_offset] == 0x0a) {
+            _offset++;
+          }
           continue;
         }
         if (escaped >= 0x30 && escaped <= 0x37) {
@@ -954,7 +1020,9 @@ final class _PsdEngineParser {
         depth++;
         value.addByte(byte);
       } else if (byte == 0x29) {
-        if (--depth == 0) return _PsdEngineString(value.takeBytes());
+        if (--depth == 0) {
+          return _PsdEngineString(value.takeBytes());
+        }
         value.addByte(byte);
       } else {
         value.addByte(byte);
@@ -966,15 +1034,31 @@ final class _PsdEngineParser {
   /// Reads one engine-data value.
   Object? _readValue() {
     _skipTrivia();
-    if (_offset >= _bytes.length) throw const FormatException('Missing EngineData value');
-    if (_startsWith('<<')) return _readDictionary();
-    if (_bytes[_offset] == 0x5b) return _readArray();
-    if (_bytes[_offset] == 0x28) return readLiteralString();
-    if (_bytes[_offset] == 0x2f) return _PsdEngineName(_readName());
+    if (_offset >= _bytes.length) {
+      throw const FormatException('Missing EngineData value');
+    }
+    if (_startsWith('<<')) {
+      return _readDictionary();
+    }
+    if (_bytes[_offset] == 0x5b) {
+      return _readArray();
+    }
+    if (_bytes[_offset] == 0x28) {
+      return readLiteralString();
+    }
+    if (_bytes[_offset] == 0x2f) {
+      return _PsdEngineName(_readName());
+    }
     final String token = _readToken();
-    if (token == 'true') return true;
-    if (token == 'false') return false;
-    if (token == 'null') return null;
+    if (token == 'true') {
+      return true;
+    }
+    if (token == 'false') {
+      return false;
+    }
+    if (token == 'null') {
+      return null;
+    }
     return num.tryParse(token) ?? token;
   }
 
@@ -988,7 +1072,9 @@ final class _PsdEngineParser {
         _offset += 2;
         return _PsdEngineDictionary(values);
       }
-      if (_offset >= _bytes.length || _bytes[_offset] != 0x2f) throw const FormatException('Expected EngineData dictionary key');
+      if (_offset >= _bytes.length || _bytes[_offset] != 0x2f) {
+        throw const FormatException('Expected EngineData dictionary key');
+      }
       final String key = _readName();
       values[key] = _readValue();
     }
@@ -1000,7 +1086,9 @@ final class _PsdEngineParser {
     final List<Object?> values = <Object?>[];
     while (true) {
       _skipTrivia();
-      if (_offset >= _bytes.length) throw const FormatException('Unterminated EngineData array');
+      if (_offset >= _bytes.length) {
+        throw const FormatException('Unterminated EngineData array');
+      }
       if (_bytes[_offset] == 0x5d) {
         _offset++;
         return values;
@@ -1025,7 +1113,9 @@ final class _PsdEngineParser {
     while (_offset < _bytes.length && !_isDelimiter(_bytes[_offset])) {
       _offset++;
     }
-    if (start == _offset) throw const FormatException('Empty EngineData token');
+    if (start == _offset) {
+      throw const FormatException('Empty EngineData token');
+    }
     return String.fromCharCodes(Uint8List.sublistView(_bytes, start, _offset));
   }
 
@@ -1046,9 +1136,13 @@ final class _PsdEngineParser {
 
   /// Whether upcoming bytes equal [value].
   bool _startsWith(String value) {
-    if (_offset + value.length > _bytes.length) return false;
+    if (_offset + value.length > _bytes.length) {
+      return false;
+    }
     for (int index = 0; index < value.length; index++) {
-      if (_bytes[_offset + index] != value.codeUnitAt(index)) return false;
+      if (_bytes[_offset + index] != value.codeUnitAt(index)) {
+        return false;
+      }
     }
     return true;
   }
@@ -1071,7 +1165,9 @@ bool? _boolean(Object? value) => value is bool ? value : null;
 
 /// Decodes a binary Adobe engine string, including its byte-order mark.
 String? _decodeEngineString(Object? value) {
-  if (value is! _PsdEngineString) return null;
+  if (value is! _PsdEngineString) {
+    return null;
+  }
   final Uint8List bytes = value.bytes;
   if (bytes.length >= 2 && ((bytes[0] == 0xfe && bytes[1] == 0xff) || (bytes[0] == 0xff && bytes[1] == 0xfe))) {
     final bool littleEndian = bytes[0] == 0xff;
@@ -1086,9 +1182,13 @@ String? _decodeEngineString(Object? value) {
 
 /// Whether [source] contains [name] followed by a name delimiter.
 bool _matchesName(Uint8List source, int start, String name) {
-  if (start + name.length > source.length) return false;
+  if (start + name.length > source.length) {
+    return false;
+  }
   for (int index = 0; index < name.length; index++) {
-    if (source[start + index] != name.codeUnitAt(index)) return false;
+    if (source[start + index] != name.codeUnitAt(index)) {
+      return false;
+    }
   }
   final int end = start + name.length;
   return end == source.length || _isDelimiter(source[end]);

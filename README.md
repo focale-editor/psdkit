@@ -6,19 +6,20 @@ The implementation follows Adobe's [Photoshop File Formats Specification](https:
 
 ## Supported data
 
-| Feature | Read | Write | Notes |
-|---|---:|---:|---|
-| PSD and PSB containers | Yes | Yes | Version-specific 32/64-bit lengths |
-| 1, 8, 16, and 32-bit channels | Yes | Yes | Samples remain planar and lossless |
-| Bitmap, grayscale, indexed, RGB, CMYK, multichannel, duotone, Lab | Yes | Yes | RGBA preview conversion is included |
-| RAW, PackBits RLE, ZIP, ZIP prediction | Yes | Yes | ZIP uses the Dart SDK's native zlib codec |
-| Raster layers and transparency | Yes | Yes | Negative coordinates are supported |
-| Raster-mask metadata and channels | Yes | Yes | Complete mask payloads are retained |
-| Groups | Yes | Yes | Exposed through `PsdLayer.sectionType` |
-| Unicode names and layer ids | Yes | Yes | `luni`, `lyid`, `lsct`, and `lsdk` helpers |
-| Editable text layers | Yes | Yes | Unicode, transforms, bounds, orientation, fonts, sizes, colors, style ranges, and paragraph alignment |
-| Image resources | Preserved | Preserved | Including unknown resources |
-| Effects, vector paths, adjustments, smart objects | Preserved | Preserved | Available as opaque tagged blocks; semantic decoding is future work |
+| Feature                                                           |      Read |     Write | Notes                                                                                                 |
+|-------------------------------------------------------------------|----------:|----------:|-------------------------------------------------------------------------------------------------------|
+| PSD and PSB containers                                            |       Yes |       Yes | Version-specific 32/64-bit lengths                                                                    |
+| 1, 8, 16, and 32-bit channels                                     |       Yes |       Yes | Samples remain planar and lossless                                                                    |
+| Bitmap, grayscale, indexed, RGB, CMYK, multichannel, duotone, Lab |       Yes |       Yes | RGBA preview conversion is included                                                                   |
+| RAW, PackBits RLE, ZIP, ZIP prediction                            |       Yes |       Yes | ZIP uses the Dart SDK's native zlib codec                                                             |
+| Raster layers and transparency                                    |       Yes |       Yes | Negative coordinates are supported                                                                    |
+| Raster-mask metadata and channels                                 |       Yes |       Yes | Complete mask payloads are retained                                                                   |
+| Groups                                                            |       Yes |       Yes | Exposed through `PsdLayer.sectionType`                                                                |
+| Unicode names and layer ids                                       |       Yes |       Yes | `luni`, `lyid`, `lsct`, and `lsdk` helpers                                                            |
+| Editable text layers                                              |       Yes |       Yes | Unicode, transforms, bounds, orientation, fonts, sizes, colors, style ranges, and paragraph alignment |
+| Layer effects                                                     |       Yes |       Yes | Modern `lfx2`/`lmfx`, legacy `lrFX`, repeated effects, and complete descriptor preservation            |
+| Image resources                                                   | Preserved | Preserved | Including unknown resources                                                                           |
+| Vector paths, adjustments, smart objects                          | Preserved | Preserved | Available as opaque tagged blocks; semantic decoding is future work                                   |
 
 Unknown image resources and tagged layer blocks are deliberately retained. Reading and rewriting a document therefore does not discard Photoshop-specific information merely because PsdKit does not interpret it yet.
 
@@ -43,7 +44,7 @@ final Uint8List output = PsdCodec.encode(
 await File('output.psd').writeAsBytes(output);
 ```
 
-To create planar RGB channels from Focale or Flutter pixels:
+To create planar RGB channels from Flutter pixels:
 
 ```dart
 final image = PsdRgbaImage(width: width, height: height, bytes: straightRgba);
@@ -91,6 +92,42 @@ final textLayer = rasterPreviewLayer.withTypeTool(typeTool);
 
 Photoshop stores rendered preview channels alongside editable type metadata. PsdKit encodes both but deliberately does not rasterize fonts; the application must supply the layer channels and merged image matching the text it displays.
 
+## Layer effects
+
+`PsdLayer.effects` decodes modern descriptor effects as well as historical `lrFX` records. Supported semantic families include multiple drop and inner shadows, outer and inner glows, bevel/emboss, satin, color/gradient/pattern overlays, and strokes:
+
+```dart
+final effects = layer.effects;
+for (final effect in effects?.effects ?? const <PsdLayerEffect>[]) {
+  print('${effect.type.name}: ${effect.opacity}% ${effect.blendMode}');
+}
+```
+
+Every `PsdLayerEffect` retains its complete action descriptor, including unknown Adobe properties. Common properties can be edited directly, while `withProperty` supports advanced descriptor values:
+
+```dart
+final shadow = PsdLayerEffect.create(
+  type: PsdLayerEffectType.dropShadow,
+  blendMode: 'Mltp',
+  opacity: 60,
+  color: const PsdEffectColor(alpha: 255, red: 0, green: 0, blue: 0),
+  angle: 120,
+  distance: 8,
+  size: 12,
+);
+final stroke = PsdLayerEffect.create(
+  type: PsdLayerEffectType.stroke,
+  size: 3,
+  strokePosition: PsdStrokePosition.outside,
+  color: const PsdEffectColor(alpha: 255, red: 255, green: 255, blue: 255),
+);
+final editedLayer = layer.withEffects(
+  PsdLayerEffects.create(effects: [shadow, stroke]),
+);
+```
+
+Unchanged modern and legacy blocks round-trip byte for byte. Editing a legacy `lrFX` record upgrades it to modern `lfx2`, avoiding the limitations of the historical fixed structures. PsdKit stores effect definitions but does not rasterize them; the application remains responsible for matching layer preview channels and the merged image.
+
 ## Safety and platforms
 
 `PsdReadOptions` limits canvas area, layer count, and decoded allocation size when opening untrusted files. All variable-length sections are parsed through bounded readers.
@@ -104,8 +141,7 @@ dart analyze
 dart test
 dart run tool/quality_check.dart
 dart run tool/text_corpus_check.dart /path/to/psd-corpus
+dart run tool/effects_corpus_check.dart /path/to/psd-corpus
 ```
 
 The quality check enforces Dartdoc on public and private declarations and the project member order: fields, constructors, then methods.
-
-See [Focale integration](https://github.com/focale-editor/psdkit/blob/main/doc/focale_integration.md) for the recommended application adapter boundary and round-trip strategy.
