@@ -14,7 +14,7 @@ Future<void> main() async {
   final List<String> issues = <String>[];
   for (final File file in files) {
     final String source = await file.readAsString();
-    final _QualityVisitor visitor = _QualityVisitor(file.path, source);
+    final _QualityVisitor visitor = _QualityVisitor(path: file.path, source: source);
     parseString(content: source, path: file.path, throwIfDiagnostics: false).unit.accept(visitor);
     issues.addAll(visitor.issues);
   }
@@ -37,7 +37,7 @@ final class _QualityVisitor extends RecursiveAstVisitor<void> {
   final List<String> issues = <String>[];
 
   /// Creates a visitor for one source file.
-  _QualityVisitor(this.path, this.source);
+  _QualityVisitor({required this.path, required this.source});
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {

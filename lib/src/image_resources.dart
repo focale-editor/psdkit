@@ -1,9 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:psdkit/src/binary.dart';
-import 'package:psdkit/src/descriptor.dart';
-import 'package:psdkit/src/exceptions.dart';
+import 'package:pscore/pscore.dart';
 import 'package:psdkit/src/model.dart';
 import 'package:psdkit/src/paths.dart';
 
@@ -187,34 +185,34 @@ enum PsdImageResourceListLayout {
 /// Describes the placement policy used for printing.
 enum PsdPrintScaleStyle {
   /// Centers the image.
-  centered(0),
+  centered(code: 0),
 
   /// Scales the image to fit the page.
-  sizeToFit(1),
+  sizeToFit(code: 1),
 
   /// Uses explicit position and scale values.
-  userDefined(2);
+  userDefined(code: 2);
 
   /// Stored two-byte style code.
   final int code;
 
   /// Creates a style from its stored [code].
-  const PsdPrintScaleStyle(this.code);
+  const PsdPrintScaleStyle({required this.code});
 }
 
 /// Direction of a Photoshop guide.
 enum PsdGuideDirection {
   /// Vertical guide.
-  vertical(0),
+  vertical(code: 0),
 
   /// Horizontal guide.
-  horizontal(1);
+  horizontal(code: 1);
 
   /// Stored one-byte direction code.
   final int code;
 
   /// Creates a guide direction from its [code].
-  const PsdGuideDirection(this.code);
+  const PsdGuideDirection({required this.code});
 }
 
 /// Semantic or explicitly opaque payload of one image-resource block.
@@ -639,7 +637,7 @@ final class PsdIccProfileResource extends PsdImageResourceData {
   final Uint8List data;
 
   /// Creates an ICC-profile resource.
-  const PsdIccProfileResource(this.data);
+  const PsdIccProfileResource({required this.data});
 
   @override
   int get resourceId => PsdImageResourceIds.iccProfile;
@@ -781,7 +779,7 @@ final class PsdUrlList extends PsdImageResourceData {
   final List<PsdUrlItem> items;
 
   /// Creates URL-list resource data.
-  const PsdUrlList(this.items);
+  const PsdUrlList({required this.items});
 
   @override
   int get resourceId => PsdImageResourceIds.urlList;
@@ -797,7 +795,7 @@ final class PsdDescriptorImageResource extends PsdImageResourceData {
   final int descriptorVersion;
 
   /// Editable action descriptor.
-  final PsdDescriptor descriptor;
+  final PsDescriptor descriptor;
 
   /// Bytes following the descriptor.
   final Uint8List trailingData;
@@ -861,7 +859,7 @@ final class PsdSlicesResource extends PsdImageResourceData {
   final int descriptorVersion;
 
   /// Slice descriptor.
-  final PsdDescriptor descriptor;
+  final PsDescriptor descriptor;
 
   /// Bytes following the descriptor.
   final Uint8List trailingData;
@@ -877,10 +875,10 @@ final class PsdSlicesResource extends PsdImageResourceData {
 abstract final class PsdImageResourceCodec {
   /// Decodes [data] according to [resourceId].
   static PsdImageResourceData decode(Uint8List data, {required int resourceId}) {
-    final PsdBinaryReader reader = PsdBinaryReader(data);
+    final PsBinaryReader reader = PsBinaryReader(bytes: data);
     final PsdImageResourceData decoded = _readImageResource(reader, resourceId);
     if (!reader.isAtEnd) {
-      throw PsdFormatException('Unexpected bytes after image resource $resourceId', data, reader.offset);
+      throw PsFormatException(message: 'Unexpected bytes after image resource $resourceId', source: data, offset: reader.offset);
     }
     return decoded;
   }
@@ -896,7 +894,7 @@ abstract final class PsdImageResourceCodec {
 
   /// Encodes one semantic or opaque resource payload.
   static Uint8List encode(PsdImageResourceData value) {
-    final PsdBinaryWriter writer = PsdBinaryWriter();
+    final PsBinaryWriter writer = PsBinaryWriter();
     _writeImageResource(writer, value);
     return writer.takeBytes();
   }
@@ -910,7 +908,7 @@ extension PsdImageResourceDecoding on PsdImageResource {
   /// Returns a block whose payload is encoded from [value].
   PsdImageResource withDecoded(PsdImageResourceData value) {
     if (value.resourceId != id) {
-      throw PsdWriteException('Resource value ${value.resourceId} cannot replace block $id');
+      throw PsWriteException(message: 'Resource value ${value.resourceId} cannot replace block $id');
     }
     return PsdImageResource(id: id, name: name, signature: signature, data: PsdImageResourceCodec.encode(value));
   }
@@ -1007,13 +1005,13 @@ const Set<int> _binaryResourceIds = <int>{
 const Set<int> _descriptorResourceIds = <int>{1065, 1074, 1075, 1076, 1078, 1080, 1082, 1083, 1088, 3000};
 
 /// Reads one resource model while consuming [reader] completely.
-PsdImageResourceData _readImageResource(PsdBinaryReader reader, int resourceId) {
+PsdImageResourceData _readImageResource(PsBinaryReader reader, int resourceId) {
   if (PsdImageResourceIds.isPath(resourceId) || resourceId == PsdImageResourceIds.workingPath) {
     final Uint8List bytes = reader.readBytes(reader.remaining);
     return PsdPathImageResource(resourceId: resourceId, path: PsdVectorPathCodec.decode(bytes));
   }
   if (resourceId == PsdImageResourceIds.iccProfile) {
-    return PsdIccProfileResource(reader.readBytes(reader.remaining));
+    return PsdIccProfileResource(data: reader.readBytes(reader.remaining));
   }
   if (resourceId == PsdImageResourceIds.xmp) {
     final Uint8List bytes = reader.readBytes(reader.remaining);
@@ -1096,7 +1094,7 @@ PsdImageResourceData _readImageResource(PsdBinaryReader reader, int resourceId) 
 }
 
 /// Writes one semantic resource model.
-void _writeImageResource(PsdBinaryWriter writer, PsdImageResourceData value) {
+void _writeImageResource(PsBinaryWriter writer, PsdImageResourceData value) {
   switch (value) {
     case PsdRawImageResource():
       writer.writeBytes(value.data);
@@ -1146,7 +1144,7 @@ void _writeImageResource(PsdBinaryWriter writer, PsdImageResourceData value) {
         ..writeUint16(value.heightUnit);
     case PsdImageResourceColor():
       if (value.components.length != 4) {
-        throw const PsdWriteException('Image-resource colors require four components');
+        throw const PsWriteException(message: 'Image-resource colors require four components');
       }
       writer.writeUint16(value.colorSpace);
       value.components.forEach(writer.writeUint16);
@@ -1183,7 +1181,7 @@ void _writeImageResource(PsdBinaryWriter writer, PsdImageResourceData value) {
     case PsdTransferFunctions():
       for (final PsdTransferFunction function in value.functions) {
         if (function.curve.length != 13) {
-          throw const PsdWriteException('Transfer functions require thirteen curve values');
+          throw const PsWriteException(message: 'Transfer functions require thirteen curve values');
         }
         function.curve.forEach(writer.writeInt16);
         writer.writeUint16(function.override);
@@ -1236,13 +1234,13 @@ void _writeImageResource(PsdBinaryWriter writer, PsdImageResourceData value) {
     case PsdDescriptorImageResource():
       writer
         ..writeUint32(value.descriptorVersion)
-        ..writeBytes(PsdDescriptorCodec.encode(value.descriptor))
+        ..writeBytes(PsDescriptorCodec.encode(value.descriptor))
         ..writeBytes(value.trailingData);
     case PsdDisplayInfo():
       writer.writeUint32(value.version);
       for (final PsdAlphaChannelDisplay channel in value.channels) {
         if (channel.components.length != 4) {
-          throw const PsdWriteException('Alpha-channel display records require four color components');
+          throw const PsWriteException(message: 'Alpha-channel display records require four color components');
         }
         writer.writeUint16(channel.colorSpace);
         channel.components.forEach(writer.writeUint16);
@@ -1256,13 +1254,13 @@ void _writeImageResource(PsdBinaryWriter writer, PsdImageResourceData value) {
       writer
         ..writeUint32(value.version)
         ..writeUint32(value.descriptorVersion)
-        ..writeBytes(PsdDescriptorCodec.encode(value.descriptor))
+        ..writeBytes(PsDescriptorCodec.encode(value.descriptor))
         ..writeBytes(value.trailingData);
   }
 }
 
 /// Reads the optional ninth print flag after the eight historical flags.
-PsdPrintFlags _readPrintFlags(PsdBinaryReader reader) {
+PsdPrintFlags _readPrintFlags(PsBinaryReader reader) {
   final List<bool> flags = <bool>[for (int index = 0; index < 8; index++) reader.readUint8() != 0];
   final bool? printFlags = reader.isAtEnd ? null : reader.readUint8() != 0;
   return PsdPrintFlags(
@@ -1279,9 +1277,9 @@ PsdPrintFlags _readPrintFlags(PsdBinaryReader reader) {
 }
 
 /// Reads fixed-size halftone records until the resource ends.
-PsdHalftoneScreens _readHalftoneScreens(PsdBinaryReader reader, int resourceId) {
+PsdHalftoneScreens _readHalftoneScreens(PsBinaryReader reader, int resourceId) {
   if (reader.remaining % 18 != 0) {
-    throw const PsdFormatException('Halftone-screen resource length is not divisible by 18');
+    throw const PsFormatException(message: 'Halftone-screen resource length is not divisible by 18');
   }
   final List<PsdHalftoneScreen> screens = <PsdHalftoneScreen>[];
   while (!reader.isAtEnd) {
@@ -1305,9 +1303,9 @@ PsdHalftoneScreens _readHalftoneScreens(PsdBinaryReader reader, int resourceId) 
 }
 
 /// Reads fixed-size transfer functions until the resource ends.
-PsdTransferFunctions _readTransferFunctions(PsdBinaryReader reader, int resourceId) {
+PsdTransferFunctions _readTransferFunctions(PsBinaryReader reader, int resourceId) {
   if (reader.remaining % 28 != 0) {
-    throw const PsdFormatException('Transfer-function resource length is not divisible by 28');
+    throw const PsFormatException(message: 'Transfer-function resource length is not divisible by 28');
   }
   final List<PsdTransferFunction> functions = <PsdTransferFunction>[];
   while (!reader.isAtEnd) {
@@ -1322,13 +1320,13 @@ PsdTransferFunctions _readTransferFunctions(PsdBinaryReader reader, int resource
 }
 
 /// Reads grid cycles followed by five-byte guide records.
-PsdGridAndGuides _readGridAndGuides(PsdBinaryReader reader) {
+PsdGridAndGuides _readGridAndGuides(PsBinaryReader reader) {
   final int version = reader.readUint32();
   final int horizontal = reader.readUint32();
   final int vertical = reader.readUint32();
   final int count = reader.readUint32();
   if (count > reader.remaining ~/ 5) {
-    throw const PsdFormatException('Truncated grid-and-guides resource');
+    throw const PsFormatException(message: 'Truncated grid-and-guides resource');
   }
   return PsdGridAndGuides(
     version: version,
@@ -1339,7 +1337,7 @@ PsdGridAndGuides _readGridAndGuides(PsdBinaryReader reader) {
 }
 
 /// Reads a Photoshop 4 or later thumbnail header and payload.
-PsdThumbnailResource _readThumbnail(PsdBinaryReader reader, int resourceId) {
+PsdThumbnailResource _readThumbnail(PsBinaryReader reader, int resourceId) {
   final int format = reader.readUint32();
   final int width = reader.readUint32();
   final int height = reader.readUint32();
@@ -1362,17 +1360,17 @@ PsdThumbnailResource _readThumbnail(PsdBinaryReader reader, int resourceId) {
 }
 
 /// Reads a count-prefixed URL list.
-PsdUrlList _readUrlList(PsdBinaryReader reader) {
+PsdUrlList _readUrlList(PsBinaryReader reader) {
   final int count = reader.readUint32();
   final List<PsdUrlItem> items = <PsdUrlItem>[];
   for (int index = 0; index < count; index++) {
     items.add(PsdUrlItem(number: reader.readUint32(), id: reader.readUint32(), name: _readUnicodeString(reader)));
   }
-  return PsdUrlList(items);
+  return PsdUrlList(items: items);
 }
 
 /// Reads Photoshop writer, reader, and merged-composite information.
-PsdVersionInfo _readVersionInfo(PsdBinaryReader reader) => PsdVersionInfo(
+PsdVersionInfo _readVersionInfo(PsBinaryReader reader) => PsdVersionInfo(
   version: reader.readUint32(),
   hasRealMergedData: reader.readUint8() != 0,
   writerName: _readUnicodeString(reader),
@@ -1381,10 +1379,10 @@ PsdVersionInfo _readVersionInfo(PsdBinaryReader reader) => PsdVersionInfo(
 );
 
 /// Reads the two-byte-counted selected-layer id list.
-PsdIntegerListImageResource _readLayerSelectionIds(PsdBinaryReader reader) {
+PsdIntegerListImageResource _readLayerSelectionIds(PsBinaryReader reader) {
   final int count = reader.readUint16();
   if (count > reader.remaining ~/ 4) {
-    throw const PsdFormatException('Truncated layer-selection id list');
+    throw const PsFormatException(message: 'Truncated layer-selection id list');
   }
   return PsdIntegerListImageResource(
     resourceId: PsdImageResourceIds.layerSelectionIds,
@@ -1395,10 +1393,10 @@ PsdIntegerListImageResource _readLayerSelectionIds(PsdBinaryReader reader) {
 }
 
 /// Reads versioned alpha-channel display records.
-PsdDisplayInfo _readDisplayInfo(PsdBinaryReader reader) {
+PsdDisplayInfo _readDisplayInfo(PsBinaryReader reader) {
   final int version = reader.readUint32();
   if (reader.remaining % 13 != 0) {
-    throw const PsdFormatException('Display-info resource length is not divisible by 13');
+    throw const PsFormatException(message: 'Display-info resource length is not divisible by 13');
   }
   final List<PsdAlphaChannelDisplay> channels = <PsdAlphaChannelDisplay>[];
   while (!reader.isAtEnd) {
@@ -1415,10 +1413,10 @@ PsdDisplayInfo _readDisplayInfo(PsdBinaryReader reader) {
 }
 
 /// Reads a four-byte descriptor version followed by one action descriptor.
-PsdDescriptorImageResource _readDescriptorResource(PsdBinaryReader reader, int resourceId) {
+PsdDescriptorImageResource _readDescriptorResource(PsBinaryReader reader, int resourceId) {
   final int version = reader.readUint32();
   final Uint8List descriptorBytes = reader.readView(reader.remaining);
-  final ({PsdDescriptor descriptor, int bytesRead}) decoded = PsdDescriptorCodec.decodePrefix(descriptorBytes);
+  final ({PsDescriptor descriptor, int bytesRead}) decoded = PsDescriptorCodec.decodePrefix(descriptorBytes);
   return PsdDescriptorImageResource(
     resourceId: resourceId,
     descriptorVersion: version,
@@ -1428,16 +1426,16 @@ PsdDescriptorImageResource _readDescriptorResource(PsdBinaryReader reader, int r
 }
 
 /// Reads modern descriptor-backed slices or retains legacy version 6 bytes.
-PsdImageResourceData _readSlices(PsdBinaryReader reader) {
+PsdImageResourceData _readSlices(PsBinaryReader reader) {
   final Uint8List bytes = reader.readBytes(reader.remaining);
-  final PsdBinaryReader local = PsdBinaryReader(bytes);
+  final PsBinaryReader local = PsBinaryReader(bytes: bytes);
   final int version = local.readUint32();
   if (version != 7 && version != 8) {
     return PsdBinaryMetadataResource(resourceId: PsdImageResourceIds.slices, data: bytes);
   }
   final int descriptorVersion = local.readUint32();
   final Uint8List descriptorBytes = local.readView(local.remaining);
-  final ({PsdDescriptor descriptor, int bytesRead}) decoded = PsdDescriptorCodec.decodePrefix(descriptorBytes);
+  final ({PsDescriptor descriptor, int bytesRead}) decoded = PsDescriptorCodec.decodePrefix(descriptorBytes);
   return PsdSlicesResource(
     version: version,
     descriptorVersion: descriptorVersion,
@@ -1447,9 +1445,9 @@ PsdImageResourceData _readSlices(PsdBinaryReader reader) {
 }
 
 /// Reads uncounted unsigned integers of [bytesPerValue].
-List<int> _readUnsignedIntegers(PsdBinaryReader reader, int bytesPerValue) {
+List<int> _readUnsignedIntegers(PsBinaryReader reader, int bytesPerValue) {
   if (reader.remaining % bytesPerValue != 0) {
-    throw PsdFormatException('Integer-list length is not divisible by $bytesPerValue');
+    throw PsFormatException(message: 'Integer-list length is not divisible by $bytesPerValue');
   }
   final List<int> result = <int>[];
   while (!reader.isAtEnd) {
@@ -1459,7 +1457,7 @@ List<int> _readUnsignedIntegers(PsdBinaryReader reader, int bytesPerValue) {
 }
 
 /// Writes a counted or uncounted fixed-width integer list.
-void _writeIntegerList(PsdBinaryWriter writer, PsdIntegerListImageResource value) {
+void _writeIntegerList(PsBinaryWriter writer, PsdIntegerListImageResource value) {
   switch (value.layout) {
     case PsdImageResourceListLayout.uncounted:
       break;
@@ -1477,13 +1475,13 @@ void _writeIntegerList(PsdBinaryWriter writer, PsdIntegerListImageResource value
       _requireUnsigned(item, 32, 'image-resource list item');
       writer.writeUint32(item);
     } else {
-      throw const PsdWriteException('Image-resource integer lists require two-byte or four-byte values');
+      throw const PsWriteException(message: 'Image-resource integer lists require two-byte or four-byte values');
     }
   }
 }
 
 /// Reads Pascal strings until the resource ends.
-List<String> _readPascalStrings(PsdBinaryReader reader) {
+List<String> _readPascalStrings(PsBinaryReader reader) {
   final List<String> result = <String>[];
   while (!reader.isAtEnd) {
     result.add(reader.readString(reader.readUint8()));
@@ -1492,7 +1490,7 @@ List<String> _readPascalStrings(PsdBinaryReader reader) {
 }
 
 /// Writes one unpadded one-byte Pascal string.
-void _writePascalString(PsdBinaryWriter writer, String value) {
+void _writePascalString(PsBinaryWriter writer, String value) {
   final List<int> bytes = _oneByteString(value, 255);
   writer
     ..writeUint8(bytes.length)
@@ -1500,7 +1498,7 @@ void _writePascalString(PsdBinaryWriter writer, String value) {
 }
 
 /// Reads UTF-16 strings until the resource ends.
-List<String> _readUnicodeStrings(PsdBinaryReader reader) {
+List<String> _readUnicodeStrings(PsBinaryReader reader) {
   final List<String> result = <String>[];
   while (!reader.isAtEnd) {
     result.add(_readUnicodeString(reader));
@@ -1509,16 +1507,16 @@ List<String> _readUnicodeStrings(PsdBinaryReader reader) {
 }
 
 /// Reads a length-prefixed big-endian UTF-16 string.
-String _readUnicodeString(PsdBinaryReader reader) {
+String _readUnicodeString(PsBinaryReader reader) {
   final int length = reader.readUint32();
   if (length > reader.remaining ~/ 2) {
-    throw const PsdFormatException('Truncated image-resource Unicode string');
+    throw const PsFormatException(message: 'Truncated image-resource Unicode string');
   }
   return String.fromCharCodes(<int>[for (int index = 0; index < length; index++) reader.readUint16()]);
 }
 
 /// Writes a length-prefixed big-endian UTF-16 string.
-void _writeUnicodeString(PsdBinaryWriter writer, String value) {
+void _writeUnicodeString(PsBinaryWriter writer, String value) {
   writer.writeUint32(value.codeUnits.length);
   value.codeUnits.forEach(writer.writeUint16);
 }
@@ -1526,7 +1524,7 @@ void _writeUnicodeString(PsdBinaryWriter writer, String value) {
 /// Converts [value] to one-byte characters, rejecting unsupported code units.
 List<int> _oneByteString(String value, int maximumLength) {
   if (value.length > maximumLength || value.codeUnits.any((unit) => unit > 0xff)) {
-    throw PsdWriteException('Image-resource string must contain at most $maximumLength one-byte characters');
+    throw PsWriteException(message: 'Image-resource string must contain at most $maximumLength one-byte characters');
   }
   return value.codeUnits;
 }
@@ -1538,7 +1536,7 @@ String? _asciiAt(Uint8List bytes, int offset) => offset < 0 || offset + 4 > byte
 void _requireUnsigned(int value, int bits, String label) {
   final int maximum = (BigInt.one << bits).toInt() - 1;
   if (value < 0 || value > maximum) {
-    throw PsdWriteException('$label $value does not fit in $bits bits');
+    throw PsWriteException(message: '$label $value does not fit in $bits bits');
   }
 }
 

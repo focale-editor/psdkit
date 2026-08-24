@@ -3,50 +3,62 @@ import 'dart:typed_data';
 import 'package:psdkit/psdkit.dart';
 import 'package:test/test.dart';
 
+/// Exercises Photoshop type-tool and text-engine data handling.
 void main() {
-  group('PsdDescriptorCodec', () {
+  group('PsDescriptorCodec', () {
     test('round-trips text descriptor value types', () {
-      final PsdDescriptor source = PsdDescriptor(
+      final PsDescriptor source = PsDescriptor(
         name: 'Texte',
         classId: 'TxLr',
-        items: <PsdDescriptorItem>[
-          PsdDescriptorItem(key: 'bool', value: PsdBooleanValue(true)),
-          PsdDescriptorItem(key: 'long', value: PsdIntegerValue(-42)),
-          PsdDescriptorItem(key: 'comp', value: PsdLargeIntegerValue(0x123456789)),
-          PsdDescriptorItem(key: 'doub', value: PsdDoubleValue(1.25)),
-          PsdDescriptorItem(
+        items: <PsDescriptorItem>[
+          const PsDescriptorItem(key: 'bool', value: PsBooleanValue(value: true)),
+          const PsDescriptorItem(key: 'long', value: PsIntegerValue(value: -42)),
+          const PsDescriptorItem(key: 'comp', value: PsLargeIntegerValue(value: 0x123456789)),
+          const PsDescriptorItem(key: 'doub', value: PsDoubleValue(value: 1.25)),
+          const PsDescriptorItem(
             key: 'unit',
-            value: PsdUnitFloatValue(unit: '#Pnt', value: 24),
+            value: PsUnitFloatValue(unit: '#Pnt', value: 24),
           ),
-          PsdDescriptorItem(key: 'text', value: PsdStringValue('Été 😀\u0000')),
-          PsdDescriptorItem(
+          const PsDescriptorItem(
+            key: 'text',
+            value: PsStringValue(value: 'Été 😀\u0000'),
+          ),
+          const PsDescriptorItem(
             key: 'enum',
-            value: PsdEnumeratedValue(typeId: 'Ornt', value: 'Hrzn'),
+            value: PsEnumeratedValue(typeId: 'Ornt', value: 'Hrzn'),
           ),
-          PsdDescriptorItem(
+          const PsDescriptorItem(
             key: 'obj ',
-            value: PsdObjectValue(const PsdDescriptor(name: '', classId: 'obj ', items: <PsdDescriptorItem>[])),
+            value: PsObjectValue(
+              value: PsDescriptor(name: '', classId: 'obj ', items: <PsDescriptorItem>[]),
+            ),
           ),
-          PsdDescriptorItem(
+          const PsDescriptorItem(
             key: 'list',
-            value: PsdListValue(<PsdDescriptorValue>[PsdBooleanValue(false), PsdDoubleValue(2.5)]),
+            value: PsListValue(values: <PsDescriptorValue>[PsBooleanValue(value: false), PsDoubleValue(value: 2.5)]),
           ),
-          PsdDescriptorItem(key: 'raw ', value: PsdRawValue(Uint8List.fromList(<int>[0, 1, 255]))),
-          PsdDescriptorItem(key: 'alis', value: PsdAliasValue(Uint8List.fromList(<int>[4, 5]))),
-          PsdDescriptorItem(
+          PsDescriptorItem(
+            key: 'raw ',
+            value: PsRawValue(value: Uint8List.fromList(<int>[0, 1, 255])),
+          ),
+          PsDescriptorItem(
+            key: 'alis',
+            value: PsAliasValue(value: Uint8List.fromList(<int>[4, 5])),
+          ),
+          const PsDescriptorItem(
             key: 'type',
-            value: PsdClassValue(name: 'Classe', classId: 'TxLr'),
+            value: PsClassValue(name: 'Classe', classId: 'TxLr'),
           ),
         ],
       );
 
-      final Uint8List encoded = PsdDescriptorCodec.encode(source);
-      final PsdDescriptor decoded = PsdDescriptorCodec.decode(encoded);
+      final Uint8List encoded = PsDescriptorCodec.encode(source);
+      final PsDescriptor decoded = PsDescriptorCodec.decode(encoded);
 
-      expect(PsdDescriptorCodec.encode(decoded), orderedEquals(encoded));
-      expect((decoded.value('text')! as PsdStringValue).value, 'Été 😀\u0000');
-      expect((decoded.value('unit')! as PsdUnitFloatValue).value, 24);
-      expect((decoded.value('list')! as PsdListValue).values, hasLength(2));
+      expect(PsDescriptorCodec.encode(decoded), orderedEquals(encoded));
+      expect((decoded.value('text')! as PsStringValue).value, 'Été 😀\u0000');
+      expect((decoded.value('unit')! as PsUnitFloatValue).value, 24);
+      expect((decoded.value('list')! as PsListValue).values, hasLength(2));
     });
   });
 
@@ -156,24 +168,32 @@ void main() {
   });
 }
 
+/// Builds a representative type-tool payload containing [text].
 PsdTypeTool _typeTool(String text) => PsdTypeTool(
-  textDescriptor: PsdDescriptor(
+  textDescriptor: PsDescriptor(
     name: '',
     classId: 'TxLr',
-    items: <PsdDescriptorItem>[
-      PsdDescriptorItem(key: 'Txt ', value: PsdStringValue('$text\u0000')),
-      PsdDescriptorItem(
-        key: 'Ornt',
-        value: PsdEnumeratedValue(typeId: 'Ornt', value: 'Hrzn'),
+    items: <PsDescriptorItem>[
+      PsDescriptorItem(
+        key: 'Txt ',
+        value: PsStringValue(value: '$text\u0000'),
       ),
-      PsdDescriptorItem(key: 'EngineData', value: PsdRawValue(_engineData(text))),
+      const PsDescriptorItem(
+        key: 'Ornt',
+        value: PsEnumeratedValue(typeId: 'Ornt', value: 'Hrzn'),
+      ),
+      PsDescriptorItem(
+        key: 'EngineData',
+        value: PsRawValue(value: _engineData(text)),
+      ),
     ],
   ),
-  warpDescriptor: const PsdDescriptor(name: '', classId: 'warp'),
+  warpDescriptor: const PsDescriptor(name: '', classId: 'warp'),
   bounds: const PsdTextBounds(left: 0, top: 0, right: 100, bottom: 40),
   trailingData: Uint8List.fromList(<int>[0, 0]),
 );
 
+/// Builds minimal Photoshop text-engine data containing [text].
 Uint8List _engineData(String text) {
   final BytesBuilder bytes = BytesBuilder(copy: false)
     ..add(
@@ -199,6 +219,7 @@ Uint8List _engineData(String text) {
   return bytes.takeBytes();
 }
 
+/// Encodes [value] as terminated big-endian UTF-16 with a byte-order mark.
 Uint8List _utf16(String value) {
   final BytesBuilder bytes = BytesBuilder(copy: false)..add(const <int>[0xfe, 0xff]);
   for (final int unit in '$value\u0000'.codeUnits) {

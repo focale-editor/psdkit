@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:psdkit/src/binary.dart';
-import 'package:psdkit/src/descriptor.dart';
+import 'package:pscore/pscore.dart';
 
 /// Identifies a Photoshop layer-effect family.
 enum PsdLayerEffectType {
@@ -156,7 +155,7 @@ final class PsdLayerEffect {
   final PsdLayerEffectType type;
 
   /// Complete descriptor, including properties not interpreted by PsdKit.
-  final PsdDescriptor descriptor;
+  final PsDescriptor descriptor;
 
   /// Creates an effect view over an existing [descriptor].
   const PsdLayerEffect({required this.type, required this.descriptor});
@@ -185,10 +184,13 @@ final class PsdLayerEffect {
     double offsetX = 0,
     double offsetY = 0,
   }) {
-    final List<PsdDescriptorItem> items = <PsdDescriptorItem>[
-      PsdDescriptorItem(key: 'enab', value: PsdBooleanValue(enabled)),
-      PsdDescriptorItem(key: 'present', value: PsdBooleanValue(true)),
-      PsdDescriptorItem(key: 'showInDialog', value: PsdBooleanValue(true)),
+    final List<PsDescriptorItem> items = <PsDescriptorItem>[
+      PsDescriptorItem(
+        key: 'enab',
+        value: PsBooleanValue(value: enabled),
+      ),
+      const PsDescriptorItem(key: 'present', value: PsBooleanValue(value: true)),
+      const PsDescriptorItem(key: 'showInDialog', value: PsBooleanValue(value: true)),
     ];
     _appendEffectProperties(
       items,
@@ -215,7 +217,7 @@ final class PsdLayerEffect {
     );
     return PsdLayerEffect(
       type: type,
-      descriptor: PsdDescriptor(name: '\u0000', classId: _effectClassId(type), items: items),
+      descriptor: PsDescriptor(name: '\u0000', classId: _effectClassId(type), items: items),
     );
   }
 
@@ -282,21 +284,21 @@ final class PsdLayerEffect {
   PsdEffectPattern? get pattern => _patternValue(descriptor.value('Ptrn'));
 
   /// Returns a copy with one raw descriptor property replaced.
-  PsdLayerEffect withProperty(String key, PsdDescriptorValue value) => PsdLayerEffect(type: type, descriptor: descriptor.withValue(key, value));
+  PsdLayerEffect withProperty(String key, PsDescriptorValue value) => PsdLayerEffect(type: type, descriptor: descriptor.withValue(key, value));
 
   /// Returns a copy whose enabled state is [value].
-  PsdLayerEffect withEnabled(bool value) => withProperty('enab', PsdBooleanValue(value));
+  PsdLayerEffect withEnabled(bool value) => withProperty('enab', PsBooleanValue(value: value));
 
   /// Returns a copy whose opacity percentage is [value].
   PsdLayerEffect withOpacity(double value) => withProperty(
     type == PsdLayerEffectType.bevelEmboss ? 'hglO' : 'Opct',
-    PsdUnitFloatValue(unit: '#Prc', value: value),
+    PsUnitFloatValue(unit: '#Prc', value: value),
   );
 
   /// Returns a copy whose primary color is [value].
   PsdLayerEffect withColor(PsdEffectColor value) => withProperty(
     type == PsdLayerEffectType.bevelEmboss ? 'hglC' : 'Clr ',
-    PsdObjectValue(_colorDescriptor(value)),
+    PsObjectValue(value: _colorDescriptor(value)),
   );
 }
 
@@ -309,7 +311,7 @@ final class PsdLayerEffects {
   final int descriptorVersion;
 
   /// Complete modern effects descriptor.
-  final PsdDescriptor descriptor;
+  final PsDescriptor descriptor;
 
   /// Original tagged-block key, normally `lfx2` or `lrFX`.
   final String blockKey;
@@ -333,15 +335,18 @@ final class PsdLayerEffects {
   /// Creates a modern effects record from semantic [effects].
   factory PsdLayerEffects.create({List<PsdLayerEffect> effects = const <PsdLayerEffect>[], bool enabled = true, double scale = 100}) {
     final PsdLayerEffects empty = PsdLayerEffects(
-      descriptor: PsdDescriptor(
+      descriptor: PsDescriptor(
         name: '\u0000',
         classId: 'null',
-        items: <PsdDescriptorItem>[
-          PsdDescriptorItem(
+        items: <PsDescriptorItem>[
+          PsDescriptorItem(
             key: 'Scl ',
-            value: PsdUnitFloatValue(unit: '#Prc', value: scale),
+            value: PsUnitFloatValue(unit: '#Prc', value: scale),
           ),
-          PsdDescriptorItem(key: 'masterFXSwitch', value: PsdBooleanValue(enabled)),
+          PsDescriptorItem(
+            key: 'masterFXSwitch',
+            value: PsBooleanValue(value: enabled),
+          ),
         ],
       ),
     );
@@ -362,15 +367,15 @@ final class PsdLayerEffects {
 
   /// Returns a modern record containing [effects] and preserving other root keys.
   PsdLayerEffects withEffects(List<PsdLayerEffect> effects) {
-    final List<PsdDescriptorItem> items = <PsdDescriptorItem>[
-      for (final PsdDescriptorItem item in descriptor.items)
+    final List<PsDescriptorItem> items = <PsDescriptorItem>[
+      for (final PsDescriptorItem item in descriptor.items)
         if (!_effectRootKeys.contains(item.key)) item,
       ..._writeEffectItems(effects),
     ];
     return PsdLayerEffects(
       version: version,
       descriptorVersion: descriptorVersion,
-      descriptor: PsdDescriptor(name: descriptor.name, classId: descriptor.classId, items: items),
+      descriptor: PsDescriptor(name: descriptor.name, classId: descriptor.classId, items: items),
       trailingData: blockKey == 'lrFX' ? null : trailingData,
     );
   }
@@ -379,7 +384,7 @@ final class PsdLayerEffects {
   PsdLayerEffects withEnabled(bool value) => PsdLayerEffects(
     version: version,
     descriptorVersion: descriptorVersion,
-    descriptor: descriptor.withValue('masterFXSwitch', PsdBooleanValue(value)),
+    descriptor: descriptor.withValue('masterFXSwitch', PsBooleanValue(value: value)),
     blockKey: blockKey == 'lrFX' ? 'lfx2' : blockKey,
     trailingData: blockKey == 'lrFX' ? null : trailingData,
   );
@@ -401,10 +406,10 @@ abstract final class PsdLayerEffectsCodec {
     if (key == 'lrFX') {
       return _decodeLegacyEffects(bytes);
     }
-    final PsdBinaryReader reader = PsdBinaryReader(bytes);
+    final PsBinaryReader reader = PsBinaryReader(bytes: bytes);
     final int version = reader.readUint32();
     final int descriptorVersion = reader.readUint32();
-    final ({PsdDescriptor descriptor, int bytesRead}) decoded = PsdDescriptorCodec.decodePrefix(Uint8List.sublistView(bytes, reader.offset));
+    final ({PsDescriptor descriptor, int bytesRead}) decoded = PsDescriptorCodec.decodePrefix(Uint8List.sublistView(bytes, reader.offset));
     reader.skip(decoded.bytesRead);
     return PsdLayerEffects(
       version: version,
@@ -421,10 +426,10 @@ abstract final class PsdLayerEffectsCodec {
     if (effects.blockKey == 'lrFX' && legacy != null) {
       return Uint8List.fromList(legacy);
     }
-    return (PsdBinaryWriter()
+    return (PsBinaryWriter()
           ..writeUint32(effects.version)
           ..writeUint32(effects.descriptorVersion)
-          ..writeBytes(PsdDescriptorCodec.encode(effects.descriptor))
+          ..writeBytes(PsDescriptorCodec.encode(effects.descriptor))
           ..writeBytes(effects.trailingData))
         .takeBytes();
   }
@@ -455,19 +460,19 @@ const Set<String> _effectRootKeys = <String>{
 };
 
 /// Reads every recognized effect from [descriptor].
-List<PsdLayerEffect> _readEffects(PsdDescriptor descriptor) {
+List<PsdLayerEffect> _readEffects(PsDescriptor descriptor) {
   final List<PsdLayerEffect> result = <PsdLayerEffect>[];
-  for (final PsdDescriptorItem item in descriptor.items) {
+  for (final PsDescriptorItem item in descriptor.items) {
     final PsdLayerEffectType? type = _effectTypeForRootKey(item.key);
     if (type == null) {
       continue;
     }
     switch (item.value) {
-      case PsdObjectValue(:final PsdDescriptor value):
+      case PsObjectValue(:final PsDescriptor value):
         result.add(PsdLayerEffect(type: type, descriptor: value));
-      case PsdListValue(:final List<PsdDescriptorValue> values):
-        for (final PsdDescriptorValue value in values) {
-          if (value case PsdObjectValue(:final PsdDescriptor value)) {
+      case PsListValue(:final List<PsDescriptorValue> values):
+        for (final PsDescriptorValue value in values) {
+          if (value case PsObjectValue(:final PsDescriptor value)) {
             result.add(PsdLayerEffect(type: type, descriptor: value));
           }
         }
@@ -479,8 +484,8 @@ List<PsdLayerEffect> _readEffects(PsdDescriptor descriptor) {
 }
 
 /// Serializes semantic [effects] into singular or multi-effect root items.
-List<PsdDescriptorItem> _writeEffectItems(List<PsdLayerEffect> effects) {
-  final List<PsdDescriptorItem> result = <PsdDescriptorItem>[];
+List<PsDescriptorItem> _writeEffectItems(List<PsdLayerEffect> effects) {
+  final List<PsDescriptorItem> result = <PsDescriptorItem>[];
   for (final PsdLayerEffectType type in PsdLayerEffectType.values) {
     if (type == PsdLayerEffectType.unknown) {
       continue;
@@ -490,12 +495,17 @@ List<PsdDescriptorItem> _writeEffectItems(List<PsdLayerEffect> effects) {
       continue;
     }
     if (matches.length == 1) {
-      result.add(PsdDescriptorItem(key: _effectRootKey(type), value: PsdObjectValue(matches.single.descriptor)));
+      result.add(
+        PsDescriptorItem(
+          key: _effectRootKey(type),
+          value: PsObjectValue(value: matches.single.descriptor),
+        ),
+      );
     } else {
       result.add(
-        PsdDescriptorItem(
+        PsDescriptorItem(
           key: _effectMultiRootKey(type),
-          value: PsdListValue(<PsdDescriptorValue>[for (final PsdLayerEffect effect in matches) PsdObjectValue(effect.descriptor)]),
+          value: PsListValue(values: <PsDescriptorValue>[for (final PsdLayerEffect effect in matches) PsObjectValue(value: effect.descriptor)]),
         ),
       );
     }
@@ -505,7 +515,7 @@ List<PsdDescriptorItem> _writeEffectItems(List<PsdLayerEffect> effects) {
 
 /// Adds properties required by the selected effect [type].
 void _appendEffectProperties(
-  List<PsdDescriptorItem> items, {
+  List<PsDescriptorItem> items, {
   required PsdLayerEffectType type,
   required String blendMode,
   required double opacity,
@@ -530,286 +540,393 @@ void _appendEffectProperties(
   if (type != PsdLayerEffectType.bevelEmboss) {
     items
       ..add(
-        PsdDescriptorItem(
+        PsDescriptorItem(
           key: 'Md  ',
-          value: PsdEnumeratedValue(typeId: 'BlnM', value: blendMode),
+          value: PsEnumeratedValue(typeId: 'BlnM', value: blendMode),
         ),
       )
       ..add(
-        PsdDescriptorItem(
+        PsDescriptorItem(
           key: 'Opct',
-          value: PsdUnitFloatValue(unit: '#Prc', value: opacity),
+          value: PsUnitFloatValue(unit: '#Prc', value: opacity),
         ),
       );
   }
   switch (type) {
     case PsdLayerEffectType.dropShadow || PsdLayerEffectType.innerShadow:
       items
-        ..add(PsdDescriptorItem(key: 'Clr ', value: PsdObjectValue(_colorDescriptor(color))))
-        ..add(PsdDescriptorItem(key: 'uglg', value: PsdBooleanValue(useGlobalAngle)))
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
+            key: 'Clr ',
+            value: PsObjectValue(value: _colorDescriptor(color)),
+          ),
+        )
+        ..add(
+          PsDescriptorItem(
+            key: 'uglg',
+            value: PsBooleanValue(value: useGlobalAngle),
+          ),
+        )
+        ..add(
+          PsDescriptorItem(
             key: 'lagl',
-            value: PsdUnitFloatValue(unit: '#Ang', value: angle),
+            value: PsUnitFloatValue(unit: '#Ang', value: angle),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'Dstn',
-            value: PsdUnitFloatValue(unit: '#Pxl', value: distance),
+            value: PsUnitFloatValue(unit: '#Pxl', value: distance),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'Ckmt',
-            value: PsdUnitFloatValue(unit: '#Pxl', value: spread),
+            value: PsUnitFloatValue(unit: '#Pxl', value: spread),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'blur',
-            value: PsdUnitFloatValue(unit: '#Pxl', value: size),
+            value: PsUnitFloatValue(unit: '#Pxl', value: size),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'Nose',
-            value: PsdUnitFloatValue(unit: '#Prc', value: noise),
+            value: PsUnitFloatValue(unit: '#Prc', value: noise),
           ),
         )
-        ..add(PsdDescriptorItem(key: 'AntA', value: PsdBooleanValue(false)))
-        ..add(PsdDescriptorItem(key: 'TrnS', value: PsdObjectValue(_linearContourDescriptor())))
-        ..add(PsdDescriptorItem(key: 'layerConceals', value: PsdBooleanValue(true)));
+        ..add(const PsDescriptorItem(key: 'AntA', value: PsBooleanValue(value: false)))
+        ..add(
+          PsDescriptorItem(
+            key: 'TrnS',
+            value: PsObjectValue(value: _linearContourDescriptor()),
+          ),
+        )
+        ..add(const PsDescriptorItem(key: 'layerConceals', value: PsBooleanValue(value: true)));
     case PsdLayerEffectType.outerGlow || PsdLayerEffectType.innerGlow:
       items
-        ..add(PsdDescriptorItem(key: 'Clr ', value: PsdObjectValue(_colorDescriptor(color))))
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
+            key: 'Clr ',
+            value: PsObjectValue(value: _colorDescriptor(color)),
+          ),
+        )
+        ..add(
+          const PsDescriptorItem(
             key: 'GlwT',
-            value: PsdEnumeratedValue(typeId: 'BETE', value: 'SfBL'),
+            value: PsEnumeratedValue(typeId: 'BETE', value: 'SfBL'),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'Ckmt',
-            value: PsdUnitFloatValue(unit: '#Pxl', value: spread),
+            value: PsUnitFloatValue(unit: '#Pxl', value: spread),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'blur',
-            value: PsdUnitFloatValue(unit: '#Pxl', value: size),
+            value: PsUnitFloatValue(unit: '#Pxl', value: size),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'Nose',
-            value: PsdUnitFloatValue(unit: '#Prc', value: noise),
+            value: PsUnitFloatValue(unit: '#Prc', value: noise),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          const PsDescriptorItem(
             key: 'ShdN',
-            value: PsdUnitFloatValue(unit: '#Prc', value: 0),
+            value: PsUnitFloatValue(unit: '#Prc', value: 0),
           ),
         )
-        ..add(PsdDescriptorItem(key: 'AntA', value: PsdBooleanValue(false)))
-        ..add(PsdDescriptorItem(key: 'TrnS', value: PsdObjectValue(_linearContourDescriptor())))
+        ..add(const PsDescriptorItem(key: 'AntA', value: PsBooleanValue(value: false)))
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
+            key: 'TrnS',
+            value: PsObjectValue(value: _linearContourDescriptor()),
+          ),
+        )
+        ..add(
+          const PsDescriptorItem(
             key: 'Inpr',
-            value: PsdUnitFloatValue(unit: '#Prc', value: 50),
+            value: PsUnitFloatValue(unit: '#Prc', value: 50),
           ),
         );
       if (type == PsdLayerEffectType.innerGlow) {
         items.add(
-          PsdDescriptorItem(
+          const PsDescriptorItem(
             key: 'glwS',
-            value: PsdEnumeratedValue(typeId: 'IGSr', value: 'SrcE'),
+            value: PsEnumeratedValue(typeId: 'IGSr', value: 'SrcE'),
           ),
         );
       }
     case PsdLayerEffectType.colorOverlay:
-      items.add(PsdDescriptorItem(key: 'Clr ', value: PsdObjectValue(_colorDescriptor(color))));
+      items.add(
+        PsDescriptorItem(
+          key: 'Clr ',
+          value: PsObjectValue(value: _colorDescriptor(color)),
+        ),
+      );
     case PsdLayerEffectType.gradientOverlay:
       items
-        ..add(PsdDescriptorItem(key: 'Grad', value: PsdObjectValue(_gradientDescriptor(gradient ?? _defaultGradient(color)))))
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
+            key: 'Grad',
+            value: PsObjectValue(value: _gradientDescriptor(gradient ?? _defaultGradient(color))),
+          ),
+        )
+        ..add(
+          PsDescriptorItem(
             key: 'Angl',
-            value: PsdUnitFloatValue(unit: '#Ang', value: angle),
+            value: PsUnitFloatValue(unit: '#Ang', value: angle),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'Type',
-            value: PsdEnumeratedValue(typeId: 'GrdT', value: _gradientStyleId(gradientStyle)),
+            value: PsEnumeratedValue(typeId: 'GrdT', value: _gradientStyleId(gradientStyle)),
           ),
         )
-        ..add(PsdDescriptorItem(key: 'Rvrs', value: PsdBooleanValue(reverse)))
-        ..add(PsdDescriptorItem(key: 'Dthr', value: PsdBooleanValue(dither)))
-        ..add(PsdDescriptorItem(key: 'Algn', value: PsdBooleanValue(aligned)))
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
+            key: 'Rvrs',
+            value: PsBooleanValue(value: reverse),
+          ),
+        )
+        ..add(
+          PsDescriptorItem(
+            key: 'Dthr',
+            value: PsBooleanValue(value: dither),
+          ),
+        )
+        ..add(
+          PsDescriptorItem(
+            key: 'Algn',
+            value: PsBooleanValue(value: aligned),
+          ),
+        )
+        ..add(
+          PsDescriptorItem(
             key: 'Scl ',
-            value: PsdUnitFloatValue(unit: '#Prc', value: scale),
+            value: PsUnitFloatValue(unit: '#Prc', value: scale),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'Ofst',
-            value: PsdObjectValue(_pointDescriptor(offsetX, offsetY, unit: '#Prc')),
+            value: PsObjectValue(value: _pointDescriptor(offsetX, offsetY, unit: '#Prc')),
           ),
         );
     case PsdLayerEffectType.patternOverlay:
       items
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'Ptrn',
-            value: PsdObjectValue(_patternDescriptor(pattern ?? const PsdEffectPattern(name: '', id: ''))),
+            value: PsObjectValue(
+              value: _patternDescriptor(pattern ?? const PsdEffectPattern(name: '', id: '')),
+            ),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'Scl ',
-            value: PsdUnitFloatValue(unit: '#Prc', value: scale),
+            value: PsUnitFloatValue(unit: '#Prc', value: scale),
           ),
         )
-        ..add(PsdDescriptorItem(key: 'Algn', value: PsdBooleanValue(aligned)))
-        ..add(PsdDescriptorItem(key: 'phase', value: PsdObjectValue(_pointDescriptor(offsetX, offsetY))));
+        ..add(
+          PsDescriptorItem(
+            key: 'Algn',
+            value: PsBooleanValue(value: aligned),
+          ),
+        )
+        ..add(
+          PsDescriptorItem(
+            key: 'phase',
+            value: PsObjectValue(value: _pointDescriptor(offsetX, offsetY)),
+          ),
+        );
     case PsdLayerEffectType.stroke:
       final String fillType = gradient != null ? 'GrFl' : (pattern != null ? 'Ptrn' : 'SClr');
       items
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'Styl',
-            value: PsdEnumeratedValue(typeId: 'FStl', value: _strokePositionId(strokePosition)),
+            value: PsEnumeratedValue(typeId: 'FStl', value: _strokePositionId(strokePosition)),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'PntT',
-            value: PsdEnumeratedValue(typeId: 'FrFl', value: fillType),
+            value: PsEnumeratedValue(typeId: 'FrFl', value: fillType),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'Sz  ',
-            value: PsdUnitFloatValue(unit: '#Pxl', value: size),
+            value: PsUnitFloatValue(unit: '#Pxl', value: size),
           ),
         )
-        ..add(PsdDescriptorItem(key: 'Clr ', value: PsdObjectValue(_colorDescriptor(color))))
-        ..add(PsdDescriptorItem(key: 'overprint', value: PsdBooleanValue(false)));
+        ..add(
+          PsDescriptorItem(
+            key: 'Clr ',
+            value: PsObjectValue(value: _colorDescriptor(color)),
+          ),
+        )
+        ..add(const PsDescriptorItem(key: 'overprint', value: PsBooleanValue(value: false)));
       if (gradient != null) {
-        items.add(PsdDescriptorItem(key: 'Grad', value: PsdObjectValue(_gradientDescriptor(gradient))));
+        items.add(
+          PsDescriptorItem(
+            key: 'Grad',
+            value: PsObjectValue(value: _gradientDescriptor(gradient)),
+          ),
+        );
       } else if (pattern != null) {
-        items.add(PsdDescriptorItem(key: 'Ptrn', value: PsdObjectValue(_patternDescriptor(pattern))));
+        items.add(
+          PsDescriptorItem(
+            key: 'Ptrn',
+            value: PsObjectValue(value: _patternDescriptor(pattern)),
+          ),
+        );
       }
     case PsdLayerEffectType.satin:
       items
-        ..add(PsdDescriptorItem(key: 'Clr ', value: PsdObjectValue(_colorDescriptor(color))))
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
+            key: 'Clr ',
+            value: PsObjectValue(value: _colorDescriptor(color)),
+          ),
+        )
+        ..add(
+          PsDescriptorItem(
             key: 'lagl',
-            value: PsdUnitFloatValue(unit: '#Ang', value: angle),
+            value: PsUnitFloatValue(unit: '#Ang', value: angle),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'Dstn',
-            value: PsdUnitFloatValue(unit: '#Pxl', value: distance),
+            value: PsUnitFloatValue(unit: '#Pxl', value: distance),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'blur',
-            value: PsdUnitFloatValue(unit: '#Pxl', value: size),
+            value: PsUnitFloatValue(unit: '#Pxl', value: size),
           ),
         )
-        ..add(PsdDescriptorItem(key: 'AntA', value: PsdBooleanValue(true)))
-        ..add(PsdDescriptorItem(key: 'Invr', value: PsdBooleanValue(false)))
-        ..add(PsdDescriptorItem(key: 'MpgS', value: PsdObjectValue(_linearContourDescriptor())));
+        ..add(const PsDescriptorItem(key: 'AntA', value: PsBooleanValue(value: true)))
+        ..add(const PsDescriptorItem(key: 'Invr', value: PsBooleanValue(value: false)))
+        ..add(
+          PsDescriptorItem(
+            key: 'MpgS',
+            value: PsObjectValue(value: _linearContourDescriptor()),
+          ),
+        );
     case PsdLayerEffectType.bevelEmboss:
       items
         ..add(
-          PsdDescriptorItem(
+          const PsDescriptorItem(
             key: 'hglM',
-            value: PsdEnumeratedValue(typeId: 'BlnM', value: 'Scrn'),
+            value: PsEnumeratedValue(typeId: 'BlnM', value: 'Scrn'),
           ),
         )
-        ..add(PsdDescriptorItem(key: 'hglC', value: PsdObjectValue(_colorDescriptor(color))))
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
+            key: 'hglC',
+            value: PsObjectValue(value: _colorDescriptor(color)),
+          ),
+        )
+        ..add(
+          PsDescriptorItem(
             key: 'hglO',
-            value: PsdUnitFloatValue(unit: '#Prc', value: opacity),
+            value: PsUnitFloatValue(unit: '#Prc', value: opacity),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          const PsDescriptorItem(
             key: 'sdwM',
-            value: PsdEnumeratedValue(typeId: 'BlnM', value: 'Mltp'),
+            value: PsEnumeratedValue(typeId: 'BlnM', value: 'Mltp'),
           ),
         )
-        ..add(PsdDescriptorItem(key: 'sdwC', value: PsdObjectValue(_colorDescriptor(PsdEffectColor.black))))
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
+            key: 'sdwC',
+            value: PsObjectValue(value: _colorDescriptor(PsdEffectColor.black)),
+          ),
+        )
+        ..add(
+          PsDescriptorItem(
             key: 'sdwO',
-            value: PsdUnitFloatValue(unit: '#Prc', value: opacity),
+            value: PsUnitFloatValue(unit: '#Prc', value: opacity),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          const PsDescriptorItem(
             key: 'bvlT',
-            value: PsdEnumeratedValue(typeId: 'bvlT', value: 'SfBL'),
+            value: PsEnumeratedValue(typeId: 'bvlT', value: 'SfBL'),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          const PsDescriptorItem(
             key: 'bvlS',
-            value: PsdEnumeratedValue(typeId: 'BESl', value: 'InrB'),
+            value: PsEnumeratedValue(typeId: 'BESl', value: 'InrB'),
           ),
         )
-        ..add(PsdDescriptorItem(key: 'uglg', value: PsdBooleanValue(useGlobalAngle)))
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
+            key: 'uglg',
+            value: PsBooleanValue(value: useGlobalAngle),
+          ),
+        )
+        ..add(
+          PsDescriptorItem(
             key: 'lagl',
-            value: PsdUnitFloatValue(unit: '#Ang', value: angle),
+            value: PsUnitFloatValue(unit: '#Ang', value: angle),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          const PsDescriptorItem(
             key: 'Lald',
-            value: PsdUnitFloatValue(unit: '#Ang', value: 30),
+            value: PsUnitFloatValue(unit: '#Ang', value: 30),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          const PsDescriptorItem(
             key: 'srgR',
-            value: PsdUnitFloatValue(unit: '#Prc', value: 100),
+            value: PsUnitFloatValue(unit: '#Prc', value: 100),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          PsDescriptorItem(
             key: 'blur',
-            value: PsdUnitFloatValue(unit: '#Pxl', value: size),
+            value: PsUnitFloatValue(unit: '#Pxl', value: size),
           ),
         )
         ..add(
-          PsdDescriptorItem(
+          const PsDescriptorItem(
             key: 'bvlD',
-            value: PsdEnumeratedValue(typeId: 'BESs', value: 'In  '),
+            value: PsEnumeratedValue(typeId: 'BESs', value: 'In  '),
           ),
         )
-        ..add(PsdDescriptorItem(key: 'TrnS', value: PsdObjectValue(_linearContourDescriptor())))
-        ..add(PsdDescriptorItem(key: 'antialiasGloss', value: PsdBooleanValue(false)))
         ..add(
-          PsdDescriptorItem(
-            key: 'Sftn',
-            value: PsdUnitFloatValue(unit: '#Pxl', value: 0),
+          PsDescriptorItem(
+            key: 'TrnS',
+            value: PsObjectValue(value: _linearContourDescriptor()),
           ),
         )
-        ..add(PsdDescriptorItem(key: 'useShape', value: PsdBooleanValue(false)))
-        ..add(PsdDescriptorItem(key: 'useTexture', value: PsdBooleanValue(false)));
+        ..add(const PsDescriptorItem(key: 'antialiasGloss', value: PsBooleanValue(value: false)))
+        ..add(
+          const PsDescriptorItem(
+            key: 'Sftn',
+            value: PsUnitFloatValue(unit: '#Pxl', value: 0),
+          ),
+        )
+        ..add(const PsDescriptorItem(key: 'useShape', value: PsBooleanValue(value: false)))
+        ..add(const PsDescriptorItem(key: 'useTexture', value: PsBooleanValue(value: false)));
     case PsdLayerEffectType.unknown:
       break;
   }
@@ -817,7 +934,7 @@ void _appendEffectProperties(
 
 /// Builds a modern semantic descriptor from a historical `lrFX` payload.
 PsdLayerEffects _decodeLegacyEffects(Uint8List bytes) {
-  final PsdBinaryReader reader = PsdBinaryReader(bytes);
+  final PsBinaryReader reader = PsBinaryReader(bytes: bytes);
   final int version = reader.readUint16();
   if (version != 0) {
     throw FormatException('Unsupported lrFX version $version');
@@ -831,7 +948,7 @@ PsdLayerEffects _decodeLegacyEffects(Uint8List bytes) {
     }
     final String key = reader.readString(4);
     final int length = reader.readLength(wide: false, label: 'legacy effect');
-    final PsdBinaryReader effect = reader.readReader(length);
+    final PsBinaryReader effect = reader.readReader(length);
     if (key == 'cmnS') {
       effect.readUint32();
       enabled = effect.readUint8() != 0;
@@ -844,7 +961,7 @@ PsdLayerEffects _decodeLegacyEffects(Uint8List bytes) {
 }
 
 /// Decodes one historical effect payload identified by [key].
-PsdLayerEffect? _decodeLegacyEffect(String key, PsdBinaryReader reader) => switch (key) {
+PsdLayerEffect? _decodeLegacyEffect(String key, PsBinaryReader reader) => switch (key) {
   'dsdw' => _decodeLegacyShadow(reader, PsdLayerEffectType.dropShadow),
   'isdw' => _decodeLegacyShadow(reader, PsdLayerEffectType.innerShadow),
   'oglw' => _decodeLegacyGlow(reader, PsdLayerEffectType.outerGlow),
@@ -855,7 +972,7 @@ PsdLayerEffect? _decodeLegacyEffect(String key, PsdBinaryReader reader) => switc
 };
 
 /// Decodes a historical outer or inner shadow.
-PsdLayerEffect _decodeLegacyShadow(PsdBinaryReader reader, PsdLayerEffectType type) {
+PsdLayerEffect _decodeLegacyShadow(PsBinaryReader reader, PsdLayerEffectType type) {
   reader.readUint32();
   final int size = reader.readInt32();
   final int spread = reader.readInt32();
@@ -883,7 +1000,7 @@ PsdLayerEffect _decodeLegacyShadow(PsdBinaryReader reader, PsdLayerEffectType ty
 }
 
 /// Decodes a historical outer or inner glow.
-PsdLayerEffect _decodeLegacyGlow(PsdBinaryReader reader, PsdLayerEffectType type) {
+PsdLayerEffect _decodeLegacyGlow(PsBinaryReader reader, PsdLayerEffectType type) {
   reader.readUint32();
   final int size = reader.readInt32();
   final int spread = reader.readInt32();
@@ -908,7 +1025,7 @@ PsdLayerEffect _decodeLegacyGlow(PsdBinaryReader reader, PsdLayerEffectType type
 }
 
 /// Decodes a historical solid color overlay.
-PsdLayerEffect _decodeLegacySolidFill(PsdBinaryReader reader) {
+PsdLayerEffect _decodeLegacySolidFill(PsBinaryReader reader) {
   reader.readUint32();
   reader.readString(4);
   final String blendMode = reader.readString(4);
@@ -926,7 +1043,7 @@ PsdLayerEffect _decodeLegacySolidFill(PsdBinaryReader reader) {
 }
 
 /// Decodes the common semantic portion of a historical bevel effect.
-PsdLayerEffect _decodeLegacyBevel(PsdBinaryReader reader) {
+PsdLayerEffect _decodeLegacyBevel(PsBinaryReader reader) {
   reader.readUint32();
   final int angle = reader.readInt32();
   final int strength = reader.readInt32();
@@ -951,7 +1068,7 @@ PsdLayerEffect _decodeLegacyBevel(PsdBinaryReader reader) {
 }
 
 /// Reads a ten-byte Photoshop legacy color record.
-PsdEffectColor _readLegacyColor(PsdBinaryReader reader, {PsdEffectColor fallback = PsdEffectColor.black}) {
+PsdEffectColor _readLegacyColor(PsBinaryReader reader, {PsdEffectColor fallback = PsdEffectColor.black}) {
   final int space = reader.readUint16();
   final List<int> components = <int>[for (int index = 0; index < 4; index++) reader.readUint16()];
   if (space != 0) {
@@ -961,31 +1078,31 @@ PsdEffectColor _readLegacyColor(PsdBinaryReader reader, {PsdEffectColor fallback
 }
 
 /// Reads a Boolean property from [descriptor].
-bool? _boolValue(PsdDescriptor descriptor, String key) => switch (descriptor.value(key)) {
-  PsdBooleanValue(:final bool value) => value,
+bool? _boolValue(PsDescriptor descriptor, String key) => switch (descriptor.value(key)) {
+  PsBooleanValue(:final bool value) => value,
   _ => null,
 };
 
 /// Reads a numeric property from [descriptor].
-double? _numberValue(PsdDescriptor descriptor, String key) => switch (descriptor.value(key)) {
-  PsdUnitFloatValue(:final double value) => value,
-  PsdDoubleValue(:final double value) => value,
-  PsdIntegerValue(:final int value) => value.toDouble(),
+double? _numberValue(PsDescriptor descriptor, String key) => switch (descriptor.value(key)) {
+  PsUnitFloatValue(:final double value) => value,
+  PsDoubleValue(:final double value) => value,
+  PsIntegerValue(:final int value) => value.toDouble(),
   _ => null,
 };
 
 /// Reads an enumeration identifier from [descriptor].
-String? _enumValue(PsdDescriptor descriptor, String key) => switch (descriptor.value(key)) {
-  PsdEnumeratedValue(:final String value) => value,
+String? _enumValue(PsDescriptor descriptor, String key) => switch (descriptor.value(key)) {
+  PsEnumeratedValue(:final String value) => value,
   _ => null,
 };
 
 /// Reads an RGB descriptor value.
-PsdEffectColor? _colorValue(PsdDescriptorValue? value) {
-  if (value is! PsdObjectValue) {
+PsdEffectColor? _colorValue(PsDescriptorValue? value) {
+  if (value is! PsObjectValue) {
     return null;
   }
-  final PsdDescriptor color = value.value;
+  final PsDescriptor color = value.value;
   final double? red = _numberValue(color, 'Rd  ');
   final double? green = _numberValue(color, 'Grn ');
   final double? blue = _numberValue(color, 'Bl  ');
@@ -996,16 +1113,16 @@ PsdEffectColor? _colorValue(PsdDescriptorValue? value) {
 }
 
 /// Reads a gradient descriptor value.
-PsdEffectGradient? _gradientValue(PsdDescriptorValue? value) {
-  if (value is! PsdObjectValue) {
+PsdEffectGradient? _gradientValue(PsDescriptorValue? value) {
+  if (value is! PsObjectValue) {
     return null;
   }
-  final PsdDescriptor gradient = value.value;
+  final PsDescriptor gradient = value.value;
   final List<PsdGradientColorStop> colors = <PsdGradientColorStop>[];
   final List<PsdGradientOpacityStop> opacities = <PsdGradientOpacityStop>[];
-  if (gradient.value('Clrs') case PsdListValue(:final List<PsdDescriptorValue> values)) {
-    for (final PsdDescriptorValue value in values) {
-      if (value case PsdObjectValue(:final PsdDescriptor value)) {
+  if (gradient.value('Clrs') case PsListValue(:final List<PsDescriptorValue> values)) {
+    for (final PsDescriptorValue value in values) {
+      if (value case PsObjectValue(:final PsDescriptor value)) {
         final PsdEffectColor? color = _colorValue(value.value('Clr '));
         if (color != null) {
           colors.add(
@@ -1019,9 +1136,9 @@ PsdEffectGradient? _gradientValue(PsdDescriptorValue? value) {
       }
     }
   }
-  if (gradient.value('Trns') case PsdListValue(:final List<PsdDescriptorValue> values)) {
-    for (final PsdDescriptorValue value in values) {
-      if (value case PsdObjectValue(:final PsdDescriptor value)) {
+  if (gradient.value('Trns') case PsListValue(:final List<PsDescriptorValue> values)) {
+    for (final PsDescriptorValue value in values) {
+      if (value case PsObjectValue(:final PsDescriptor value)) {
         opacities.add(
           PsdGradientOpacityStop(
             opacity: _numberValue(value, 'Opct') ?? 100,
@@ -1036,134 +1153,182 @@ PsdEffectGradient? _gradientValue(PsdDescriptorValue? value) {
 }
 
 /// Reads a pattern descriptor value.
-PsdEffectPattern? _patternValue(PsdDescriptorValue? value) {
-  if (value is! PsdObjectValue) {
+PsdEffectPattern? _patternValue(PsDescriptorValue? value) {
+  if (value is! PsObjectValue) {
     return null;
   }
   return PsdEffectPattern(name: _stringValue(value.value, 'Nm  ') ?? '', id: _stringValue(value.value, 'Idnt') ?? '');
 }
 
 /// Reads a Unicode string property and removes its terminal NUL.
-String? _stringValue(PsdDescriptor descriptor, String key) => switch (descriptor.value(key)) {
-  PsdStringValue(:final String value) => value.endsWith('\u0000') ? value.substring(0, value.length - 1) : value,
+String? _stringValue(PsDescriptor descriptor, String key) => switch (descriptor.value(key)) {
+  PsStringValue(:final String value) => value.endsWith('\u0000') ? value.substring(0, value.length - 1) : value,
   _ => null,
 };
 
 /// Creates an RGB action descriptor for [color].
-PsdDescriptor _colorDescriptor(PsdEffectColor color) => PsdDescriptor(
+PsDescriptor _colorDescriptor(PsdEffectColor color) => PsDescriptor(
   name: '\u0000',
   classId: 'RGBC',
-  items: <PsdDescriptorItem>[
-    PsdDescriptorItem(key: 'Rd  ', value: PsdDoubleValue(color.red.toDouble())),
-    PsdDescriptorItem(key: 'Grn ', value: PsdDoubleValue(color.green.toDouble())),
-    PsdDescriptorItem(key: 'Bl  ', value: PsdDoubleValue(color.blue.toDouble())),
+  items: <PsDescriptorItem>[
+    PsDescriptorItem(
+      key: 'Rd  ',
+      value: PsDoubleValue(value: color.red.toDouble()),
+    ),
+    PsDescriptorItem(
+      key: 'Grn ',
+      value: PsDoubleValue(value: color.green.toDouble()),
+    ),
+    PsDescriptorItem(
+      key: 'Bl  ',
+      value: PsDoubleValue(value: color.blue.toDouble()),
+    ),
   ],
 );
 
 /// Creates Photoshop's default two-point linear contour descriptor.
-PsdDescriptor _linearContourDescriptor() => PsdDescriptor(
+PsDescriptor _linearContourDescriptor() => PsDescriptor(
   name: '\u0000',
   classId: 'ShpC',
-  items: <PsdDescriptorItem>[
-    PsdDescriptorItem(key: 'Nm  ', value: PsdStringValue('Linear\u0000')),
-    PsdDescriptorItem(
+  items: <PsDescriptorItem>[
+    const PsDescriptorItem(
+      key: 'Nm  ',
+      value: PsStringValue(value: 'Linear\u0000'),
+    ),
+    PsDescriptorItem(
       key: 'Crv ',
-      value: PsdListValue(<PsdDescriptorValue>[
-        PsdObjectValue(_curvePointDescriptor(0, 0)),
-        PsdObjectValue(_curvePointDescriptor(255, 255)),
-      ]),
+      value: PsListValue(
+        values: <PsDescriptorValue>[
+          PsObjectValue(value: _curvePointDescriptor(0, 0)),
+          PsObjectValue(value: _curvePointDescriptor(255, 255)),
+        ],
+      ),
     ),
   ],
 );
 
 /// Creates one point in a Photoshop contour curve.
-PsdDescriptor _curvePointDescriptor(double horizontal, double vertical) => PsdDescriptor(
+PsDescriptor _curvePointDescriptor(double horizontal, double vertical) => PsDescriptor(
   name: '\u0000',
   classId: 'CrPt',
-  items: <PsdDescriptorItem>[
-    PsdDescriptorItem(key: 'Hrzn', value: PsdDoubleValue(horizontal)),
-    PsdDescriptorItem(key: 'Vrtc', value: PsdDoubleValue(vertical)),
+  items: <PsDescriptorItem>[
+    PsDescriptorItem(
+      key: 'Hrzn',
+      value: PsDoubleValue(value: horizontal),
+    ),
+    PsDescriptorItem(
+      key: 'Vrtc',
+      value: PsDoubleValue(value: vertical),
+    ),
   ],
 );
 
 /// Creates a two-dimensional Photoshop point descriptor.
-PsdDescriptor _pointDescriptor(double horizontal, double vertical, {String? unit}) => PsdDescriptor(
+PsDescriptor _pointDescriptor(double horizontal, double vertical, {String? unit}) => PsDescriptor(
   name: '\u0000',
   classId: 'Pnt ',
-  items: <PsdDescriptorItem>[
-    PsdDescriptorItem(
+  items: <PsDescriptorItem>[
+    PsDescriptorItem(
       key: 'Hrzn',
-      value: unit == null ? PsdDoubleValue(horizontal) : PsdUnitFloatValue(unit: unit, value: horizontal),
+      value: unit == null ? PsDoubleValue(value: horizontal) : PsUnitFloatValue(unit: unit, value: horizontal),
     ),
-    PsdDescriptorItem(
+    PsDescriptorItem(
       key: 'Vrtc',
-      value: unit == null ? PsdDoubleValue(vertical) : PsdUnitFloatValue(unit: unit, value: vertical),
+      value: unit == null ? PsDoubleValue(value: vertical) : PsUnitFloatValue(unit: unit, value: vertical),
     ),
   ],
 );
 
 /// Creates an action descriptor for [gradient].
-PsdDescriptor _gradientDescriptor(PsdEffectGradient gradient) => PsdDescriptor(
+PsDescriptor _gradientDescriptor(PsdEffectGradient gradient) => PsDescriptor(
   name: '${gradient.name}\u0000',
   classId: 'Grdn',
-  items: <PsdDescriptorItem>[
-    PsdDescriptorItem(key: 'Nm  ', value: PsdStringValue('${gradient.name}\u0000')),
-    PsdDescriptorItem(
+  items: <PsDescriptorItem>[
+    PsDescriptorItem(
+      key: 'Nm  ',
+      value: PsStringValue(value: '${gradient.name}\u0000'),
+    ),
+    const PsDescriptorItem(
       key: 'GrdF',
-      value: PsdEnumeratedValue(typeId: 'GrdF', value: 'CstS'),
+      value: PsEnumeratedValue(typeId: 'GrdF', value: 'CstS'),
     ),
-    PsdDescriptorItem(key: 'Intr', value: PsdDoubleValue(4096)),
-    PsdDescriptorItem(
+    const PsDescriptorItem(key: 'Intr', value: PsDoubleValue(value: 4096)),
+    PsDescriptorItem(
       key: 'Clrs',
-      value: PsdListValue(<PsdDescriptorValue>[
-        for (final PsdGradientColorStop stop in gradient.colors)
-          PsdObjectValue(
-            PsdDescriptor(
-              name: '\u0000',
-              classId: 'Clrt',
-              items: <PsdDescriptorItem>[
-                PsdDescriptorItem(key: 'Clr ', value: PsdObjectValue(_colorDescriptor(stop.color))),
-                PsdDescriptorItem(
-                  key: 'Type',
-                  value: PsdEnumeratedValue(typeId: 'Clry', value: 'UsrS'),
-                ),
-                PsdDescriptorItem(key: 'Lctn', value: PsdIntegerValue(stop.location)),
-                PsdDescriptorItem(key: 'Mdpn', value: PsdIntegerValue(stop.midpoint)),
-              ],
+      value: PsListValue(
+        values: <PsDescriptorValue>[
+          for (final PsdGradientColorStop stop in gradient.colors)
+            PsObjectValue(
+              value: PsDescriptor(
+                name: '\u0000',
+                classId: 'Clrt',
+                items: <PsDescriptorItem>[
+                  PsDescriptorItem(
+                    key: 'Clr ',
+                    value: PsObjectValue(value: _colorDescriptor(stop.color)),
+                  ),
+                  const PsDescriptorItem(
+                    key: 'Type',
+                    value: PsEnumeratedValue(typeId: 'Clry', value: 'UsrS'),
+                  ),
+                  PsDescriptorItem(
+                    key: 'Lctn',
+                    value: PsIntegerValue(value: stop.location),
+                  ),
+                  PsDescriptorItem(
+                    key: 'Mdpn',
+                    value: PsIntegerValue(value: stop.midpoint),
+                  ),
+                ],
+              ),
             ),
-          ),
-      ]),
+        ],
+      ),
     ),
-    PsdDescriptorItem(
+    PsDescriptorItem(
       key: 'Trns',
-      value: PsdListValue(<PsdDescriptorValue>[
-        for (final PsdGradientOpacityStop stop in gradient.opacities)
-          PsdObjectValue(
-            PsdDescriptor(
-              name: '\u0000',
-              classId: 'TrnS',
-              items: <PsdDescriptorItem>[
-                PsdDescriptorItem(
-                  key: 'Opct',
-                  value: PsdUnitFloatValue(unit: '#Prc', value: stop.opacity),
-                ),
-                PsdDescriptorItem(key: 'Lctn', value: PsdIntegerValue(stop.location)),
-                PsdDescriptorItem(key: 'Mdpn', value: PsdIntegerValue(stop.midpoint)),
-              ],
+      value: PsListValue(
+        values: <PsDescriptorValue>[
+          for (final PsdGradientOpacityStop stop in gradient.opacities)
+            PsObjectValue(
+              value: PsDescriptor(
+                name: '\u0000',
+                classId: 'TrnS',
+                items: <PsDescriptorItem>[
+                  PsDescriptorItem(
+                    key: 'Opct',
+                    value: PsUnitFloatValue(unit: '#Prc', value: stop.opacity),
+                  ),
+                  PsDescriptorItem(
+                    key: 'Lctn',
+                    value: PsIntegerValue(value: stop.location),
+                  ),
+                  PsDescriptorItem(
+                    key: 'Mdpn',
+                    value: PsIntegerValue(value: stop.midpoint),
+                  ),
+                ],
+              ),
             ),
-          ),
-      ]),
+        ],
+      ),
     ),
   ],
 );
 
 /// Creates an action descriptor for [pattern].
-PsdDescriptor _patternDescriptor(PsdEffectPattern pattern) => PsdDescriptor(
+PsDescriptor _patternDescriptor(PsdEffectPattern pattern) => PsDescriptor(
   name: '\u0000',
   classId: 'Ptrn',
-  items: <PsdDescriptorItem>[
-    PsdDescriptorItem(key: 'Nm  ', value: PsdStringValue('${pattern.name}\u0000')),
-    PsdDescriptorItem(key: 'Idnt', value: PsdStringValue('${pattern.id}\u0000')),
+  items: <PsDescriptorItem>[
+    PsDescriptorItem(
+      key: 'Nm  ',
+      value: PsStringValue(value: '${pattern.name}\u0000'),
+    ),
+    PsDescriptorItem(
+      key: 'Idnt',
+      value: PsStringValue(value: '${pattern.id}\u0000'),
+    ),
   ],
 );
 

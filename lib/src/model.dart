@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 
+import 'package:pscore/pscore.dart';
 import 'package:psdkit/src/adjustments.dart';
 import 'package:psdkit/src/effects.dart';
-import 'package:psdkit/src/exceptions.dart';
 import 'package:psdkit/src/paths.dart';
 import 'package:psdkit/src/smart_objects.dart';
 import 'package:psdkit/src/text.dart';
@@ -10,91 +10,91 @@ import 'package:psdkit/src/text.dart';
 /// Selects the classic PSD or large-document PSB container.
 enum PsdVersion {
   /// Photoshop document, with 32-bit section lengths.
-  psd(1),
+  psd(code: 1),
 
   /// Photoshop large document, with selected 64-bit section lengths.
-  psb(2);
+  psb(code: 2);
 
   /// Value stored in the file header.
   final int code;
 
   /// Creates a version from its stored header [code].
-  const PsdVersion(this.code);
+  const PsdVersion({required this.code});
 }
 
 /// Identifies the document colour model.
 enum PsdColorMode {
   /// One bit per pixel.
-  bitmap(0),
+  bitmap(code: 0),
 
   /// One grayscale component.
-  grayscale(1),
+  grayscale(code: 1),
 
   /// Indexed colour using the color-mode palette.
-  indexed(2),
+  indexed(code: 2),
 
   /// Red, green, and blue components.
-  rgb(3),
+  rgb(code: 3),
 
   /// Cyan, magenta, yellow, and black components.
-  cmyk(4),
+  cmyk(code: 4),
 
   /// An arbitrary collection of channels.
-  multichannel(7),
+  multichannel(code: 7),
 
   /// Grayscale interpreted through duotone settings.
-  duotone(8),
+  duotone(code: 8),
 
   /// CIE L*a*b* components.
-  lab(9);
+  lab(code: 9);
 
   /// Value stored in the file header.
   final int code;
 
   /// Creates a colour mode from its stored header [code].
-  const PsdColorMode(this.code);
+  const PsdColorMode({required this.code});
 }
 
 /// Selects the compression used for a channel or merged image.
 enum PsdCompression {
   /// Uncompressed planar samples.
-  raw(0),
+  raw(code: 0),
 
   /// PackBits compression applied independently to every row.
-  rle(1),
+  rle(code: 1),
 
   /// A zlib stream without prediction.
-  zip(2),
+  zip(code: 2),
 
   /// A zlib stream after horizontal prediction.
-  zipPrediction(3);
+  zipPrediction(code: 3);
 
   /// Value stored before the compressed bytes.
   final int code;
 
   /// Creates a compression mode from its stored [code].
-  const PsdCompression(this.code);
+  const PsdCompression({required this.code});
 }
 
 /// Describes the semantic role of a layer record in a group hierarchy.
 enum PsdSectionType {
   /// A regular layer.
-  other(0),
+  other(code: 0),
 
   /// The visible start of an expanded group.
-  openFolder(1),
+  openFolder(code: 1),
 
   /// The visible start of a collapsed group.
-  closedFolder(2),
+  closedFolder(code: 2),
 
   /// The hidden record ending a group.
-  boundingDivider(3);
+  boundingDivider(code: 3);
 
   /// Value stored in an `lsct` tagged block.
   final int code;
 
   /// Creates a section type from its stored [code].
-  const PsdSectionType(this.code);
+  const PsdSectionType({required this.code});
 }
 
 /// A rectangle in document pixel coordinates.
@@ -602,10 +602,10 @@ final class PsdDocument {
     final Set<int> ids = <int>{};
     for (final PsdNamedPath path in paths) {
       if (path.resourceId < 2000 || path.resourceId > 2997) {
-        throw PsdWriteException('Named path resource id ${path.resourceId} must be from 2000 through 2997');
+        throw PsWriteException(message: 'Named path resource id ${path.resourceId} must be from 2000 through 2997');
       }
       if (!ids.add(path.resourceId)) {
-        throw PsdWriteException('Duplicate named path resource id ${path.resourceId}');
+        throw PsWriteException(message: 'Duplicate named path resource id ${path.resourceId}');
       }
     }
     return PsdDocument(

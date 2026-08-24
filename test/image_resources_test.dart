@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:psdkit/psdkit.dart';
 import 'package:test/test.dart';
 
+/// Exercises typed Photoshop image-resource codecs.
 void main() {
   group('image resources', () {
     test('round-trips resolution, colors, flags, and guides', () {
@@ -70,7 +71,7 @@ void main() {
       profile.setRange(16, 20, 'RGB '.codeUnits);
       profile.setRange(20, 24, 'XYZ '.codeUnits);
       profile.setRange(36, 40, 'acsp'.codeUnits);
-      final PsdIccProfileResource icc = PsdIccProfileResource(profile);
+      final PsdIccProfileResource icc = PsdIccProfileResource(data: profile);
       final PsdTextImageResource xmp = PsdTextImageResource(resourceId: PsdImageResourceIds.xmp, value: '<x:xmpmeta>été</x:xmpmeta>', utf8: true);
 
       expect((_roundTrip(thumbnail) as PsdThumbnailResource).jpeg, isTrue);
@@ -94,7 +95,7 @@ void main() {
             PsdAlphaChannelDisplay(colorSpace: 0, components: <int>[65535, 0, 32768, 0], opacity: 75, mode: 2),
           ],
         ),
-        const PsdUrlList(<PsdUrlItem>[PsdUrlItem(number: 1, id: 42, name: 'https://example.com')]),
+        const PsdUrlList(items: <PsdUrlItem>[PsdUrlItem(number: 1, id: 42, name: 'https://example.com')]),
         const PsdVersionInfo(version: 1, hasRealMergedData: true, writerName: 'PsdKit', readerName: 'Photoshop', fileVersion: 1),
       ];
 
@@ -108,24 +109,32 @@ void main() {
     });
 
     test('round-trips descriptor resources, slices, and paths', () {
-      final PsdDescriptor descriptor = PsdDescriptor(
+      final PsDescriptor descriptor = PsDescriptor(
         name: '',
         classId: 'null',
-        items: <PsdDescriptorItem>[
-          PsdDescriptorItem(key: 'Nm  ', value: PsdStringValue('Item')),
-          PsdDescriptorItem(
-            key: 'null',
-            value: PsdReferenceValue(<PsdDescriptorValue>[
-              PsdPropertyValue(name: '', classId: 'Dcmn', keyId: 'Ttl '),
-              PsdReferenceClassValue(name: '', classId: 'Lyr '),
-              PsdEnumeratedReferenceValue(name: '', classId: 'Lyr ', typeId: 'Ordn', value: 'Trgt'),
-              PsdOffsetValue(name: '', classId: 'Lyr ', value: 2),
-              PsdIdentifierValue(7),
-              PsdIndexValue(3),
-              PsdNameValue(name: '', classId: 'Lyr ', value: 'Calque'),
-            ]),
+        items: <PsDescriptorItem>[
+          const PsDescriptorItem(
+            key: 'Nm  ',
+            value: PsStringValue(value: 'Item'),
           ),
-          PsdDescriptorItem(key: 'Pth ', value: PsdPathValue(Uint8List.fromList(<int>[1, 2, 3]))),
+          PsDescriptorItem(
+            key: 'null',
+            value: PsReferenceValue(
+              values: <PsDescriptorValue>[
+                const PsPropertyValue(name: '', classId: 'Dcmn', keyId: 'Ttl '),
+                const PsReferenceClassValue(name: '', classId: 'Lyr '),
+                PsEnumeratedReferenceValue(name: '', classId: 'Lyr ', typeId: 'Ordn', value: 'Trgt'),
+                const PsOffsetValue(name: '', classId: 'Lyr ', value: 2),
+                const PsIdentifierValue(value: 7),
+                const PsIndexValue(value: 3),
+                const PsNameValue(name: '', classId: 'Lyr ', value: 'Calque'),
+              ],
+            ),
+          ),
+          PsDescriptorItem(
+            key: 'Pth ',
+            value: PsPathValue(value: Uint8List.fromList(<int>[1, 2, 3])),
+          ),
         ],
       );
       final PsdDescriptorImageResource layerComps = PsdDescriptorImageResource(
@@ -145,17 +154,17 @@ void main() {
           PsdSubpath(
             closed: true,
             knots: <PsdBezierKnot>[
-              PsdBezierKnot.corner(PsdPathPoint(x: 0, y: 0)),
-              PsdBezierKnot.corner(PsdPathPoint(x: 1, y: 1)),
+              PsdBezierKnot.corner(anchor: PsdPathPoint(x: 0, y: 0)),
+              PsdBezierKnot.corner(anchor: PsdPathPoint(x: 1, y: 1)),
             ],
           ),
         ],
       );
 
-      final PsdDescriptor decodedDescriptor = (_roundTrip(layerComps) as PsdDescriptorImageResource).descriptor;
-      expect(decodedDescriptor.value('Nm  '), isA<PsdStringValue>());
-      expect((decodedDescriptor.value('null') as PsdReferenceValue).values, hasLength(7));
-      expect(decodedDescriptor.value('Pth '), isA<PsdPathValue>());
+      final PsDescriptor decodedDescriptor = (_roundTrip(layerComps) as PsdDescriptorImageResource).descriptor;
+      expect(decodedDescriptor.value('Nm  '), isA<PsStringValue>());
+      expect((decodedDescriptor.value('null') as PsReferenceValue).values, hasLength(7));
+      expect(decodedDescriptor.value('Pth '), isA<PsPathValue>());
       expect((_roundTrip(slices) as PsdSlicesResource).version, 8);
       expect((_roundTrip(PsdPathImageResource(resourceId: 2000, path: path)) as PsdPathImageResource).path.subpaths.single.knots, hasLength(2));
     });

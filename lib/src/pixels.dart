@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:psdkit/src/exceptions.dart';
+import 'package:pscore/pscore.dart';
 import 'package:psdkit/src/model.dart';
 
 /// An 8-bit, straight-alpha RGBA pixel buffer.
@@ -27,7 +27,7 @@ abstract final class PsdPixels {
   static List<Uint8List> encodeRgb(PsdRgbaImage image, {bool includeAlpha = true}) {
     final int pixelCount = image.width * image.height;
     if (image.bytes.length != pixelCount * 4) {
-      throw PsdWriteException('RGBA image has ${image.bytes.length} bytes; expected ${pixelCount * 4}');
+      throw PsWriteException(message: 'RGBA image has ${image.bytes.length} bytes; expected ${pixelCount * 4}');
     }
     final List<Uint8List> result = <Uint8List>[
       Uint8List(pixelCount),
@@ -65,7 +65,7 @@ abstract final class PsdPixels {
     for (int id = 0; id < baseChannels; id++) {
       final PsdChannel? channel = layer.channel(id);
       if (channel == null) {
-        throw PsdFormatException('Layer "${layer.name}" is missing color channel $id');
+        throw PsFormatException(message: 'Layer "${layer.name}" is missing color channel $id');
       }
       components.add(channel.data);
     }
@@ -96,10 +96,12 @@ abstract final class PsdPixels {
   }) {
     final int requiredComponents = _baseChannels(colorMode);
     if (components.length < requiredComponents) {
-      throw PsdFormatException('${colorMode.name} needs $requiredComponents color channels; found ${components.length}');
+      throw PsFormatException(message: '${colorMode.name} needs $requiredComponents color channels; found ${components.length}');
     }
     final int pixelCount = width * height;
     final Uint8List output = Uint8List(pixelCount * 4);
+
+    /// Reads one component sample using the document depth.
     int sample(Uint8List bytes, int pixel, {bool bitmap = false}) => _sample(bytes, pixel, width, depth, bitmap: bitmap);
     for (int pixel = 0; pixel < pixelCount; pixel++) {
       final List<int> color = switch (colorMode) {
@@ -151,7 +153,7 @@ int _sample(Uint8List bytes, int pixel, int width, int depth, {bool bitmap = fal
       }
       return (value.clamp(0.0, 1.0) * 255).round();
   }
-  throw PsdFormatException('Unsupported sample depth $depth');
+  throw PsFormatException(message: 'Unsupported sample depth $depth');
 }
 
 /// Expands one grayscale [value] into three RGB components.
@@ -160,7 +162,7 @@ List<int> _gray(int value) => <int>[value, value, value];
 /// Resolves an indexed-colour [index] through the planar [palette].
 List<int> _indexed(Uint8List palette, int index) {
   if (palette.length < 768) {
-    throw const PsdFormatException('Indexed color data must contain a 768-byte palette');
+    throw const PsFormatException(message: 'Indexed color data must contain a 768-byte palette');
   }
   return <int>[palette[index], palette[256 + index], palette[512 + index]];
 }

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:psdkit/psdkit.dart';
 import 'package:test/test.dart';
 
+/// Exercises Photoshop vector-path encoding and decoding.
 void main() {
   group('PsdVectorPath', () {
     test('round-trips closed and open cubic Bezier subpaths', () {
@@ -18,7 +19,7 @@ void main() {
                 anchor: PsdPathPoint(x: 0.25, y: 0.25),
                 outgoing: PsdPathPoint(x: 0.375, y: 0.25),
               ),
-              PsdBezierKnot.corner(PsdPathPoint(x: 0.75, y: 0.75)),
+              PsdBezierKnot.corner(anchor: PsdPathPoint(x: 0.75, y: 0.75)),
             ],
           ),
           PsdSubpath(
@@ -80,7 +81,7 @@ void main() {
             PsdSubpath(
               closed: true,
               knots: <PsdBezierKnot>[
-                PsdBezierKnot.corner(PsdPathPoint(x: 0.25, y: 0.5)),
+                PsdBezierKnot.corner(anchor: PsdPathPoint(x: 0.25, y: 0.5)),
               ],
             ),
           ],
@@ -148,9 +149,9 @@ void main() {
                 PsdSubpath(
                   closed: true,
                   knots: <PsdBezierKnot>[
-                    PsdBezierKnot.corner(PsdPathPoint(x: 0, y: 0)),
-                    PsdBezierKnot.corner(PsdPathPoint(x: 1, y: 0)),
-                    PsdBezierKnot.corner(PsdPathPoint(x: 1, y: 1)),
+                    PsdBezierKnot.corner(anchor: PsdPathPoint(x: 0, y: 0)),
+                    PsdBezierKnot.corner(anchor: PsdPathPoint(x: 1, y: 0)),
+                    PsdBezierKnot.corner(anchor: PsdPathPoint(x: 1, y: 1)),
                   ],
                 ),
               ],

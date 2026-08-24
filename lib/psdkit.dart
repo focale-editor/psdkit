@@ -1,11 +1,11 @@
 /// A pure Dart PSD and PSB reader and writer without Flutter or native code.
 library;
 
+export 'package:pscore/pscore.dart';
+
 export 'src/adjustments.dart';
 export 'src/codec.dart';
-export 'src/descriptor.dart';
 export 'src/effects.dart';
-export 'src/exceptions.dart';
 export 'src/image_resources.dart';
 export 'src/model.dart';
 export 'src/paths.dart';

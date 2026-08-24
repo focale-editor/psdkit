@@ -3,21 +3,27 @@ import 'dart:typed_data';
 import 'package:psdkit/psdkit.dart';
 import 'package:test/test.dart';
 
+/// Exercises smart-object descriptors and linked resources.
 void main() {
   group('smart objects', () {
     test('round-trips and edits modern placed-layer descriptors', () {
       final PsdPlacedTransform transform = _transform();
       final PsdDescriptorSmartObject source = PsdDescriptorSmartObject(
-        descriptor: PsdDescriptor(
+        descriptor: PsDescriptor(
           name: '',
           classId: 'null',
-          items: <PsdDescriptorItem>[
-            PsdDescriptorItem(key: 'Idnt', value: PsdStringValue('resource-id\u0000')),
-            PsdDescriptorItem(
+          items: <PsDescriptorItem>[
+            const PsDescriptorItem(
+              key: 'Idnt',
+              value: PsStringValue(value: 'resource-id\u0000'),
+            ),
+            PsDescriptorItem(
               key: 'Trnf',
-              value: PsdListValue(<PsdDescriptorValue>[
-                for (final double coordinate in transform.toList()) PsdDoubleValue(coordinate),
-              ]),
+              value: PsListValue(
+                values: <PsDescriptorValue>[
+                  for (final double coordinate in transform.toList()) PsDoubleValue(value: coordinate),
+                ],
+              ),
             ),
           ],
         ),
@@ -53,7 +59,7 @@ void main() {
         id: 'legacy-id',
         transform: _transform(),
         warp: const PsdVersionedDescriptor(
-          descriptor: PsdDescriptor(name: '', classId: 'warp'),
+          descriptor: PsDescriptor(name: '', classId: 'warp'),
         ),
       );
       final Uint8List bytes = PsdSmartObjectCodec.encode(source);
@@ -66,21 +72,21 @@ void main() {
     });
 
     test('round-trips object-array descriptor values', () {
-      final PsdDescriptor source = PsdDescriptor(
+      const PsDescriptor source = PsDescriptor(
         name: '',
         classId: 'null',
-        items: <PsdDescriptorItem>[
-          PsdDescriptorItem(
+        items: <PsDescriptorItem>[
+          PsDescriptorItem(
             key: 'quiltWarp',
-            value: PsdObjectArrayValue(
+            value: PsObjectArrayValue(
               itemsCount: 2,
-              value: PsdDescriptor(
+              value: PsDescriptor(
                 name: '',
                 classId: 'rationalPoint',
-                items: <PsdDescriptorItem>[
-                  PsdDescriptorItem(
+                items: <PsDescriptorItem>[
+                  PsDescriptorItem(
                     key: 'Hrzn',
-                    value: PsdUnitFloatsValue(unit: '#Pxl', values: <double>[1, 2]),
+                    value: PsUnitFloatsValue(unit: '#Pxl', values: <double>[1, 2]),
                   ),
                 ],
               ),
@@ -89,14 +95,14 @@ void main() {
         ],
       );
 
-      final Uint8List bytes = PsdDescriptorCodec.encode(source);
-      final PsdDescriptor decoded = PsdDescriptorCodec.decode(bytes);
-      final PsdObjectArrayValue array = decoded.value('quiltWarp')! as PsdObjectArrayValue;
+      final Uint8List bytes = PsDescriptorCodec.encode(source);
+      final PsDescriptor decoded = PsDescriptorCodec.decode(bytes);
+      final PsObjectArrayValue array = decoded.value('quiltWarp')! as PsObjectArrayValue;
 
       expect(array.itemsCount, 2);
       expect(array.value.classId, 'rationalPoint');
-      expect((array.value.value('Hrzn')! as PsdUnitFloatsValue).values, orderedEquals(<double>[1, 2]));
-      expect(PsdDescriptorCodec.encode(decoded), orderedEquals(bytes));
+      expect((array.value.value('Hrzn')! as PsUnitFloatsValue).values, orderedEquals(<double>[1, 2]));
+      expect(PsDescriptorCodec.encode(decoded), orderedEquals(bytes));
     });
 
     test('round-trips embedded and external linked resources', () {
@@ -116,11 +122,16 @@ void main() {
         id: 'external-id',
         name: 'linked.psd',
         fileType: '8BPS',
-        linkedFileDescriptor: PsdVersionedDescriptor(
-          descriptor: PsdDescriptor(
+        linkedFileDescriptor: const PsdVersionedDescriptor(
+          descriptor: PsDescriptor(
             name: '',
             classId: 'null',
-            items: <PsdDescriptorItem>[PsdDescriptorItem(key: 'full', value: PsdStringValue('/images/linked.psd'))],
+            items: <PsDescriptorItem>[
+              PsDescriptorItem(
+                key: 'full',
+                value: PsStringValue(value: '/images/linked.psd'),
+              ),
+            ],
           ),
         ),
         timestamp: const PsdLinkedResourceTimestamp(year: 2026, month: 8, day: 22, hour: 12, minute: 30, seconds: 15.5),
@@ -141,10 +152,15 @@ void main() {
 
     test('links smart-object layers to embedded files through the document', () {
       final PsdDescriptorSmartObject smartObject = PsdDescriptorSmartObject(
-        descriptor: PsdDescriptor(
+        descriptor: const PsDescriptor(
           name: '',
           classId: 'null',
-          items: <PsdDescriptorItem>[PsdDescriptorItem(key: 'Idnt', value: PsdStringValue('asset-id\u0000'))],
+          items: <PsDescriptorItem>[
+            PsDescriptorItem(
+              key: 'Idnt',
+              value: PsStringValue(value: 'asset-id\u0000'),
+            ),
+          ],
         ),
       );
       final PsdLayer layer = PsdLayer(
@@ -181,6 +197,7 @@ void main() {
   });
 }
 
+/// Builds the representative rectangular placed-layer transform.
 PsdPlacedTransform _transform() => const PsdPlacedTransform(
   topLeftX: 0,
   topLeftY: 0,

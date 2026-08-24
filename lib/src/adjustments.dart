@@ -1,8 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:psdkit/src/binary.dart';
-import 'package:psdkit/src/descriptor.dart';
-import 'package:psdkit/src/exceptions.dart';
+import 'package:pscore/pscore.dart';
 
 /// Keys used by Photoshop fill and adjustment layers.
 const Set<String> psdAdjustmentKeys = <String>{
@@ -589,7 +587,7 @@ final class PsdDescriptorAdjustment extends PsdAdjustment {
   final int descriptorVersion;
 
   /// Complete editable action descriptor.
-  final PsdDescriptor descriptor;
+  final PsDescriptor descriptor;
 
   /// Uninterpreted bytes following the descriptor.
   final Uint8List trailingData;
@@ -605,7 +603,7 @@ final class PsdDescriptorAdjustment extends PsdAdjustment {
   }) : trailingData = trailingData ?? Uint8List(0);
 
   /// Returns a copy whose descriptor property [key] is [value].
-  PsdDescriptorAdjustment withProperty(String key, PsdDescriptorValue value) => PsdDescriptorAdjustment(
+  PsdDescriptorAdjustment withProperty(String key, PsDescriptorValue value) => PsdDescriptorAdjustment(
     blockKey: blockKey,
     type: type,
     version: version,
@@ -637,10 +635,10 @@ abstract final class PsdAdjustmentCodec {
   /// Decodes one adjustment [data] selected by its tagged-block [key].
   static PsdAdjustment decode(Uint8List data, {required String key}) {
     if (!psdAdjustmentKeys.contains(key)) {
-      throw PsdFormatException('Unsupported adjustment key "$key"', data, 0);
+      throw PsFormatException(message: 'Unsupported adjustment key "$key"', source: data, offset: 0);
     }
     try {
-      final PsdBinaryReader reader = PsdBinaryReader(data);
+      final PsBinaryReader reader = PsBinaryReader(bytes: data);
       return switch (key) {
         'brit' => _readBrightnessContrast(reader),
         'levl' => _readLevels(reader),
@@ -656,7 +654,7 @@ abstract final class PsdAdjustmentCodec {
         'SoCo' || 'GdFl' || 'PtFl' || 'vibA' || 'blwh' || 'clrL' => _readDescriptorAdjustment(reader, key),
         _ => PsdRawAdjustment(blockKey: key, type: _typeForKey(key), data: data),
       };
-    } on PsdFormatException {
+    } on PsFormatException {
       return PsdRawAdjustment(blockKey: key, type: _typeForKey(key), data: data);
     }
   }
@@ -672,7 +670,7 @@ abstract final class PsdAdjustmentCodec {
 
   /// Encodes one semantic [adjustment] payload.
   static Uint8List encode(PsdAdjustment adjustment) {
-    final PsdBinaryWriter writer = PsdBinaryWriter();
+    final PsBinaryWriter writer = PsBinaryWriter();
     switch (adjustment) {
       case PsdBrightnessContrastAdjustment():
         writer
@@ -718,7 +716,7 @@ abstract final class PsdAdjustmentCodec {
 }
 
 /// Reads a brightness/contrast payload.
-PsdBrightnessContrastAdjustment _readBrightnessContrast(PsdBinaryReader reader) => PsdBrightnessContrastAdjustment(
+PsdBrightnessContrastAdjustment _readBrightnessContrast(PsBinaryReader reader) => PsdBrightnessContrastAdjustment(
   brightness: reader.readInt16(),
   contrast: reader.readInt16(),
   mean: reader.readInt16(),
@@ -727,7 +725,7 @@ PsdBrightnessContrastAdjustment _readBrightnessContrast(PsdBinaryReader reader) 
 );
 
 /// Reads the standard and optional extended levels records.
-PsdLevelsAdjustment _readLevels(PsdBinaryReader reader) {
+PsdLevelsAdjustment _readLevels(PsBinaryReader reader) {
   final int version = reader.readUint16();
   final List<PsdLevelRecord> records = <PsdLevelRecord>[for (int index = 0; index < 29; index++) _readLevelRecord(reader)];
   final List<PsdLevelRecord> extended = <PsdLevelRecord>[];
@@ -750,7 +748,7 @@ PsdLevelsAdjustment _readLevels(PsdBinaryReader reader) {
 }
 
 /// Reads one levels channel record.
-PsdLevelRecord _readLevelRecord(PsdBinaryReader reader) => PsdLevelRecord(
+PsdLevelRecord _readLevelRecord(PsBinaryReader reader) => PsdLevelRecord(
   inputFloor: reader.readUint16(),
   inputCeiling: reader.readUint16(),
   outputFloor: reader.readUint16(),
@@ -759,9 +757,9 @@ PsdLevelRecord _readLevelRecord(PsdBinaryReader reader) => PsdLevelRecord(
 );
 
 /// Reads main bitmap curves and optional version-4 duplicates.
-PsdCurvesAdjustment _readCurves(PsdBinaryReader reader) {
+PsdCurvesAdjustment _readCurves(PsBinaryReader reader) {
   if (reader.readUint8() != 0) {
-    throw PsdFormatException('Curves reserved byte must be zero', reader.bytes, 0);
+    throw PsFormatException(message: 'Curves reserved byte must be zero', source: reader.bytes, offset: 0);
   }
   final int version = reader.readUint16();
   reader.readUint16();
@@ -790,7 +788,7 @@ PsdCurvesAdjustment _readCurves(PsdBinaryReader reader) {
 }
 
 /// Reads one curve after its channel index has been determined.
-PsdCurve _readCurve(PsdBinaryReader reader, int channel) {
+PsdCurve _readCurve(PsBinaryReader reader, int channel) {
   final int count = reader.readUint16();
   return PsdCurve(
     channel: channel,
@@ -801,7 +799,7 @@ PsdCurve _readCurve(PsdBinaryReader reader, int channel) {
 }
 
 /// Reads exposure fixed-point values.
-PsdExposureAdjustment _readExposure(PsdBinaryReader reader) => PsdExposureAdjustment(
+PsdExposureAdjustment _readExposure(PsBinaryReader reader) => PsdExposureAdjustment(
   version: reader.readUint16(),
   exposure: reader.readInt32() / 65536,
   offset: reader.readInt32() / 65536,
@@ -810,7 +808,7 @@ PsdExposureAdjustment _readExposure(PsdBinaryReader reader) => PsdExposureAdjust
 );
 
 /// Reads modern hue/saturation settings.
-PsdHueSaturationAdjustment _readHueSaturation(PsdBinaryReader reader) {
+PsdHueSaturationAdjustment _readHueSaturation(PsBinaryReader reader) {
   final int version = reader.readUint16();
   final bool colorize = reader.readUint8() != 0;
   reader.readUint8();
@@ -834,14 +832,14 @@ PsdHueSaturationAdjustment _readHueSaturation(PsdBinaryReader reader) {
 }
 
 /// Reads one HSL triplet.
-PsdHueSaturationValues _readHueValues(PsdBinaryReader reader) => PsdHueSaturationValues(
+PsdHueSaturationValues _readHueValues(PsBinaryReader reader) => PsdHueSaturationValues(
   hue: reader.readInt16(),
   saturation: reader.readInt16(),
   lightness: reader.readInt16(),
 );
 
 /// Reads the three tonal ranges of a color-balance adjustment.
-PsdColorBalanceAdjustment _readColorBalance(PsdBinaryReader reader) => PsdColorBalanceAdjustment(
+PsdColorBalanceAdjustment _readColorBalance(PsBinaryReader reader) => PsdColorBalanceAdjustment(
   shadows: _readColorBalanceValues(reader),
   midtones: _readColorBalanceValues(reader),
   highlights: _readColorBalanceValues(reader),
@@ -850,14 +848,14 @@ PsdColorBalanceAdjustment _readColorBalance(PsdBinaryReader reader) => PsdColorB
 );
 
 /// Reads one color-balance correction triplet.
-PsdColorBalanceValues _readColorBalanceValues(PsdBinaryReader reader) => PsdColorBalanceValues(
+PsdColorBalanceValues _readColorBalanceValues(PsBinaryReader reader) => PsdColorBalanceValues(
   cyanRed: reader.readInt16(),
   magentaGreen: reader.readInt16(),
   yellowBlue: reader.readInt16(),
 );
 
 /// Reads four channel-mixer output rows.
-PsdChannelMixerAdjustment _readChannelMixer(PsdBinaryReader reader) => PsdChannelMixerAdjustment(
+PsdChannelMixerAdjustment _readChannelMixer(PsBinaryReader reader) => PsdChannelMixerAdjustment(
   version: reader.readUint16(),
   monochrome: reader.readUint16() != 0,
   outputs: <PsdChannelMixerOutput>[
@@ -871,7 +869,7 @@ PsdChannelMixerAdjustment _readChannelMixer(PsdBinaryReader reader) => PsdChanne
 );
 
 /// Reads version-dependent photo-filter color data.
-PsdPhotoFilterAdjustment _readPhotoFilter(PsdBinaryReader reader) {
+PsdPhotoFilterAdjustment _readPhotoFilter(PsBinaryReader reader) {
   final int version = reader.readUint16();
   final int colorLength = version == 3 ? 12 : 10;
   return PsdPhotoFilterAdjustment(
@@ -884,14 +882,14 @@ PsdPhotoFilterAdjustment _readPhotoFilter(PsdBinaryReader reader) {
 }
 
 /// Reads posterize or threshold data.
-PsdSingleValueAdjustment _readSingleValue(PsdBinaryReader reader, String key) => PsdSingleValueAdjustment(
+PsdSingleValueAdjustment _readSingleValue(PsBinaryReader reader, String key) => PsdSingleValueAdjustment(
   type: key == 'post' ? PsdAdjustmentType.posterize : PsdAdjustmentType.threshold,
   value: reader.readUint16(),
   trailingData: reader.readBytes(reader.remaining),
 );
 
 /// Reads all ten selective-color plate records.
-PsdSelectiveColorAdjustment _readSelectiveColor(PsdBinaryReader reader) => PsdSelectiveColorAdjustment(
+PsdSelectiveColorAdjustment _readSelectiveColor(PsBinaryReader reader) => PsdSelectiveColorAdjustment(
   version: reader.readUint16(),
   absolute: reader.readUint16() != 0,
   corrections: <PsdSelectiveColorCorrection>[
@@ -907,14 +905,14 @@ PsdSelectiveColorAdjustment _readSelectiveColor(PsdBinaryReader reader) => PsdSe
 );
 
 /// Reads a descriptor-backed fill or adjustment.
-PsdDescriptorAdjustment _readDescriptorAdjustment(PsdBinaryReader reader, String key) {
+PsdDescriptorAdjustment _readDescriptorAdjustment(PsBinaryReader reader, String key) {
   int? version;
   if (key == 'clrL') {
     version = reader.readUint16();
   }
   final int descriptorVersion = reader.readUint32();
   final Uint8List payload = reader.readBytes(reader.remaining);
-  final ({PsdDescriptor descriptor, int bytesRead}) decoded = PsdDescriptorCodec.decodePrefix(payload);
+  final ({PsDescriptor descriptor, int bytesRead}) decoded = PsDescriptorCodec.decodePrefix(payload);
   return PsdDescriptorAdjustment(
     blockKey: key,
     type: _typeForKey(key),
@@ -926,9 +924,9 @@ PsdDescriptorAdjustment _readDescriptorAdjustment(PsdBinaryReader reader, String
 }
 
 /// Writes standard and optional extended levels records.
-void _writeLevels(PsdBinaryWriter writer, PsdLevelsAdjustment adjustment) {
+void _writeLevels(PsBinaryWriter writer, PsdLevelsAdjustment adjustment) {
   if (adjustment.records.length != 29) {
-    throw const PsdWriteException('Levels adjustments require exactly 29 standard records');
+    throw const PsWriteException(message: 'Levels adjustments require exactly 29 standard records');
   }
   writer.writeUint16(adjustment.version);
   for (final PsdLevelRecord record in adjustment.records) {
@@ -947,7 +945,7 @@ void _writeLevels(PsdBinaryWriter writer, PsdLevelsAdjustment adjustment) {
 }
 
 /// Writes one levels channel record.
-void _writeLevelRecord(PsdBinaryWriter writer, PsdLevelRecord record) {
+void _writeLevelRecord(PsBinaryWriter writer, PsdLevelRecord record) {
   writer
     ..writeUint16(record.inputFloor)
     ..writeUint16(record.inputCeiling)
@@ -957,11 +955,11 @@ void _writeLevelRecord(PsdBinaryWriter writer, PsdLevelRecord record) {
 }
 
 /// Writes bitmap curves and optional extended curves.
-void _writeCurves(PsdBinaryWriter writer, PsdCurvesAdjustment adjustment) {
+void _writeCurves(PsBinaryWriter writer, PsdCurvesAdjustment adjustment) {
   int mask = 0;
   for (final PsdCurve curve in adjustment.curves) {
     if (curve.channel < 0 || curve.channel > 15) {
-      throw PsdWriteException('Main curve channel ${curve.channel} must be from 0 through 15');
+      throw PsWriteException(message: 'Main curve channel ${curve.channel} must be from 0 through 15');
     }
     mask |= 1 << curve.channel;
   }
@@ -988,7 +986,7 @@ void _writeCurves(PsdBinaryWriter writer, PsdCurvesAdjustment adjustment) {
 }
 
 /// Writes one curve without a channel prefix.
-void _writeCurve(PsdBinaryWriter writer, PsdCurve curve) {
+void _writeCurve(PsBinaryWriter writer, PsdCurve curve) {
   writer.writeUint16(curve.points.length);
   for (final PsdCurvePoint point in curve.points) {
     writer
@@ -998,9 +996,9 @@ void _writeCurve(PsdBinaryWriter writer, PsdCurve curve) {
 }
 
 /// Writes modern hue/saturation settings.
-void _writeHueSaturation(PsdBinaryWriter writer, PsdHueSaturationAdjustment adjustment) {
+void _writeHueSaturation(PsBinaryWriter writer, PsdHueSaturationAdjustment adjustment) {
   if (adjustment.ranges.length != 6) {
-    throw const PsdWriteException('Hue/saturation adjustments require exactly six ranges');
+    throw const PsWriteException(message: 'Hue/saturation adjustments require exactly six ranges');
   }
   writer
     ..writeUint16(adjustment.version)
@@ -1010,7 +1008,7 @@ void _writeHueSaturation(PsdBinaryWriter writer, PsdHueSaturationAdjustment adju
   _writeHueValues(writer, adjustment.master);
   for (final PsdHueSaturationRange range in adjustment.ranges) {
     if (range.boundaries.length != 4) {
-      throw const PsdWriteException('Each hue/saturation range requires four boundaries');
+      throw const PsWriteException(message: 'Each hue/saturation range requires four boundaries');
     }
     range.boundaries.forEach(writer.writeInt16);
     _writeHueValues(writer, range.values);
@@ -1019,7 +1017,7 @@ void _writeHueSaturation(PsdBinaryWriter writer, PsdHueSaturationAdjustment adju
 }
 
 /// Writes one HSL triplet.
-void _writeHueValues(PsdBinaryWriter writer, PsdHueSaturationValues values) {
+void _writeHueValues(PsBinaryWriter writer, PsdHueSaturationValues values) {
   writer
     ..writeInt16(values.hue)
     ..writeInt16(values.saturation)
@@ -1027,7 +1025,7 @@ void _writeHueValues(PsdBinaryWriter writer, PsdHueSaturationValues values) {
 }
 
 /// Writes the color-balance tonal ranges.
-void _writeColorBalance(PsdBinaryWriter writer, PsdColorBalanceAdjustment adjustment) {
+void _writeColorBalance(PsBinaryWriter writer, PsdColorBalanceAdjustment adjustment) {
   _writeColorBalanceValues(writer, adjustment.shadows);
   _writeColorBalanceValues(writer, adjustment.midtones);
   _writeColorBalanceValues(writer, adjustment.highlights);
@@ -1037,7 +1035,7 @@ void _writeColorBalance(PsdBinaryWriter writer, PsdColorBalanceAdjustment adjust
 }
 
 /// Writes one color-balance correction triplet.
-void _writeColorBalanceValues(PsdBinaryWriter writer, PsdColorBalanceValues values) {
+void _writeColorBalanceValues(PsBinaryWriter writer, PsdColorBalanceValues values) {
   writer
     ..writeInt16(values.cyanRed)
     ..writeInt16(values.magentaGreen)
@@ -1045,9 +1043,9 @@ void _writeColorBalanceValues(PsdBinaryWriter writer, PsdColorBalanceValues valu
 }
 
 /// Writes four channel-mixer output rows.
-void _writeChannelMixer(PsdBinaryWriter writer, PsdChannelMixerAdjustment adjustment) {
+void _writeChannelMixer(PsBinaryWriter writer, PsdChannelMixerAdjustment adjustment) {
   if (adjustment.outputs.length != 4 || adjustment.outputs.any((output) => output.channels.length != 4)) {
-    throw const PsdWriteException('Channel mixer adjustments require four output rows of four channels');
+    throw const PsWriteException(message: 'Channel mixer adjustments require four output rows of four channels');
   }
   writer
     ..writeUint16(adjustment.version)
@@ -1060,10 +1058,10 @@ void _writeChannelMixer(PsdBinaryWriter writer, PsdChannelMixerAdjustment adjust
 }
 
 /// Writes version-dependent photo-filter data.
-void _writePhotoFilter(PsdBinaryWriter writer, PsdPhotoFilterAdjustment adjustment) {
+void _writePhotoFilter(PsBinaryWriter writer, PsdPhotoFilterAdjustment adjustment) {
   final int expectedLength = adjustment.version == 3 ? 12 : 10;
   if (adjustment.colorData.length != expectedLength) {
-    throw PsdWriteException('Photo filter version ${adjustment.version} requires $expectedLength color bytes');
+    throw PsWriteException(message: 'Photo filter version ${adjustment.version} requires $expectedLength color bytes');
   }
   writer
     ..writeUint16(adjustment.version)
@@ -1074,9 +1072,9 @@ void _writePhotoFilter(PsdBinaryWriter writer, PsdPhotoFilterAdjustment adjustme
 }
 
 /// Writes ten selective-color correction records.
-void _writeSelectiveColor(PsdBinaryWriter writer, PsdSelectiveColorAdjustment adjustment) {
+void _writeSelectiveColor(PsBinaryWriter writer, PsdSelectiveColorAdjustment adjustment) {
   if (adjustment.corrections.length != 10) {
-    throw const PsdWriteException('Selective color adjustments require exactly ten correction records');
+    throw const PsWriteException(message: 'Selective color adjustments require exactly ten correction records');
   }
   writer
     ..writeUint16(adjustment.version)
@@ -1092,18 +1090,18 @@ void _writeSelectiveColor(PsdBinaryWriter writer, PsdSelectiveColorAdjustment ad
 }
 
 /// Writes the version header and complete action descriptor.
-void _writeDescriptorAdjustment(PsdBinaryWriter writer, PsdDescriptorAdjustment adjustment) {
+void _writeDescriptorAdjustment(PsBinaryWriter writer, PsdDescriptorAdjustment adjustment) {
   if (adjustment.blockKey == 'clrL') {
     writer.writeUint16(adjustment.version ?? 1);
   }
   writer
     ..writeUint32(adjustment.descriptorVersion)
-    ..writeBytes(PsdDescriptorCodec.encode(adjustment.descriptor))
+    ..writeBytes(PsDescriptorCodec.encode(adjustment.descriptor))
     ..writeBytes(adjustment.trailingData);
 }
 
 /// Peeks at [length] one-byte characters without advancing [reader].
-String _peekString(PsdBinaryReader reader, int length) => String.fromCharCodes(
+String _peekString(PsBinaryReader reader, int length) => String.fromCharCodes(
   Uint8List.sublistView(reader.bytes, reader.offset, reader.offset + length),
 );
 

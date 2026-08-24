@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:psdkit/psdkit.dart';
 import 'package:test/test.dart';
 
+/// Exercises modern and legacy Photoshop layer effects.
 void main() {
   group('PsdLayerEffects', () {
     test('creates and round-trips modern effects, gradients, and repetitions', () {
@@ -67,18 +68,21 @@ void main() {
     });
 
     test('edits known properties while retaining unknown descriptor items', () {
-      final PsdLayerEffect source = PsdLayerEffect(
+      const PsdLayerEffect source = PsdLayerEffect(
         type: PsdLayerEffectType.outerGlow,
-        descriptor: PsdDescriptor(
+        descriptor: PsDescriptor(
           name: '\u0000',
           classId: 'OrGl',
-          items: <PsdDescriptorItem>[
-            PsdDescriptorItem(key: 'enab', value: PsdBooleanValue(true)),
-            PsdDescriptorItem(
+          items: <PsDescriptorItem>[
+            PsDescriptorItem(key: 'enab', value: PsBooleanValue(value: true)),
+            PsDescriptorItem(
               key: 'Opct',
-              value: PsdUnitFloatValue(unit: '#Prc', value: 10),
+              value: PsUnitFloatValue(unit: '#Prc', value: 10),
             ),
-            PsdDescriptorItem(key: 'futureAdobeKey', value: PsdStringValue('retained')),
+            PsDescriptorItem(
+              key: 'futureAdobeKey',
+              value: PsStringValue(value: 'retained'),
+            ),
           ],
         ),
       );
@@ -87,7 +91,7 @@ void main() {
 
       expect(edited.opacity, 72.5);
       expect(edited.color?.argb, 0xff040506);
-      expect((edited.descriptor.value('futureAdobeKey')! as PsdStringValue).value, 'retained');
+      expect((edited.descriptor.value('futureAdobeKey')! as PsStringValue).value, 'retained');
     });
 
     test('decodes legacy lrFX and converts edits to modern lfx2', () {
@@ -129,6 +133,7 @@ void main() {
   });
 }
 
+/// Builds a complete legacy solid-fill effects payload.
 Uint8List _legacySolidFill() {
   final Uint8List common = _bytes(<Uint8List>[
     _uint32(0),
@@ -150,12 +155,14 @@ Uint8List _legacySolidFill() {
   ]);
 }
 
+/// Wraps [value] in one legacy effect entry identified by [key].
 Uint8List _legacyEntry(String key, Uint8List value) => _bytes(<Uint8List>[
   Uint8List.fromList('8BIM$key'.codeUnits),
   _uint32(value.length),
   value,
 ]);
 
+/// Encodes one legacy 16-bit RGB color record.
 Uint8List _legacyRgb(int red, int green, int blue) => _bytes(<Uint8List>[
   _uint16(0),
   _uint16(red * 257),
@@ -164,12 +171,15 @@ Uint8List _legacyRgb(int red, int green, int blue) => _bytes(<Uint8List>[
   _uint16(0),
 ]);
 
+/// Concatenates binary [parts] without copying intermediate results.
 Uint8List _bytes(List<Uint8List> parts) {
   final BytesBuilder output = BytesBuilder(copy: false);
   parts.forEach(output.add);
   return output.takeBytes();
 }
 
+/// Encodes [value] as one big-endian unsigned 16-bit integer.
 Uint8List _uint16(int value) => (ByteData(2)..setUint16(0, value)).buffer.asUint8List();
 
+/// Encodes [value] as one big-endian unsigned 32-bit integer.
 Uint8List _uint32(int value) => (ByteData(4)..setUint32(0, value)).buffer.asUint8List();

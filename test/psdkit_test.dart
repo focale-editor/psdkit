@@ -6,6 +6,7 @@ import 'package:psdkit/psdkit.dart';
 import 'package:psdkit/src/compression.dart';
 import 'package:test/test.dart';
 
+/// Exercises complete PSD encoding, decoding, pixels, and limits.
 void main() {
   group('PsdCodec', () {
     for (final PsdCompression compression in PsdCompression.values) {
@@ -124,11 +125,11 @@ void main() {
     test('rejects malformed and oversized input', () {
       final Uint8List encoded = PsdCodec.encode(_document());
       encoded[0] = 0;
-      expect(() => PsdCodec.decode(encoded), throwsA(isA<PsdFormatException>()));
+      expect(() => PsdCodec.decode(encoded), throwsA(isA<PsFormatException>()));
 
       expect(
         () => PsdCodec.decode(PsdCodec.encode(_document()), options: const PsdReadOptions(maxPixels: 2)),
-        throwsA(isA<PsdFormatException>()),
+        throwsA(isA<PsFormatException>()),
       );
     });
 
@@ -145,7 +146,7 @@ void main() {
           wideRowLengths: false,
           maxDecodedBytes: 1,
         ),
-        throwsA(isA<PsdFormatException>()),
+        throwsA(isA<PsFormatException>()),
       );
     });
 
@@ -333,6 +334,7 @@ void main() {
   });
 }
 
+/// Builds the representative layered document shared by codec tests.
 PsdDocument _document({PsdCompression compression = PsdCompression.rle}) {
   const PsdRectangle rectangle = PsdRectangle(top: -1, left: -2, bottom: 1, right: 1);
   return PsdDocument(
@@ -372,11 +374,13 @@ PsdDocument _document({PsdCompression compression = PsdCompression.rle}) {
   );
 }
 
+/// Encodes [value] as one big-endian unsigned 32-bit integer.
 Uint8List _uint32(int value) {
   final ByteData data = ByteData(4)..setUint32(0, value);
   return data.buffer.asUint8List();
 }
 
+/// Encodes [values] as big-endian unsigned 16-bit integers.
 Uint8List _uint16(List<int> values) {
   final ByteData data = ByteData(values.length * 2);
   for (int index = 0; index < values.length; index++) {
@@ -385,7 +389,9 @@ Uint8List _uint16(List<int> values) {
   return data.buffer.asUint8List();
 }
 
+/// Adds index-aware filtering to test iterables.
 extension<T> on Iterable<T> {
+  /// Returns values for which [predicate] accepts both index and value.
   Iterable<T> whereIndexed(bool Function(int index, T value) predicate) sync* {
     int index = 0;
     for (final T value in this) {

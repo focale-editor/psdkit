@@ -86,7 +86,7 @@ void _tryDescriptors(Uint8List bytes) {
       continue;
     }
     try {
-      final ({PsdDescriptor descriptor, int bytesRead}) decoded = PsdDescriptorCodec.decodePrefix(Uint8List.sublistView(bytes, offset));
+      final ({PsDescriptor descriptor, int bytesRead}) decoded = PsDescriptorCodec.decodePrefix(Uint8List.sublistView(bytes, offset));
       stdout.writeln('  descriptor@$offset class=${decoded.descriptor.classId} items=${decoded.descriptor.items.length} bytes=${decoded.bytesRead}');
     } on Object {
       // Most binary adjustment payloads are intentionally not descriptors.

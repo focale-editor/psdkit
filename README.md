@@ -4,6 +4,8 @@ PsdKit is a pure Dart reader and writer for Adobe Photoshop PSD and PSB files. I
 
 The implementation follows Adobe's [Photoshop File Formats Specification](https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/).
 
+Shared Photoshop binary primitives and Action Descriptors come from [`pscore`](https://github.com/focale-editor/pscore). PsdKit re-exports that API, so most consumers only need the `psdkit.dart` import shown below.
+
 ## Usage
 
 ```dart

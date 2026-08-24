@@ -1,27 +1,26 @@
 import 'dart:typed_data';
 
-import 'package:psdkit/src/binary.dart';
-import 'package:psdkit/src/exceptions.dart';
+import 'package:pscore/pscore.dart';
 
 /// Boolean operation applied when a Photoshop subpath is combined.
 enum PsdPathOperation {
   /// Excludes overlapping areas.
-  exclude(0),
+  exclude(code: 0),
 
   /// Adds the subpath to the current shape.
-  combine(1),
+  combine(code: 1),
 
   /// Subtracts the subpath from the current shape.
-  subtract(2),
+  subtract(code: 2),
 
   /// Keeps only intersecting areas.
-  intersect(3);
+  intersect(code: 3);
 
   /// Integer stored in a subpath-length record.
   final int code;
 
   /// Creates an operation from its stored [code].
-  const PsdPathOperation(this.code);
+  const PsdPathOperation({required this.code});
 }
 
 /// A normalized two-dimensional point in Photoshop path coordinates.
@@ -68,7 +67,7 @@ final class PsdBezierKnot {
   const PsdBezierKnot({required this.incoming, required this.anchor, required this.outgoing, this.linked = true});
 
   /// Creates a corner knot whose handles coincide with [anchor].
-  const PsdBezierKnot.corner(PsdPathPoint anchor) : this(incoming: anchor, anchor: anchor, outgoing: anchor, linked: false);
+  const PsdBezierKnot.corner({required PsdPathPoint anchor}) : this(incoming: anchor, anchor: anchor, outgoing: anchor, linked: false);
 }
 
 /// One open or closed contour inside a Photoshop path.
@@ -345,11 +344,11 @@ abstract final class PsdVectorPathCodec {
     if (bytes.length % 26 != 0) {
       throw const FormatException('Photoshop path data must contain complete 26-byte records');
     }
-    final PsdBinaryReader reader = PsdBinaryReader(bytes);
+    final PsBinaryReader reader = PsBinaryReader(bytes: bytes);
     final List<PsdPathRecord> records = <PsdPathRecord>[];
     while (!reader.isAtEnd) {
       final int selector = reader.readUint16();
-      final PsdBinaryReader payload = reader.readReader(24);
+      final PsBinaryReader payload = reader.readReader(24);
       records.add(_readPathRecord(selector, payload));
     }
     return PsdVectorPath(records: records);
@@ -357,7 +356,7 @@ abstract final class PsdVectorPathCodec {
 
   /// Encodes [path] as fixed-size Photoshop path records.
   static Uint8List encode(PsdVectorPath path) {
-    final PsdBinaryWriter writer = PsdBinaryWriter();
+    final PsBinaryWriter writer = PsBinaryWriter();
     for (final PsdPathRecord record in path.records) {
       writer.writeUint16(record.selector);
       _writePathRecord(writer, record);
@@ -379,7 +378,7 @@ abstract final class PsdVectorMaskCodec {
 
   /// Decodes a complete vector-mask tagged-block payload.
   static PsdVectorMask decode(Uint8List bytes, {String key = 'vmsk'}) {
-    final PsdBinaryReader reader = PsdBinaryReader(bytes);
+    final PsBinaryReader reader = PsBinaryReader(bytes: bytes);
     final int version = reader.readUint32();
     final int flags = reader.readUint32();
     final int pathLength = reader.remaining - reader.remaining % 26;
@@ -395,7 +394,7 @@ abstract final class PsdVectorMaskCodec {
 
   /// Encodes [mask] as a complete vector-mask payload.
   static Uint8List encode(PsdVectorMask mask) =>
-      (PsdBinaryWriter()
+      (PsBinaryWriter()
             ..writeUint32(mask.version)
             ..writeUint32(mask.flags)
             ..writeBytes(PsdVectorPathCodec.encode(mask.path))
@@ -416,7 +415,7 @@ List<PsdPathRecord> _recordsFromSubpaths(List<PsdSubpath> subpaths) {
 }
 
 /// Decodes one path record with [selector].
-PsdPathRecord _readPathRecord(int selector, PsdBinaryReader reader) => switch (selector) {
+PsdPathRecord _readPathRecord(int selector, PsBinaryReader reader) => switch (selector) {
   0 || 3 => PsdSubpathLengthRecord(
     closed: selector == 0,
     knotCount: reader.readUint16(),
@@ -446,7 +445,7 @@ PsdPathRecord _readPathRecord(int selector, PsdBinaryReader reader) => switch (s
 };
 
 /// Encodes one fixed-size path [record].
-void _writePathRecord(PsdBinaryWriter writer, PsdPathRecord record) {
+void _writePathRecord(PsBinaryWriter writer, PsdPathRecord record) {
   switch (record) {
     case PsdSubpathLengthRecord():
       _requireLength(record.trailingData, 20, 'subpath-length trailing data');
@@ -483,26 +482,26 @@ void _writePathRecord(PsdBinaryWriter writer, PsdPathRecord record) {
 }
 
 /// Reads one point stored in vertical-then-horizontal order.
-PsdPathPoint _readPathPoint(PsdBinaryReader reader) {
+PsdPathPoint _readPathPoint(PsBinaryReader reader) {
   final double y = _readPathFixed(reader);
   final double x = _readPathFixed(reader);
   return PsdPathPoint(x: x, y: y);
 }
 
 /// Writes one point in vertical-then-horizontal order.
-void _writePathPoint(PsdBinaryWriter writer, PsdPathPoint point) {
+void _writePathPoint(PsBinaryWriter writer, PsdPathPoint point) {
   _writePathFixed(writer, point.y);
   _writePathFixed(writer, point.x);
 }
 
 /// Reads a signed 8.24 fixed-point path coordinate.
-double _readPathFixed(PsdBinaryReader reader) => reader.readInt32() / 16777216;
+double _readPathFixed(PsBinaryReader reader) => reader.readInt32() / 16777216;
 
 /// Writes [value] as a signed 8.24 fixed-point coordinate.
-void _writePathFixed(PsdBinaryWriter writer, double value) {
+void _writePathFixed(PsBinaryWriter writer, double value) {
   final double scaled = value * 16777216;
   if (!scaled.isFinite || scaled < -2147483648 || scaled > 2147483647) {
-    throw PsdWriteException('Path coordinate $value does not fit signed 8.24 fixed point');
+    throw PsWriteException(message: 'Path coordinate $value does not fit signed 8.24 fixed point');
   }
   writer.writeInt32(scaled.round());
 }
@@ -510,6 +509,6 @@ void _writePathFixed(PsdBinaryWriter writer, double value) {
 /// Requires [bytes] to have the fixed [length] expected by a record.
 void _requireLength(Uint8List bytes, int length, String label) {
   if (bytes.length != length) {
-    throw PsdWriteException('$label must contain exactly $length bytes');
+    throw PsWriteException(message: '$label must contain exactly $length bytes');
   }
 }

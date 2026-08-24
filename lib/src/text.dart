@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:psdkit/src/binary.dart';
-import 'package:psdkit/src/descriptor.dart';
+import 'package:pscore/pscore.dart';
 
 /// Direction in which Photoshop lays out a text layer.
 enum PsdTextOrientation {
@@ -221,7 +220,7 @@ final class PsdTypeTool {
   final int textDescriptorVersion;
 
   /// Descriptor containing text, orientation, antialiasing, and engine data.
-  final PsdDescriptor textDescriptor;
+  final PsDescriptor textDescriptor;
 
   /// Warp record version, normally 1.
   final int warpVersion;
@@ -230,7 +229,7 @@ final class PsdTypeTool {
   final int warpDescriptorVersion;
 
   /// Descriptor containing text warp settings.
-  final PsdDescriptor warpDescriptor;
+  final PsDescriptor warpDescriptor;
 
   /// Text box or point-text bounds.
   final PsdTextBounds bounds;
@@ -266,13 +265,13 @@ final class PsdTypeTool {
 
   /// Plain Unicode text stored under the `Txt ` descriptor key.
   String get text => switch (textDescriptor.value('Txt ')) {
-    PsdStringValue(:final String value) => _withoutTerminalNull(value),
+    PsStringValue(:final String value) => _withoutTerminalNull(value),
     _ => '',
   };
 
   /// Layout direction stored by the type-tool descriptor.
   PsdTextOrientation get orientation => switch (textDescriptor.value('Ornt')) {
-    PsdEnumeratedValue(:final String value) when value == 'Vrtc' => PsdTextOrientation.vertical,
+    PsEnumeratedValue(:final String value) when value == 'Vrtc' => PsdTextOrientation.vertical,
     _ => PsdTextOrientation.horizontal,
   };
 
@@ -281,17 +280,17 @@ final class PsdTypeTool {
 
   /// Raw Adobe text-engine program stored under `EngineData`.
   Uint8List? get engineData => switch (textDescriptor.value('EngineData')) {
-    PsdRawValue(:final Uint8List value) => value,
+    PsRawValue(:final Uint8List value) => value,
     _ => null,
   };
 
   /// Returns a copy containing [text] in both descriptor text fields.
   PsdTypeTool withText(String text) {
     final String normalized = text.replaceAll('\r\n', '\r').replaceAll('\n', '\r');
-    PsdDescriptor descriptor = textDescriptor.withValue('Txt ', PsdStringValue('$normalized\u0000'));
+    PsDescriptor descriptor = textDescriptor.withValue('Txt ', PsStringValue(value: '$normalized\u0000'));
     final Uint8List? engine = engineData;
     if (engine != null) {
-      descriptor = descriptor.withValue('EngineData', PsdRawValue(PsdTextEngine.replaceText(engine, normalized)));
+      descriptor = descriptor.withValue('EngineData', PsRawValue(value: PsdTextEngine.replaceText(engine, normalized)));
     }
     return PsdTypeTool(
       version: version,
@@ -312,16 +311,16 @@ final class PsdTypeTool {
   /// Unlike [withText], this regenerates `EngineData`; use it when styles or
   /// paragraph properties changed and retain the original instance otherwise.
   PsdTypeTool withContent(PsdTextContent content) {
-    final PsdDescriptor descriptor = textDescriptor
-        .withValue('Txt ', PsdStringValue('${content.text.replaceAll('\r\n', '\r').replaceAll('\n', '\r')}\u0000'))
+    final PsDescriptor descriptor = textDescriptor
+        .withValue('Txt ', PsStringValue(value: '${content.text.replaceAll('\r\n', '\r').replaceAll('\n', '\r')}\u0000'))
         .withValue(
           'Ornt',
-          PsdEnumeratedValue(typeId: 'Ornt', value: content.orientation == PsdTextOrientation.vertical ? 'Vrtc' : 'Hrzn'),
+          PsEnumeratedValue(typeId: 'Ornt', value: content.orientation == PsdTextOrientation.vertical ? 'Vrtc' : 'Hrzn'),
         )
-        .withValue('EngineData', PsdRawValue(PsdTextEngine.encode(content)));
-    final PsdDescriptor warp = warpDescriptor.withValue(
+        .withValue('EngineData', PsRawValue(value: PsdTextEngine.encode(content)));
+    final PsDescriptor warp = warpDescriptor.withValue(
       'warpRotate',
-      PsdEnumeratedValue(typeId: 'Ornt', value: content.orientation == PsdTextOrientation.vertical ? 'Vrtc' : 'Hrzn'),
+      PsEnumeratedValue(typeId: 'Ornt', value: content.orientation == PsdTextOrientation.vertical ? 'Vrtc' : 'Hrzn'),
     );
     return PsdTypeTool(
       version: version,
@@ -351,7 +350,7 @@ abstract final class PsdTypeToolCodec {
 
   /// Decodes one complete `TySh` tagged-block payload.
   static PsdTypeTool decode(Uint8List bytes) {
-    final PsdBinaryReader reader = PsdBinaryReader(bytes);
+    final PsBinaryReader reader = PsBinaryReader(bytes: bytes);
     final int version = reader.readUint16();
     final PsdTextTransform transform = PsdTextTransform(
       xx: reader.readFloat64(),
@@ -363,18 +362,18 @@ abstract final class PsdTypeToolCodec {
     );
     final int textVersion = reader.readUint16();
     final int textDescriptorVersion = reader.readUint32();
-    late final ({PsdDescriptor descriptor, int bytesRead}) text;
+    late final ({PsDescriptor descriptor, int bytesRead}) text;
     try {
-      text = PsdDescriptorCodec.decodePrefix(Uint8List.sublistView(reader.bytes, reader.offset));
+      text = PsDescriptorCodec.decodePrefix(Uint8List.sublistView(reader.bytes, reader.offset));
     } on FormatException catch (error) {
       throw FormatException('Invalid TySh text descriptor: $error');
     }
     reader.skip(text.bytesRead);
     final int warpVersion = reader.readUint16();
     final int warpDescriptorVersion = reader.readUint32();
-    late final ({PsdDescriptor descriptor, int bytesRead}) warp;
+    late final ({PsDescriptor descriptor, int bytesRead}) warp;
     try {
-      warp = PsdDescriptorCodec.decodePrefix(Uint8List.sublistView(reader.bytes, reader.offset));
+      warp = PsDescriptorCodec.decodePrefix(Uint8List.sublistView(reader.bytes, reader.offset));
     } on FormatException catch (error) {
       throw FormatException('Invalid TySh warp descriptor: $error');
     }
@@ -401,7 +400,7 @@ abstract final class PsdTypeToolCodec {
 
   /// Encodes [typeTool] as a complete `TySh` payload.
   static Uint8List encode(PsdTypeTool typeTool) {
-    final PsdBinaryWriter writer = PsdBinaryWriter()
+    final PsBinaryWriter writer = PsBinaryWriter()
       ..writeUint16(typeTool.version)
       ..writeFloat64(typeTool.transform.xx)
       ..writeFloat64(typeTool.transform.xy)
@@ -411,10 +410,10 @@ abstract final class PsdTypeToolCodec {
       ..writeFloat64(typeTool.transform.ty)
       ..writeUint16(typeTool.textVersion)
       ..writeUint32(typeTool.textDescriptorVersion)
-      ..writeBytes(PsdDescriptorCodec.encode(typeTool.textDescriptor))
+      ..writeBytes(PsDescriptorCodec.encode(typeTool.textDescriptor))
       ..writeUint16(typeTool.warpVersion)
       ..writeUint32(typeTool.warpDescriptorVersion)
-      ..writeBytes(PsdDescriptorCodec.encode(typeTool.warpDescriptor))
+      ..writeBytes(PsDescriptorCodec.encode(typeTool.warpDescriptor))
       ..writeInt32(typeTool.bounds.left)
       ..writeInt32(typeTool.bounds.top)
       ..writeInt32(typeTool.bounds.right)
@@ -432,7 +431,7 @@ abstract final class PsdTextEngine {
       return PsdTextContent(text: fallbackText, orientation: orientation);
     }
     try {
-      final Object? rootValue = _PsdEngineParser(engineData).parse();
+      final Object? rootValue = _PsdEngineParser(bytes: engineData).parse();
       final _PsdEngineDictionary? root = _dictionary(rootValue);
       final _PsdEngineDictionary? engine = _dictionary(root?['EngineDict']);
       final _PsdEngineDictionary? editor = _dictionary(engine?['Editor']);
@@ -514,7 +513,7 @@ abstract final class PsdTextEngine {
     if (target == null) {
       return engineData;
     }
-    final int oldLength = _withoutTerminalNull(_decodeEngineString(_PsdEngineString(target.value)) ?? '').length;
+    final int oldLength = _withoutTerminalNull(_decodeEngineString(_PsdEngineString(bytes: target.value)) ?? '').length;
     final Uint8List encoded = _encodeEngineString(text, target.value);
     final BytesBuilder output = BytesBuilder(copy: false)
       ..add(Uint8List.sublistView(engineData, 0, target.start))
@@ -540,7 +539,7 @@ abstract final class PsdTextEngine {
           index++;
         }
         if (index < source.length && source[index] == 0x28) {
-          final _PsdEngineParser parser = _PsdEngineParser(source, offset: index);
+          final _PsdEngineParser parser = _PsdEngineParser(bytes: source, offset: index);
           final _PsdEngineString value = parser.readLiteralString();
           return (start: index + 1, end: parser.offset - 1, value: value.bytes);
         }
@@ -694,6 +693,8 @@ abstract final class PsdTextEngine {
     if (components == null || components.length < 4) {
       return null;
     }
+
+    /// Converts one normalized color component to an 8-bit channel.
     int channel(int index) => ((_number(components[index]) ?? 0).clamp(0, 1) * 255).round();
     return PsdTextColor(alpha: channel(0), red: channel(1), green: channel(2), blue: channel(3));
   }
@@ -730,7 +731,7 @@ final class _PsdNormalizedStyleRun {
   final PsdTextStyle style;
 
   /// Creates a normalized style run.
-  const _PsdNormalizedStyleRun(this.length, this.style);
+  const _PsdNormalizedStyleRun({required this.length, required this.style});
 }
 
 /// A paragraph alignment and its normalized Photoshop run length.
@@ -742,7 +743,7 @@ final class _PsdNormalizedParagraph {
   final PsdTextJustification justification;
 
   /// Creates a normalized paragraph run.
-  const _PsdNormalizedParagraph(this.length, this.justification);
+  const _PsdNormalizedParagraph({required this.length, required this.justification});
 }
 
 /// Binary writer for ASCII text-engine syntax and UTF-16 literal strings.
@@ -771,73 +772,79 @@ final class _PsdEngineWriter {
 }
 
 /// Creates the action descriptor surrounding semantic text-engine data.
-PsdDescriptor _createTextDescriptor(PsdTextContent content, PsdTextBounds bounds) {
+PsDescriptor _createTextDescriptor(PsdTextContent content, PsdTextBounds bounds) {
   final String text = content.text.replaceAll('\r\n', '\r').replaceAll('\n', '\r');
-  return PsdDescriptor(
+  return PsDescriptor(
     name: '',
     classId: 'TxLr',
-    items: <PsdDescriptorItem>[
-      PsdDescriptorItem(key: 'Txt ', value: PsdStringValue('$text\u0000')),
-      PsdDescriptorItem(
+    items: <PsDescriptorItem>[
+      PsDescriptorItem(
+        key: 'Txt ',
+        value: PsStringValue(value: '$text\u0000'),
+      ),
+      const PsDescriptorItem(
         key: 'textGridding',
-        value: PsdEnumeratedValue(typeId: 'textGridding', value: 'None'),
+        value: PsEnumeratedValue(typeId: 'textGridding', value: 'None'),
       ),
-      PsdDescriptorItem(
+      PsDescriptorItem(
         key: 'Ornt',
-        value: PsdEnumeratedValue(typeId: 'Ornt', value: content.orientation == PsdTextOrientation.vertical ? 'Vrtc' : 'Hrzn'),
+        value: PsEnumeratedValue(typeId: 'Ornt', value: content.orientation == PsdTextOrientation.vertical ? 'Vrtc' : 'Hrzn'),
       ),
-      PsdDescriptorItem(
+      const PsDescriptorItem(
         key: 'AntA',
-        value: PsdEnumeratedValue(typeId: 'Annt', value: 'AnSm'),
+        value: PsEnumeratedValue(typeId: 'Annt', value: 'AnSm'),
       ),
-      PsdDescriptorItem(key: 'bounds', value: _createBoundsValue(bounds)),
-      PsdDescriptorItem(key: 'boundingBox', value: _createBoundsValue(bounds)),
-      PsdDescriptorItem(key: 'TextIndex', value: PsdIntegerValue(0)),
-      PsdDescriptorItem(key: 'EngineData', value: PsdRawValue(PsdTextEngine.encode(content))),
+      PsDescriptorItem(key: 'bounds', value: _createBoundsValue(bounds)),
+      PsDescriptorItem(key: 'boundingBox', value: _createBoundsValue(bounds)),
+      const PsDescriptorItem(key: 'TextIndex', value: PsIntegerValue(value: 0)),
+      PsDescriptorItem(
+        key: 'EngineData',
+        value: PsRawValue(value: PsdTextEngine.encode(content)),
+      ),
     ],
   );
 }
 
 /// Creates the default no-warp descriptor for [orientation].
-PsdDescriptor _createWarpDescriptor(PsdTextOrientation orientation) => PsdDescriptor(
+PsDescriptor _createWarpDescriptor(PsdTextOrientation orientation) => PsDescriptor(
   name: '',
   classId: 'warp',
-  items: <PsdDescriptorItem>[
-    PsdDescriptorItem(
+  items: <PsDescriptorItem>[
+    const PsDescriptorItem(
       key: 'warpStyle',
-      value: PsdEnumeratedValue(typeId: 'warpStyle', value: 'warpNone'),
+      value: PsEnumeratedValue(typeId: 'warpStyle', value: 'warpNone'),
     ),
-    PsdDescriptorItem(key: 'warpValue', value: PsdDoubleValue(0)),
-    PsdDescriptorItem(key: 'warpPerspective', value: PsdDoubleValue(0)),
-    PsdDescriptorItem(key: 'warpPerspectiveOther', value: PsdDoubleValue(0)),
-    PsdDescriptorItem(
+    const PsDescriptorItem(key: 'warpValue', value: PsDoubleValue(value: 0)),
+    const PsDescriptorItem(key: 'warpPerspective', value: PsDoubleValue(value: 0)),
+    const PsDescriptorItem(key: 'warpPerspectiveOther', value: PsDoubleValue(value: 0)),
+    PsDescriptorItem(
       key: 'warpRotate',
-      value: PsdEnumeratedValue(typeId: 'Ornt', value: orientation == PsdTextOrientation.vertical ? 'Vrtc' : 'Hrzn'),
+      value: PsEnumeratedValue(typeId: 'Ornt', value: orientation == PsdTextOrientation.vertical ? 'Vrtc' : 'Hrzn'),
     ),
   ],
 );
 
 /// Creates a Photoshop bounds descriptor from integer [bounds].
-PsdObjectValue _createBoundsValue(PsdTextBounds bounds) => PsdObjectValue(
-  PsdDescriptor(
+PsObjectValue _createBoundsValue(PsdTextBounds bounds) => PsObjectValue(
+  value: PsDescriptor(
     name: '',
     classId: 'bounds',
-    items: <PsdDescriptorItem>[
-      PsdDescriptorItem(
+    items: <PsDescriptorItem>[
+      PsDescriptorItem(
         key: 'Left',
-        value: PsdUnitFloatValue(unit: '#Pxl', value: bounds.left.toDouble()),
+        value: PsUnitFloatValue(unit: '#Pxl', value: bounds.left.toDouble()),
       ),
-      PsdDescriptorItem(
+      PsDescriptorItem(
         key: 'Top ',
-        value: PsdUnitFloatValue(unit: '#Pxl', value: bounds.top.toDouble()),
+        value: PsUnitFloatValue(unit: '#Pxl', value: bounds.top.toDouble()),
       ),
-      PsdDescriptorItem(
+      PsDescriptorItem(
         key: 'Rght',
-        value: PsdUnitFloatValue(unit: '#Pxl', value: bounds.right.toDouble()),
+        value: PsUnitFloatValue(unit: '#Pxl', value: bounds.right.toDouble()),
       ),
-      PsdDescriptorItem(
+      PsDescriptorItem(
         key: 'Btom',
-        value: PsdUnitFloatValue(unit: '#Pxl', value: bounds.bottom.toDouble()),
+        value: PsUnitFloatValue(unit: '#Pxl', value: bounds.bottom.toDouble()),
       ),
     ],
   ),
@@ -847,7 +854,12 @@ PsdObjectValue _createBoundsValue(PsdTextBounds bounds) => PsdObjectValue(
 List<_PsdNormalizedStyleRun> _normalizeStyles(List<PsdTextStyleRun> runs, int textLength) {
   const PsdTextStyle fallback = PsdTextStyle(fontFamily: 'ArialMT', fontSize: 12, color: PsdTextColor(alpha: 255, red: 0, green: 0, blue: 0));
   if (runs.isEmpty || textLength == 0) {
-    return <_PsdNormalizedStyleRun>[_PsdNormalizedStyleRun(textLength + 1, runs.isEmpty ? fallback : runs.first.style)];
+    return <_PsdNormalizedStyleRun>[
+      _PsdNormalizedStyleRun(
+        length: textLength + 1,
+        style: runs.isEmpty ? fallback : runs.first.style,
+      ),
+    ];
   }
   final List<PsdTextStyleRun> sorted = List<PsdTextStyleRun>.of(runs)..sort((left, right) => left.start.compareTo(right.start));
   final List<_PsdNormalizedStyleRun> result = <_PsdNormalizedStyleRun>[];
@@ -856,30 +868,35 @@ List<_PsdNormalizedStyleRun> _normalizeStyles(List<PsdTextStyleRun> runs, int te
   for (final PsdTextStyleRun run in sorted) {
     final int start = run.start.clamp(offset, textLength);
     if (start > offset) {
-      result.add(_PsdNormalizedStyleRun(start - offset, current));
+      result.add(_PsdNormalizedStyleRun(length: start - offset, style: current));
     }
     final int end = (run.start + run.length).clamp(start, textLength);
     if (end > start) {
-      result.add(_PsdNormalizedStyleRun(end - start, run.style));
+      result.add(_PsdNormalizedStyleRun(length: end - start, style: run.style));
     }
     current = run.style;
     offset = end;
   }
   if (offset < textLength) {
-    result.add(_PsdNormalizedStyleRun(textLength - offset, current));
+    result.add(_PsdNormalizedStyleRun(length: textLength - offset, style: current));
   }
   if (result.isEmpty) {
-    result.add(_PsdNormalizedStyleRun(textLength, current));
+    result.add(_PsdNormalizedStyleRun(length: textLength, style: current));
   }
   final _PsdNormalizedStyleRun last = result.removeLast();
-  result.add(_PsdNormalizedStyleRun(last.length + 1, last.style));
+  result.add(_PsdNormalizedStyleRun(length: last.length + 1, style: last.style));
   return result;
 }
 
 /// Normalizes sparse semantic [paragraphs] into contiguous Photoshop runs.
 List<_PsdNormalizedParagraph> _normalizeParagraphs(List<PsdTextParagraph> paragraphs, int textLength) {
   if (paragraphs.isEmpty || textLength == 0) {
-    return <_PsdNormalizedParagraph>[_PsdNormalizedParagraph(textLength + 1, paragraphs.isEmpty ? PsdTextJustification.left : paragraphs.first.justification)];
+    return <_PsdNormalizedParagraph>[
+      _PsdNormalizedParagraph(
+        length: textLength + 1,
+        justification: paragraphs.isEmpty ? PsdTextJustification.left : paragraphs.first.justification,
+      ),
+    ];
   }
   final List<PsdTextParagraph> sorted = List<PsdTextParagraph>.of(paragraphs)..sort((left, right) => left.start.compareTo(right.start));
   final List<_PsdNormalizedParagraph> result = <_PsdNormalizedParagraph>[];
@@ -888,23 +905,33 @@ List<_PsdNormalizedParagraph> _normalizeParagraphs(List<PsdTextParagraph> paragr
   for (final PsdTextParagraph paragraph in sorted) {
     final int start = paragraph.start.clamp(offset, textLength);
     if (start > offset) {
-      result.add(_PsdNormalizedParagraph(start - offset, current));
+      result.add(_PsdNormalizedParagraph(length: start - offset, justification: current));
     }
     final int end = (paragraph.start + paragraph.length).clamp(start, textLength);
     if (end > start) {
-      result.add(_PsdNormalizedParagraph(end - start, paragraph.justification));
+      result.add(
+        _PsdNormalizedParagraph(
+          length: end - start,
+          justification: paragraph.justification,
+        ),
+      );
     }
     current = paragraph.justification;
     offset = end;
   }
   if (offset < textLength) {
-    result.add(_PsdNormalizedParagraph(textLength - offset, current));
+    result.add(_PsdNormalizedParagraph(length: textLength - offset, justification: current));
   }
   if (result.isEmpty) {
-    result.add(_PsdNormalizedParagraph(textLength, current));
+    result.add(_PsdNormalizedParagraph(length: textLength, justification: current));
   }
   final _PsdNormalizedParagraph last = result.removeLast();
-  result.add(_PsdNormalizedParagraph(last.length + 1, last.justification));
+  result.add(
+    _PsdNormalizedParagraph(
+      length: last.length + 1,
+      justification: last.justification,
+    ),
+  );
   return result;
 }
 
@@ -928,7 +955,7 @@ final class _PsdEngineDictionary {
   final Map<String, Object?> values;
 
   /// Creates an engine dictionary.
-  const _PsdEngineDictionary(this.values);
+  const _PsdEngineDictionary({required this.values});
 
   /// Returns the value associated with [key].
   Object? operator [](String key) => values[key];
@@ -940,7 +967,7 @@ final class _PsdEngineString {
   final Uint8List bytes;
 
   /// Creates a binary engine string.
-  const _PsdEngineString(this.bytes);
+  const _PsdEngineString({required this.bytes});
 }
 
 /// A PostScript name used as a dictionary value.
@@ -949,7 +976,7 @@ final class _PsdEngineName {
   final String value;
 
   /// Creates an engine name.
-  const _PsdEngineName(this.value);
+  const _PsdEngineName({required this.value});
 }
 
 /// Bounded parser for the PostScript subset used by Adobe `EngineData`.
@@ -961,7 +988,7 @@ final class _PsdEngineParser {
   int _offset;
 
   /// Creates an engine-data parser.
-  _PsdEngineParser(this._bytes, {this._offset = 0});
+  _PsdEngineParser({required this._bytes, this._offset = 0});
 
   /// Current byte offset.
   int get offset => _offset;
@@ -1021,7 +1048,7 @@ final class _PsdEngineParser {
         value.addByte(byte);
       } else if (byte == 0x29) {
         if (--depth == 0) {
-          return _PsdEngineString(value.takeBytes());
+          return _PsdEngineString(bytes: value.takeBytes());
         }
         value.addByte(byte);
       } else {
@@ -1047,7 +1074,7 @@ final class _PsdEngineParser {
       return readLiteralString();
     }
     if (_bytes[_offset] == 0x2f) {
-      return _PsdEngineName(_readName());
+      return _PsdEngineName(value: _readName());
     }
     final String token = _readToken();
     if (token == 'true') {
@@ -1070,7 +1097,7 @@ final class _PsdEngineParser {
       _skipTrivia();
       if (_startsWith('>>')) {
         _offset += 2;
-        return _PsdEngineDictionary(values);
+        return _PsdEngineDictionary(values: values);
       }
       if (_offset >= _bytes.length || _bytes[_offset] != 0x2f) {
         throw const FormatException('Expected EngineData dictionary key');
@@ -1212,7 +1239,7 @@ int _findName(Uint8List source, String name, {int start = 0}) {
 /// Skips a complete PostScript literal string starting at [offset].
 int _skipLiteralString(Uint8List source, int offset) {
   try {
-    final _PsdEngineParser parser = _PsdEngineParser(source, offset: offset);
+    final _PsdEngineParser parser = _PsdEngineParser(bytes: source, offset: offset);
     parser.readLiteralString();
     return parser.offset;
   } on FormatException {

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:psdkit/psdkit.dart';
 import 'package:test/test.dart';
 
+/// Exercises Photoshop adjustment-layer encoding and decoding.
 void main() {
   group('adjustments', () {
     test('round-trips the corpus curves variant byte for byte', () {
@@ -143,17 +144,17 @@ void main() {
       final PsdDescriptorAdjustment source = PsdDescriptorAdjustment(
         blockKey: 'vibA',
         type: PsdAdjustmentType.vibrance,
-        descriptor: PsdDescriptor(
+        descriptor: const PsDescriptor(
           name: '',
           classId: 'vibA',
-          items: <PsdDescriptorItem>[PsdDescriptorItem(key: 'vibrance', value: PsdIntegerValue(25))],
+          items: <PsDescriptorItem>[PsDescriptorItem(key: 'vibrance', value: PsIntegerValue(value: 25))],
         ),
       );
-      final PsdDescriptorAdjustment edited = source.withProperty('vibrance', PsdIntegerValue(40));
+      final PsdDescriptorAdjustment edited = source.withProperty('vibrance', const PsIntegerValue(value: 40));
       final Uint8List bytes = PsdAdjustmentCodec.encode(edited);
       final PsdDescriptorAdjustment decoded = PsdAdjustmentCodec.decode(bytes, key: 'vibA') as PsdDescriptorAdjustment;
 
-      expect((decoded.descriptor.value('vibrance') as PsdIntegerValue).value, 40);
+      expect((decoded.descriptor.value('vibrance') as PsIntegerValue).value, 40);
       expect(PsdAdjustmentCodec.encode(decoded), orderedEquals(bytes));
     });
 

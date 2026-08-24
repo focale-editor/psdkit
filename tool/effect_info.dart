@@ -23,7 +23,7 @@ Future<void> main(List<String> arguments) async {
         }
         final ByteData header = ByteData.sublistView(block.data);
         stdout.writeln('  version=${header.getUint32(0)}, descriptorVersion=${header.getUint32(4)}');
-        final ({PsdDescriptor descriptor, int bytesRead}) decoded = PsdDescriptorCodec.decodePrefix(Uint8List.sublistView(block.data, 8));
+        final ({PsDescriptor descriptor, int bytesRead}) decoded = PsDescriptorCodec.decodePrefix(Uint8List.sublistView(block.data, 8));
         _printDescriptor(decoded.descriptor, '  ');
         stdout.writeln('  trailing=${block.data.length - 8 - decoded.bytesRead}');
       } else if (block.key == 'lrFX') {
@@ -35,63 +35,63 @@ Future<void> main(List<String> arguments) async {
 }
 
 /// Prints [descriptor] and all nested descriptor values.
-void _printDescriptor(PsdDescriptor descriptor, String indent) {
+void _printDescriptor(PsDescriptor descriptor, String indent) {
   stdout.writeln('${indent}descriptor ${descriptor.classId} "${descriptor.name}"');
-  for (final PsdDescriptorItem item in descriptor.items) {
+  for (final PsDescriptorItem item in descriptor.items) {
     stdout.write('$indent  ${item.key} ${item.value.type}');
     switch (item.value) {
-      case PsdBooleanValue(:final bool value):
+      case PsBooleanValue(:final bool value):
         stdout.writeln(' $value');
-      case PsdIntegerValue(:final int value):
+      case PsIntegerValue(:final int value):
         stdout.writeln(' $value');
-      case PsdLargeIntegerValue(:final int value):
+      case PsLargeIntegerValue(:final int value):
         stdout.writeln(' $value');
-      case PsdDoubleValue(:final double value):
+      case PsDoubleValue(:final double value):
         stdout.writeln(' $value');
-      case PsdUnitFloatValue(:final String unit, :final double value):
+      case PsUnitFloatValue(:final String unit, :final double value):
         stdout.writeln(' $value $unit');
-      case PsdUnitFloatsValue(:final String unit, :final List<double> values):
+      case PsUnitFloatsValue(:final String unit, :final List<double> values):
         stdout.writeln(' $values $unit');
-      case PsdStringValue(:final String value):
+      case PsStringValue(:final String value):
         stdout.writeln(' "$value"');
-      case PsdEnumeratedValue(:final String typeId, :final String value):
+      case PsEnumeratedValue(:final String typeId, :final String value):
         stdout.writeln(' $typeId/$value');
-      case PsdObjectValue(:final PsdDescriptor value):
+      case PsObjectValue(:final PsDescriptor value):
         stdout.writeln();
         _printDescriptor(value, '$indent    ');
-      case PsdObjectArrayValue(:final int itemsCount, :final PsdDescriptor value):
+      case PsObjectArrayValue(:final int itemsCount, :final PsDescriptor value):
         stdout.writeln(' [$itemsCount]');
         _printDescriptor(value, '$indent    ');
-      case PsdListValue(:final List<PsdDescriptorValue> values):
+      case PsListValue(:final List<PsDescriptorValue> values):
         stdout.writeln(' [${values.length}]');
-        for (final PsdDescriptorValue value in values) {
-          if (value case PsdObjectValue(:final PsdDescriptor value)) {
+        for (final PsDescriptorValue value in values) {
+          if (value case PsObjectValue(:final PsDescriptor value)) {
             _printDescriptor(value, '$indent    ');
           }
         }
-      case PsdReferenceValue(:final List<PsdDescriptorValue> values):
+      case PsReferenceValue(:final List<PsDescriptorValue> values):
         stdout.writeln(' reference[${values.length}]');
-      case PsdPropertyValue(:final String classId, :final String keyId):
+      case PsPropertyValue(:final String classId, :final String keyId):
         stdout.writeln(' $classId/$keyId');
-      case PsdReferenceClassValue(:final String classId):
+      case PsReferenceClassValue(:final String classId):
         stdout.writeln(' $classId');
-      case PsdEnumeratedReferenceValue(:final String classId, :final String typeId, :final String value):
+      case PsEnumeratedReferenceValue(:final String classId, :final String typeId, :final String value):
         stdout.writeln(' $classId/$typeId/$value');
-      case PsdOffsetValue(:final String classId, :final int value):
+      case PsOffsetValue(:final String classId, :final int value):
         stdout.writeln(' $classId+$value');
-      case PsdIdentifierValue(:final int value):
+      case PsIdentifierValue(:final int value):
         stdout.writeln(' $value');
-      case PsdIndexValue(:final int value):
+      case PsIndexValue(:final int value):
         stdout.writeln(' $value');
-      case PsdNameValue(:final String classId, :final String value):
+      case PsNameValue(:final String classId, :final String value):
         stdout.writeln(' $classId/"$value"');
-      case PsdRawValue(:final Uint8List value):
+      case PsRawValue(:final Uint8List value):
         stdout.writeln(' ${value.length} bytes');
-      case PsdAliasValue(:final Uint8List value):
+      case PsAliasValue(:final Uint8List value):
         stdout.writeln(' ${value.length} bytes');
-      case PsdPathValue(:final Uint8List value):
+      case PsPathValue(:final Uint8List value):
         stdout.writeln(' ${value.length} bytes');
-      case PsdClassValue(:final String classId):
+      case PsClassValue(:final String classId):
         stdout.writeln(' $classId');
     }
   }

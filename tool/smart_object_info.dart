@@ -45,7 +45,7 @@ Future<void> main(List<String> arguments) async {
             );
             if (block.key == 'SoLd' && block.data.length > 12) {
               try {
-                final ({PsdDescriptor descriptor, int bytesRead}) decoded = PsdDescriptorCodec.decodePrefix(
+                final ({PsDescriptor descriptor, int bytesRead}) decoded = PsDescriptorCodec.decodePrefix(
                   Uint8List.sublistView(block.data, 12),
                 );
                 stdout.writeln(

@@ -1,8 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:psdkit/src/binary.dart';
-import 'package:psdkit/src/descriptor.dart';
-import 'package:psdkit/src/exceptions.dart';
+import 'package:pscore/pscore.dart';
 
 /// Keys used by modern and legacy Photoshop smart-object layer blocks.
 const Set<String> psdSmartObjectLayerKeys = <String>{'SoLd', 'SoLE', 'plLd'};
@@ -13,19 +11,19 @@ const Set<String> psdLinkedResourceKeys = <String>{'lnkD', 'lnk2', 'lnk3'};
 /// Identifies the content storage strategy of a linked Photoshop resource.
 enum PsdLinkedResourceType {
   /// File bytes are embedded in the PSD or PSB.
-  embedded('liFD'),
+  embedded(code: 'liFD'),
 
   /// The content resides in an external file.
-  external('liFE'),
+  external(code: 'liFE'),
 
   /// A historical platform alias identifies the content.
-  alias('liFA');
+  alias(code: 'liFA');
 
   /// Four-character value stored in the linked-resource entry.
   final String code;
 
   /// Creates a resource type from its stored [code].
-  const PsdLinkedResourceType(this.code);
+  const PsdLinkedResourceType({required this.code});
 }
 
 /// A descriptor preceded by its Photoshop descriptor version.
@@ -34,7 +32,7 @@ final class PsdVersionedDescriptor {
   final int version;
 
   /// Complete action descriptor.
-  final PsdDescriptor descriptor;
+  final PsDescriptor descriptor;
 
   /// Creates a versioned action descriptor.
   const PsdVersionedDescriptor({this.version = 16, required this.descriptor});
@@ -79,7 +77,7 @@ final class PsdPlacedTransform {
   });
 
   /// Creates transform coordinates from the eight stored [values].
-  factory PsdPlacedTransform.fromList(List<double> values) {
+  factory PsdPlacedTransform.fromList({required List<double> values}) {
     if (values.length != 8) {
       throw ArgumentError.value(values.length, 'values.length', 'must be eight');
     }
@@ -139,7 +137,7 @@ final class PsdDescriptorSmartObject extends PsdSmartObjectLayerData {
   final int? descriptorVersion;
 
   /// Complete editable placed-layer descriptor.
-  final PsdDescriptor descriptor;
+  final PsDescriptor descriptor;
 
   /// Uninterpreted bytes following the descriptor.
   final Uint8List trailingData;
@@ -161,8 +159,8 @@ final class PsdDescriptorSmartObject extends PsdSmartObjectLayerData {
 
   @override
   String? get linkedResourceId {
-    final PsdDescriptorValue? value = descriptor.value('Idnt');
-    if (value is! PsdStringValue) {
+    final PsDescriptorValue? value = descriptor.value('Idnt');
+    if (value is! PsStringValue) {
       return null;
     }
     return value.value.endsWith('\u0000') ? value.value.substring(0, value.value.length - 1) : value.value;
@@ -175,7 +173,7 @@ final class PsdDescriptorSmartObject extends PsdSmartObjectLayerData {
   PsdPlacedTransform? get nonAffineTransform => _transformFromValue(descriptor.value('nonAffineTransform'));
 
   /// Returns a copy whose descriptor property [key] is [value].
-  PsdDescriptorSmartObject withProperty(String key, PsdDescriptorValue value) => PsdDescriptorSmartObject(
+  PsdDescriptorSmartObject withProperty(String key, PsDescriptorValue value) => PsdDescriptorSmartObject(
     blockKey: blockKey,
     identifier: identifier,
     version: version,
@@ -186,15 +184,15 @@ final class PsdDescriptorSmartObject extends PsdSmartObjectLayerData {
 
   /// Returns a copy linked to [resourceId].
   PsdDescriptorSmartObject withLinkedResourceId(String resourceId) {
-    final PsdDescriptorValue? current = descriptor.value('Idnt');
-    final bool terminalNull = current is PsdStringValue && current.value.endsWith('\u0000');
-    return withProperty('Idnt', PsdStringValue('$resourceId${terminalNull ? '\u0000' : ''}'));
+    final PsDescriptorValue? current = descriptor.value('Idnt');
+    final bool terminalNull = current is PsStringValue && current.value.endsWith('\u0000');
+    return withProperty('Idnt', PsStringValue(value: '$resourceId${terminalNull ? '\u0000' : ''}'));
   }
 
   /// Returns a copy whose affine corner transform is [value].
   PsdDescriptorSmartObject withTransform(PsdPlacedTransform value) => withProperty(
     'Trnf',
-    PsdListValue(<PsdDescriptorValue>[for (final double coordinate in value.toList()) PsdDoubleValue(coordinate)]),
+    PsListValue(values: <PsDescriptorValue>[for (final double coordinate in value.toList()) PsDoubleValue(value: coordinate)]),
   );
 }
 
@@ -457,7 +455,7 @@ final class PsdRawLinkedResource extends PsdLinkedResourceEntry {
   final Uint8List entryPadding;
 
   /// Creates an opaque linked-resource entry.
-  const PsdRawLinkedResource(this.data, {required this.entryPadding});
+  const PsdRawLinkedResource({required this.data, required this.entryPadding});
 }
 
 /// A complete `lnkD`, `lnk2`, or `lnk3` document block.
@@ -490,12 +488,12 @@ abstract final class PsdSmartObjectCodec {
   /// Decodes one smart-object layer [data] selected by [key].
   static PsdSmartObjectLayerData decode(Uint8List data, {required String key}) {
     if (!psdSmartObjectLayerKeys.contains(key)) {
-      throw PsdFormatException('Unsupported smart-object key "$key"', data, 0);
+      throw PsFormatException(message: 'Unsupported smart-object key "$key"', source: data, offset: 0);
     }
     try {
-      final PsdBinaryReader reader = PsdBinaryReader(data);
+      final PsBinaryReader reader = PsBinaryReader(bytes: data);
       return key == 'plLd' ? _readLegacyPlacedLayer(reader) : _readDescriptorSmartObject(reader, key);
-    } on PsdFormatException {
+    } on PsFormatException {
       return PsdRawSmartObject(blockKey: key, data: data);
     }
   }
@@ -511,7 +509,7 @@ abstract final class PsdSmartObjectCodec {
 
   /// Encodes one smart-object layer [value].
   static Uint8List encode(PsdSmartObjectLayerData value) {
-    final PsdBinaryWriter writer = PsdBinaryWriter();
+    final PsBinaryWriter writer = PsBinaryWriter();
     switch (value) {
       case PsdDescriptorSmartObject():
         _writeFourCharacters(writer, value.identifier, 'smart-object identifier');
@@ -519,10 +517,10 @@ abstract final class PsdSmartObjectCodec {
         if (value.blockKey == 'SoLd') {
           writer.writeUint32(value.descriptorVersion ?? 16);
         } else if (value.descriptorVersion != null) {
-          throw const PsdWriteException('SoLE smart objects do not store a descriptor-version field');
+          throw const PsWriteException(message: 'SoLE smart objects do not store a descriptor-version field');
         }
         writer
-          ..writeBytes(PsdDescriptorCodec.encode(value.descriptor))
+          ..writeBytes(PsDescriptorCodec.encode(value.descriptor))
           ..writeBytes(value.trailingData);
       case PsdLegacyPlacedLayer():
         _writeLegacyPlacedLayer(writer, value);
@@ -536,26 +534,26 @@ abstract final class PsdSmartObjectCodec {
 /// Encodes and decodes document-level linked-resource blocks.
 abstract final class PsdLinkedResourceCodec {
   /// Decodes one entry body without its outer 64-bit length.
-  static PsdLinkedResource decodeEntry(Uint8List data) => _readLinkedResource(PsdBinaryReader(data));
+  static PsdLinkedResource decodeEntry(Uint8List data) => _readLinkedResource(PsBinaryReader(bytes: data));
 
   /// Decodes every complete length-prefixed entry in [data].
   static PsdLinkedResourceBlock decode(Uint8List data, {String key = 'lnk2'}) {
     if (!psdLinkedResourceKeys.contains(key)) {
-      throw PsdFormatException('Unsupported linked-resource key "$key"', data, 0);
+      throw PsFormatException(message: 'Unsupported linked-resource key "$key"', source: data, offset: 0);
     }
-    final PsdBinaryReader reader = PsdBinaryReader(data);
+    final PsBinaryReader reader = PsBinaryReader(bytes: data);
     final List<PsdLinkedResourceEntry> entries = <PsdLinkedResourceEntry>[];
     while (reader.remaining >= 8) {
       final int length = reader.readUint64();
       if (length > reader.remaining) {
-        throw PsdFormatException('Linked-resource entry length $length exceeds ${reader.remaining} bytes', data, reader.offset);
+        throw PsFormatException(message: 'Linked-resource entry length $length exceeds ${reader.remaining} bytes', source: data, offset: reader.offset);
       }
-      final PsdBinaryReader entry = _readView(reader, length);
+      final PsBinaryReader entry = _readView(reader, length);
       final Uint8List padding = reader.readBytes(_entryPaddingLength(length));
       try {
         entries.add(_readLinkedResource(entry, entryPadding: padding));
       } on Object {
-        entries.add(PsdRawLinkedResource(entry.bytes, entryPadding: padding));
+        entries.add(PsdRawLinkedResource(data: entry.bytes, entryPadding: padding));
       }
     }
     return PsdLinkedResourceBlock(blockKey: key, entries: entries, trailingData: reader.readBytes(reader.remaining));
@@ -572,7 +570,7 @@ abstract final class PsdLinkedResourceCodec {
 
   /// Encodes a complete linked-resource [block].
   static Uint8List encode(PsdLinkedResourceBlock block) {
-    final PsdBinaryWriter writer = PsdBinaryWriter();
+    final PsBinaryWriter writer = PsBinaryWriter();
     for (final PsdLinkedResourceEntry entry in block.entries) {
       final Uint8List data = switch (entry) {
         PsdLinkedResource() => _writeLinkedResource(entry),
@@ -583,7 +581,7 @@ abstract final class PsdLinkedResourceCodec {
         ..writeBytes(data);
       final int paddingLength = _entryPaddingLength(data.length);
       if (entry.entryPadding.isNotEmpty && entry.entryPadding.length != paddingLength) {
-        throw PsdWriteException('Linked-resource entry requires $paddingLength padding bytes, received ${entry.entryPadding.length}');
+        throw PsWriteException(message: 'Linked-resource entry requires $paddingLength padding bytes, received ${entry.entryPadding.length}');
       }
       writer.writeBytes(entry.entryPadding.isEmpty ? Uint8List(paddingLength) : entry.entryPadding);
     }
@@ -593,12 +591,12 @@ abstract final class PsdLinkedResourceCodec {
 }
 
 /// Reads modern descriptor-backed smart-object data.
-PsdDescriptorSmartObject _readDescriptorSmartObject(PsdBinaryReader reader, String key) {
+PsdDescriptorSmartObject _readDescriptorSmartObject(PsBinaryReader reader, String key) {
   final String identifier = reader.readString(4);
   final int version = reader.readUint32();
   final int? descriptorVersion = key == 'SoLd' ? reader.readUint32() : null;
   final Uint8List payload = reader.readBytes(reader.remaining);
-  final ({PsdDescriptor descriptor, int bytesRead}) decoded = PsdDescriptorCodec.decodePrefix(payload);
+  final ({PsDescriptor descriptor, int bytesRead}) decoded = PsDescriptorCodec.decodePrefix(payload);
   return PsdDescriptorSmartObject(
     blockKey: key,
     identifier: identifier,
@@ -610,7 +608,7 @@ PsdDescriptorSmartObject _readDescriptorSmartObject(PsdBinaryReader reader, Stri
 }
 
 /// Reads historical fixed-field placed-layer data.
-PsdLegacyPlacedLayer _readLegacyPlacedLayer(PsdBinaryReader reader) {
+PsdLegacyPlacedLayer _readLegacyPlacedLayer(PsBinaryReader reader) {
   final String typeCode = reader.readString(4);
   final int version = reader.readUint32();
   final ({String value, Uint8List padding}) id = _readPascalString(reader, alignment: 1);
@@ -618,11 +616,13 @@ PsdLegacyPlacedLayer _readLegacyPlacedLayer(PsdBinaryReader reader) {
   final int totalPages = reader.readUint32();
   final int antiAliasPolicy = reader.readUint32();
   final int placedType = reader.readUint32();
-  final PsdPlacedTransform transform = PsdPlacedTransform.fromList(<double>[for (int index = 0; index < 8; index++) reader.readFloat64()]);
+  final PsdPlacedTransform transform = PsdPlacedTransform.fromList(
+    values: <double>[for (int index = 0; index < 8; index++) reader.readFloat64()],
+  );
   final int warpVersion = reader.readUint32();
   final int descriptorVersion = reader.readUint32();
   final Uint8List payload = reader.readBytes(reader.remaining);
-  final ({PsdDescriptor descriptor, int bytesRead}) decoded = PsdDescriptorCodec.decodePrefix(payload);
+  final ({PsDescriptor descriptor, int bytesRead}) decoded = PsDescriptorCodec.decodePrefix(payload);
   return PsdLegacyPlacedLayer(
     typeCode: typeCode,
     version: version,
@@ -640,15 +640,15 @@ PsdLegacyPlacedLayer _readLegacyPlacedLayer(PsdBinaryReader reader) {
 }
 
 /// Reads one linked-resource entry body.
-PsdLinkedResource _readLinkedResource(PsdBinaryReader reader, {Uint8List? entryPadding}) {
+PsdLinkedResource _readLinkedResource(PsBinaryReader reader, {Uint8List? entryPadding}) {
   final String typeCode = reader.readString(4);
   final PsdLinkedResourceType type = PsdLinkedResourceType.values.firstWhere(
     (value) => value.code == typeCode,
-    orElse: () => throw PsdFormatException('Unknown linked-resource type "$typeCode"', reader.bytes, 0),
+    orElse: () => throw PsFormatException(message: 'Unknown linked-resource type "$typeCode"', source: reader.bytes, offset: 0),
   );
   final int version = reader.readUint32();
   if (version < 1 || version > 7) {
-    throw PsdFormatException('Unsupported linked-resource version $version', reader.bytes, 4);
+    throw PsFormatException(message: 'Unsupported linked-resource version $version', source: reader.bytes, offset: 4);
   }
   final ({String value, Uint8List padding}) id = _readPascalString(reader, alignment: 1);
   final ({String value, bool terminalNull}) name = _readUnicodeString(reader);
@@ -715,9 +715,9 @@ PsdLinkedResource _readLinkedResource(PsdBinaryReader reader, {Uint8List? entryP
 }
 
 /// Reads a descriptor after its 32-bit version.
-PsdVersionedDescriptor _readVersionedDescriptor(PsdBinaryReader reader) {
+PsdVersionedDescriptor _readVersionedDescriptor(PsBinaryReader reader) {
   final int version = reader.readUint32();
-  final ({PsdDescriptor descriptor, int bytesRead}) decoded = PsdDescriptorCodec.decodePrefix(
+  final ({PsDescriptor descriptor, int bytesRead}) decoded = PsDescriptorCodec.decodePrefix(
     Uint8List.sublistView(reader.bytes, reader.offset),
   );
   reader.skip(decoded.bytesRead);
@@ -725,7 +725,7 @@ PsdVersionedDescriptor _readVersionedDescriptor(PsdBinaryReader reader) {
 }
 
 /// Writes historical fixed-field placed-layer data.
-void _writeLegacyPlacedLayer(PsdBinaryWriter writer, PsdLegacyPlacedLayer value) {
+void _writeLegacyPlacedLayer(PsBinaryWriter writer, PsdLegacyPlacedLayer value) {
   _writeFourCharacters(writer, value.typeCode, 'legacy placed-layer type');
   writer.writeUint32(value.version);
   _writePascalString(writer, value.id, value.idPadding, alignment: 1);
@@ -738,13 +738,13 @@ void _writeLegacyPlacedLayer(PsdBinaryWriter writer, PsdLegacyPlacedLayer value)
   writer
     ..writeUint32(value.warpVersion)
     ..writeUint32(value.warp.version)
-    ..writeBytes(PsdDescriptorCodec.encode(value.warp.descriptor))
+    ..writeBytes(PsDescriptorCodec.encode(value.warp.descriptor))
     ..writeBytes(value.trailingData);
 }
 
 /// Writes one semantic linked-resource entry body.
 Uint8List _writeLinkedResource(PsdLinkedResource resource) {
-  final PsdBinaryWriter writer = PsdBinaryWriter();
+  final PsBinaryWriter writer = PsBinaryWriter();
   _writeFourCharacters(writer, resource.type.code, 'linked-resource type');
   writer.writeUint32(resource.version);
   _writePascalString(writer, resource.id, resource.idPadding, alignment: 1);
@@ -759,13 +759,13 @@ Uint8List _writeLinkedResource(PsdLinkedResource resource) {
   }
   if (resource.type == PsdLinkedResourceType.external) {
     if (resource.linkedFileDescriptor == null) {
-      throw const PsdWriteException('External linked resources require a linked-file descriptor');
+      throw const PsWriteException(message: 'External linked resources require a linked-file descriptor');
     }
     _writeVersionedDescriptor(writer, resource.linkedFileDescriptor!);
     if (resource.version > 3) {
       final PsdLinkedResourceTimestamp? timestamp = resource.timestamp;
       if (timestamp == null) {
-        throw const PsdWriteException('External linked-resource versions above 3 require a timestamp');
+        throw const PsWriteException(message: 'External linked-resource versions above 3 require a timestamp');
       }
       writer
         ..writeUint32(timestamp.year)
@@ -778,7 +778,7 @@ Uint8List _writeLinkedResource(PsdLinkedResource resource) {
     writer.writeUint64(resource.externalFileSize ?? 0);
   } else if (resource.type == PsdLinkedResourceType.alias) {
     if (resource.aliasData.length != 8) {
-      throw const PsdWriteException('Alias linked resources require exactly eight alias bytes');
+      throw const PsWriteException(message: 'Alias linked resources require exactly eight alias bytes');
     }
     writer.writeBytes(resource.aliasData);
   } else {
@@ -802,35 +802,37 @@ Uint8List _writeLinkedResource(PsdLinkedResource resource) {
 }
 
 /// Writes a descriptor preceded by its version.
-void _writeVersionedDescriptor(PsdBinaryWriter writer, PsdVersionedDescriptor value) {
+void _writeVersionedDescriptor(PsBinaryWriter writer, PsdVersionedDescriptor value) {
   writer
     ..writeUint32(value.version)
-    ..writeBytes(PsdDescriptorCodec.encode(value.descriptor));
+    ..writeBytes(PsDescriptorCodec.encode(value.descriptor));
 }
 
 /// Converts a descriptor list of eight doubles to a placed transform.
-PsdPlacedTransform? _transformFromValue(PsdDescriptorValue? value) {
-  if (value is! PsdListValue || value.values.length != 8 || value.values.any((item) => item is! PsdDoubleValue)) {
+PsdPlacedTransform? _transformFromValue(PsDescriptorValue? value) {
+  if (value is! PsListValue || value.values.length != 8 || value.values.any((item) => item is! PsDoubleValue)) {
     return null;
   }
-  return PsdPlacedTransform.fromList(<double>[for (final PsdDescriptorValue item in value.values) (item as PsdDoubleValue).value]);
+  return PsdPlacedTransform.fromList(
+    values: <double>[for (final PsDescriptorValue item in value.values) (item as PsDoubleValue).value],
+  );
 }
 
 /// Reads a one-byte-length Pascal string and exact alignment bytes.
-({String value, Uint8List padding}) _readPascalString(PsdBinaryReader reader, {required int alignment}) {
+({String value, Uint8List padding}) _readPascalString(PsBinaryReader reader, {required int alignment}) {
   final int length = reader.readUint8();
   final String value = reader.readString(length);
   return (value: value, padding: reader.readBytes(_pascalPaddingLength(length, alignment: alignment)));
 }
 
 /// Writes a Pascal [value] followed by its preserved [padding].
-void _writePascalString(PsdBinaryWriter writer, String value, Uint8List padding, {required int alignment}) {
+void _writePascalString(PsBinaryWriter writer, String value, Uint8List padding, {required int alignment}) {
   if (value.length > 255 || value.codeUnits.any((unit) => unit > 0xff)) {
-    throw const PsdWriteException('Pascal strings must contain at most 255 one-byte characters');
+    throw const PsWriteException(message: 'Pascal strings must contain at most 255 one-byte characters');
   }
   final int expectedPadding = _pascalPaddingLength(value.length, alignment: alignment);
   if (padding.length != expectedPadding) {
-    throw PsdWriteException('Pascal string requires $expectedPadding padding bytes, received ${padding.length}');
+    throw PsWriteException(message: 'Pascal string requires $expectedPadding padding bytes, received ${padding.length}');
   }
   writer
     ..writeUint8(value.length)
@@ -845,10 +847,10 @@ int _pascalPaddingLength(int length, {required int alignment}) => (alignment - (
 int _entryPaddingLength(int length) => (4 - (length % 4)) % 4;
 
 /// Reads a length-prefixed UTF-16 string and removes one terminal NUL.
-({String value, bool terminalNull}) _readUnicodeString(PsdBinaryReader reader) {
+({String value, bool terminalNull}) _readUnicodeString(PsBinaryReader reader) {
   final int count = reader.readUint32();
   if (count > reader.remaining ~/ 2) {
-    throw PsdFormatException('Truncated linked-resource Unicode string', reader.bytes, reader.offset);
+    throw PsFormatException(message: 'Truncated linked-resource Unicode string', source: reader.bytes, offset: reader.offset);
   }
   final List<int> units = <int>[for (int index = 0; index < count; index++) reader.readUint16()];
   final bool terminalNull = units.isNotEmpty && units.last == 0;
@@ -856,7 +858,7 @@ int _entryPaddingLength(int length) => (4 - (length % 4)) % 4;
 }
 
 /// Writes a length-prefixed UTF-16 [value].
-void _writeUnicodeString(PsdBinaryWriter writer, String value, {required bool terminalNull}) {
+void _writeUnicodeString(PsBinaryWriter writer, String value, {required bool terminalNull}) {
   writer.writeUint32(value.codeUnits.length + (terminalNull ? 1 : 0));
   value.codeUnits.forEach(writer.writeUint16);
   if (terminalNull) {
@@ -865,15 +867,15 @@ void _writeUnicodeString(PsdBinaryWriter writer, String value, {required bool te
 }
 
 /// Creates a zero-copy bounded reader for the next [length] bytes.
-PsdBinaryReader _readView(PsdBinaryReader reader, int length) {
+PsBinaryReader _readView(PsBinaryReader reader, int length) {
   final Uint8List bytes = _readByteView(reader, length);
-  return PsdBinaryReader(bytes, baseOffset: reader.baseOffset + reader.offset - length);
+  return PsBinaryReader(bytes: bytes, baseOffset: reader.baseOffset + reader.offset - length);
 }
 
 /// Returns a zero-copy view of the next [length] bytes and advances [reader].
-Uint8List _readByteView(PsdBinaryReader reader, int length) {
+Uint8List _readByteView(PsBinaryReader reader, int length) {
   if (length < 0 || length > reader.remaining) {
-    throw PsdFormatException('Unexpected end of linked resource', reader.bytes, reader.baseOffset + reader.offset);
+    throw PsFormatException(message: 'Unexpected end of linked resource', source: reader.bytes, offset: reader.baseOffset + reader.offset);
   }
   final Uint8List bytes = Uint8List.sublistView(reader.bytes, reader.offset, reader.offset + length);
   reader.skip(length);
@@ -881,9 +883,9 @@ Uint8List _readByteView(PsdBinaryReader reader, int length) {
 }
 
 /// Writes a required four-character one-byte code.
-void _writeFourCharacters(PsdBinaryWriter writer, String value, String label) {
+void _writeFourCharacters(PsBinaryWriter writer, String value, String label) {
   if (value.length != 4 || value.codeUnits.any((unit) => unit > 0xff)) {
-    throw PsdWriteException('$label must contain four one-byte characters');
+    throw PsWriteException(message: '$label must contain four one-byte characters');
   }
   writer.writeString(value);
 }
