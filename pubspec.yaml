@@ -1,6 +1,6 @@
 name: psdkit
 description: A pure Dart PSD and PSB reader and writer with no native or third-party PSD dependency.
-version: 0.2.0
+version: 0.2.1
 homepage: https://github.com/focale-editor/psdkit
 repository: https://github.com/focale-editor/psdkit
 
