@@ -1,5 +1,10 @@
 # 📰 PsdKit changelog
 
+## v0.3.0
+Released on August 29, 2026.
+
+* **BREAKING CHORE**: Now using the latest version of `zcodec`. ([#3d9a02a](https://github.com/focale-editor/psdkit/commit/3d9a02a))
+
 ## v0.2.1
 Released on August 25, 2026.
 
