@@ -38,6 +38,246 @@ final class PsdVersionedDescriptor {
   const PsdVersionedDescriptor({this.version = 16, required this.descriptor});
 }
 
+/// One Photoshop smart filter stored inside a placed-layer descriptor.
+///
+/// The complete [descriptor] remains available so readers can round-trip
+/// vendor-specific filter settings even when no semantic accessor exists.
+final class PsdSmartFilter {
+  /// Complete `filterFX` descriptor for this stack entry.
+  final PsDescriptor descriptor;
+
+  /// Creates a Photoshop-compatible smart-filter descriptor.
+  factory PsdSmartFilter({
+    required int filterId,
+    required String name,
+    required String blendMode,
+    required double opacity,
+    PsDescriptor? filter,
+    bool enabled = true,
+    bool hasOptions = true,
+  }) {
+    if (!opacity.isFinite || opacity < 0 || opacity > 1) {
+      throw RangeError.range(opacity, 0, 1, 'opacity');
+    }
+    return PsdSmartFilter.fromDescriptor(
+      PsDescriptor(
+        name: '',
+        classId: 'filterFX',
+        items: [
+          PsDescriptorItem(
+            key: 'Nm  ',
+            value: PsStringValue(value: name),
+          ),
+          PsDescriptorItem(
+            key: 'blendOptions',
+            value: PsObjectValue(
+              value: PsDescriptor(
+                name: '',
+                classId: 'blendOptions',
+                items: [
+                  PsDescriptorItem(
+                    key: 'Opct',
+                    value: PsUnitFloatValue(
+                      unit: '#Prc',
+                      value: opacity * 100,
+                    ),
+                  ),
+                  PsDescriptorItem(
+                    key: 'Md  ',
+                    value: PsEnumeratedValue(
+                      typeId: 'BlnM',
+                      value: blendMode,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          PsDescriptorItem(
+            key: 'enab',
+            value: PsBooleanValue(value: enabled),
+          ),
+          PsDescriptorItem(
+            key: 'hasoptions',
+            value: PsBooleanValue(value: hasOptions),
+          ),
+          const PsDescriptorItem(
+            key: 'FrgC',
+            value: PsObjectValue(value: _blackRgbDescriptor),
+          ),
+          const PsDescriptorItem(
+            key: 'BckC',
+            value: PsObjectValue(value: _blackRgbDescriptor),
+          ),
+          PsDescriptorItem(
+            key: 'filterID',
+            value: PsIntegerValue(value: filterId),
+          ),
+          if (filter != null)
+            PsDescriptorItem(
+              key: 'Fltr',
+              value: PsObjectValue(value: filter),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Wraps an existing Photoshop smart-filter [descriptor] losslessly.
+  const PsdSmartFilter.fromDescriptor(this.descriptor);
+
+  /// Numeric Photoshop filter identifier, when the entry exposes one.
+  int? get filterId => switch (descriptor.value('filterID')) {
+    PsIntegerValue(:final int value) => value,
+    _ => null,
+  };
+
+  /// Human-readable filter name, when present.
+  String? get name => switch (descriptor.value('Nm  ')) {
+    PsStringValue(:final String value) => value,
+    _ => null,
+  };
+
+  /// Action descriptor containing the filter-specific parameters.
+  PsDescriptor? get filter => switch (descriptor.value('Fltr')) {
+    PsObjectValue(:final PsDescriptor value) => value,
+    _ => null,
+  };
+
+  /// Whether Photoshop evaluates this stack entry.
+  bool get enabled => switch (descriptor.value('enab')) {
+    PsBooleanValue(:final bool value) => value,
+    _ => true,
+  };
+
+  /// Whether Photoshop should expose an options dialog for this entry.
+  bool get hasOptions => switch (descriptor.value('hasoptions')) {
+    PsBooleanValue(:final bool value) => value,
+    _ => filter != null,
+  };
+
+  /// Normalized blending opacity applied to the filter result.
+  double get opacity {
+    final PsDescriptorValue? options = descriptor.value('blendOptions');
+    final PsDescriptorValue? value = options is PsObjectValue ? options.value.value('Opct') : null;
+    return switch (value) {
+      PsUnitFloatValue(unit: '#Prc', :final double value) => (value / 100).clamp(0, 1),
+      _ => 1,
+    };
+  }
+
+  /// Photoshop blend-mode identifier applied to the filter result.
+  String get blendMode {
+    final PsDescriptorValue? options = descriptor.value('blendOptions');
+    final PsDescriptorValue? value = options is PsObjectValue ? options.value.value('Md  ') : null;
+    return switch (value) {
+      PsEnumeratedValue(:final String value) => value,
+      _ => 'Nrml',
+    };
+  }
+}
+
+/// The shared settings and ordered filters attached to one smart object.
+///
+/// The wrapper preserves the original [descriptor], including unknown fields,
+/// while exposing the stable fields used by Photoshop's `filterFXStyle` data.
+final class PsdSmartFilterStack {
+  /// Complete `filterFXStyle` descriptor.
+  final PsDescriptor descriptor;
+
+  /// Creates a Photoshop-compatible smart-filter stack.
+  factory PsdSmartFilterStack({
+    required List<PsdSmartFilter> filters,
+    bool enabled = true,
+    bool validAtPosition = true,
+    bool maskEnabled = true,
+    bool maskLinked = true,
+    bool maskExtendWithWhite = true,
+  }) => PsdSmartFilterStack.fromDescriptor(
+    PsDescriptor(
+      name: '',
+      classId: 'filterFXStyle',
+      items: [
+        PsDescriptorItem(
+          key: 'enab',
+          value: PsBooleanValue(value: enabled),
+        ),
+        PsDescriptorItem(
+          key: 'validAtPosition',
+          value: PsBooleanValue(value: validAtPosition),
+        ),
+        PsDescriptorItem(
+          key: 'filterMaskEnable',
+          value: PsBooleanValue(value: maskEnabled),
+        ),
+        PsDescriptorItem(
+          key: 'filterMaskLinked',
+          value: PsBooleanValue(value: maskLinked),
+        ),
+        PsDescriptorItem(
+          key: 'filterMaskExtendWithWhite',
+          value: PsBooleanValue(value: maskExtendWithWhite),
+        ),
+        PsDescriptorItem(
+          key: 'filterFXList',
+          value: PsListValue(
+            values: [
+              for (final PsdSmartFilter filter in filters) PsObjectValue(value: filter.descriptor),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
+  /// Wraps an existing Photoshop smart-filter stack losslessly.
+  const PsdSmartFilterStack.fromDescriptor(this.descriptor);
+
+  /// Whether Photoshop evaluates the whole stack.
+  bool get enabled => _boolean('enab', fallback: true);
+
+  /// Whether the cached result is valid at the stored placement.
+  bool get validAtPosition => _boolean('validAtPosition', fallback: true);
+
+  /// Whether the shared smart-filter mask contributes to rendering.
+  bool get maskEnabled => _boolean('filterMaskEnable', fallback: true);
+
+  /// Whether the mask follows the smart object's transform.
+  bool get maskLinked => _boolean('filterMaskLinked', fallback: true);
+
+  /// Whether pixels beyond the stored mask bounds behave as white.
+  bool get maskExtendWithWhite => _boolean('filterMaskExtendWithWhite', fallback: true);
+
+  /// Ordered smart filters recognized inside the stack list.
+  List<PsdSmartFilter> get filters {
+    final PsDescriptorValue? list = descriptor.value('filterFXList');
+    if (list is! PsListValue) {
+      return const [];
+    }
+    return [
+      for (final PsDescriptorValue value in list.values)
+        if (value is PsObjectValue) PsdSmartFilter.fromDescriptor(value.value),
+    ];
+  }
+
+  /// Reads one Boolean property while tolerating older incomplete descriptors.
+  bool _boolean(String key, {required bool fallback}) => switch (descriptor.value(key)) {
+    PsBooleanValue(:final bool value) => value,
+    _ => fallback,
+  };
+}
+
+/// Neutral RGB color used by filters without explicit color parameters.
+const PsDescriptor _blackRgbDescriptor = PsDescriptor(
+  name: '',
+  classId: 'RGBC',
+  items: [
+    PsDescriptorItem(key: 'Rd  ', value: PsDoubleValue(value: 0)),
+    PsDescriptorItem(key: 'Grn ', value: PsDoubleValue(value: 0)),
+    PsDescriptorItem(key: 'Bl  ', value: PsDoubleValue(value: 0)),
+  ],
+);
+
 /// Eight transform coordinates ordered by the four placed-image corners.
 final class PsdPlacedTransform {
   /// Top-left horizontal coordinate.
@@ -172,6 +412,12 @@ final class PsdDescriptorSmartObject extends PsdSmartObjectLayerData {
   /// Optional non-affine four-corner transform.
   PsdPlacedTransform? get nonAffineTransform => _transformFromValue(descriptor.value('nonAffineTransform'));
 
+  /// Photoshop smart-filter stack attached to this placed layer, when present.
+  PsdSmartFilterStack? get smartFilters => switch (descriptor.value('filterFX')) {
+    PsObjectValue(:final PsDescriptor value) => PsdSmartFilterStack.fromDescriptor(value),
+    _ => null,
+  };
+
   /// Returns a copy whose descriptor property [key] is [value].
   PsdDescriptorSmartObject withProperty(String key, PsDescriptorValue value) => PsdDescriptorSmartObject(
     blockKey: blockKey,
@@ -193,6 +439,12 @@ final class PsdDescriptorSmartObject extends PsdSmartObjectLayerData {
   PsdDescriptorSmartObject withTransform(PsdPlacedTransform value) => withProperty(
     'Trnf',
     PsListValue(values: <PsDescriptorValue>[for (final double coordinate in value.toList()) PsDoubleValue(value: coordinate)]),
+  );
+
+  /// Returns a copy whose editable smart-filter metadata is [value].
+  PsdDescriptorSmartObject withSmartFilters(PsdSmartFilterStack value) => withProperty(
+    'filterFX',
+    PsObjectValue(value: value.descriptor),
   );
 }
 

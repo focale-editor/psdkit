@@ -12,7 +12,7 @@ void main() {
         descriptor: PsDescriptor(
           name: '',
           classId: 'null',
-          items: <PsDescriptorItem>[
+          items: [
             const PsDescriptorItem(
               key: 'Idnt',
               value: PsStringValue(value: 'resource-id\u0000'),
@@ -52,6 +52,54 @@ void main() {
           );
       expect(edited.linkedResourceId, 'replacement');
       expect(edited.transform?.bottomLeftY, 8);
+    });
+
+    test('round-trips semantic smart-filter stack metadata', () {
+      final PsdSmartFilter filter = PsdSmartFilter(
+        filterId: 1198747202,
+        name: 'Gaussian Blur',
+        blendMode: 'Mltp',
+        opacity: 0.625,
+        enabled: false,
+        filter: const PsDescriptor(
+          name: 'Gaussian Blur',
+          classId: 'GsnB',
+          items: <PsDescriptorItem>[
+            PsDescriptorItem(
+              key: 'Rds ',
+              value: PsUnitFloatValue(unit: '#Pxl', value: 4.5),
+            ),
+          ],
+        ),
+      );
+      final PsdDescriptorSmartObject source =
+          PsdDescriptorSmartObject(
+            descriptor: const PsDescriptor(name: '', classId: 'null'),
+          ).withSmartFilters(
+            PsdSmartFilterStack(
+              filters: [filter],
+              maskEnabled: false,
+              maskLinked: false,
+            ),
+          );
+
+      final Uint8List bytes = PsdSmartObjectCodec.encode(source);
+      final PsdDescriptorSmartObject decoded = PsdSmartObjectCodec.decode(
+        bytes,
+        key: 'SoLd',
+      ) as PsdDescriptorSmartObject;
+      final PsdSmartFilterStack stack = decoded.smartFilters!;
+      final PsdSmartFilter decodedFilter = stack.filters.single;
+
+      expect(stack.maskEnabled, isFalse);
+      expect(stack.maskLinked, isFalse);
+      expect(decodedFilter.filterId, 1198747202);
+      expect(decodedFilter.name, 'Gaussian Blur');
+      expect(decodedFilter.blendMode, 'Mltp');
+      expect(decodedFilter.opacity, closeTo(0.625, 1e-12));
+      expect(decodedFilter.enabled, isFalse);
+      expect(decodedFilter.filter?.classId, 'GsnB');
+      expect(PsdSmartObjectCodec.encode(decoded), orderedEquals(bytes));
     });
 
     test('round-trips legacy placed-layer metadata', () {
