@@ -1,5 +1,10 @@
 # 📰 PsdKit changelog
 
+## v0.3.1
+Released on September 3, 2026.
+
+* **FEAT**: Added smart filters support. ([#b9d1873](https://github.com/focale-editor/psdkit/commit/b9d1873))
+
 ## v0.3.0
 Released on August 29, 2026.
 
