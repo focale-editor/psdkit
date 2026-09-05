@@ -1,5 +1,10 @@
 # 📰 PsdKit changelog
 
+## v0.3.2
+Released on September 5, 2026.
+
+* **FEAT**: Added support for per-layer composition metadata. ([#1bd7f20](https://github.com/focale-editor/psdkit/commit/1bd7f20))
+
 ## v0.3.1
 Released on September 3, 2026.
 
