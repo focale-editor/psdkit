@@ -1,5 +1,10 @@
 # 📰 PsdKit changelog
 
+## v0.3.3
+Released on September 6, 2026.
+
+* **FEAT**: Added seekable, bounded-memory RAW and PackBits writing for PSD and PSB documents. ([#5ac8563](https://github.com/focale-editor/psdkit/commit/5ac8563))
+
 ## v0.3.2
 Released on September 5, 2026.
 
