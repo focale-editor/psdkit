@@ -27,6 +27,29 @@ final Uint8List output = PsdCodec.encode(
 await File('output.psd').writeAsBytes(output);
 ```
 
+For large files, use the seekable progressive writer instead of retaining the
+encoded document:
+
+```dart
+final PsdStreamDocument streamed = PsdStreamDocument.fromDocument(document);
+final int byteLength = await PsdCodec.encodeTo(
+  streamed,
+  output,
+  options: const PsdWriteOptions(
+    version: PsdVersion.psb,
+    compression: PsdCompression.rle,
+  ),
+  rowBatchSize: 32,
+);
+```
+
+`output` implements `PsdRandomAccessOutput` and remains owned by the caller.
+`encodeTo` flushes it but does not close it. `fromDocument` is a convenient
+compatibility adapter over already resident planes; genuinely bounded
+applications provide custom `PsdPlanarSource` implementations that read rows
+from tiles or temporary files. Progressive output supports RAW and row-local
+PackBits RLE. ZIP callers should continue to use the byte-oriented encoder.
+
 To create planar RGB channels from Flutter pixels:
 
 ```dart
@@ -268,7 +291,11 @@ Unknown image resources and tagged layer blocks are deliberately retained. Readi
 
 ## Safety and platforms
 
-`PsdReadOptions` limits canvas area, layer count, and decoded allocation size when opening untrusted files. All variable-length sections are parsed through bounded readers, and ZIP output is capped while it is being decompressed rather than after allocation.
+`PsdReadOptions` limits canvas area, layer count, and decoded allocation size
+when opening untrusted files. All variable-length sections are parsed through
+bounded readers, and ZIP output is capped while it is being decompressed rather
+than after allocation. Progressive RAW and RLE output retains only a bounded
+sample-row batch and a bounded batch of RLE row lengths while writing.
 
 ## Development
 

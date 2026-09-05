@@ -195,7 +195,7 @@ Uint8List _decodeRle(Uint8List input, int rowBytes, int height, bool wide) {
 Uint8List _encodeRle(Uint8List input, int rowBytes, int height, bool wide) {
   final List<Uint8List> rows = <Uint8List>[];
   for (int row = 0; row < height; row++) {
-    rows.add(_encodePackBits(Uint8List.sublistView(input, row * rowBytes, (row + 1) * rowBytes)));
+    rows.add(encodePsdPackBitsRow(Uint8List.sublistView(input, row * rowBytes, (row + 1) * rowBytes)));
   }
   final int lengthSize = wide ? 4 : 2;
   final int payloadLength = rows.fold<int>(height * lengthSize, (total, row) => total + row.length);
@@ -219,7 +219,11 @@ Uint8List _encodeRle(Uint8List input, int rowBytes, int height, bool wide) {
 }
 
 /// Encodes one [row] with the PackBits run-length algorithm.
-Uint8List _encodePackBits(Uint8List row) {
+/// Encodes one independent PSD PackBits [row].
+///
+/// The returned bytes do not include the row length stored by the surrounding
+/// channel or merged-image table.
+Uint8List encodePsdPackBitsRow(Uint8List row) {
   final BytesBuilder output = BytesBuilder(copy: false);
   int offset = 0;
   while (offset < row.length) {

@@ -4,6 +4,8 @@ import 'package:pscore/pscore.dart';
 import 'package:psdkit/src/compression.dart';
 import 'package:psdkit/src/model.dart';
 
+part 'streaming_writer.dart';
+
 /// Tagged blocks whose payload length expands to 64 bits in PSB files.
 const Set<String> _widePsbTaggedBlocks = <String>{
   'LMsk',
@@ -132,6 +134,25 @@ abstract final class PsdCodec {
       ..writeBytes(imageData);
     return writer.takeBytes();
   }
+
+  /// Writes [document] progressively to a seekable [output].
+  ///
+  /// Only bounded row batches and metadata blocks are retained while pixels
+  /// are written. Raw and PackBits compression are supported because their
+  /// rows can be emitted independently; use [encode] when ZIP compression is
+  /// required. The returned value is the final byte length.
+  static Future<int> encodeTo(
+    PsdStreamDocument document,
+    PsdRandomAccessOutput output, {
+    PsdWriteOptions options = const PsdWriteOptions(),
+    int rowBatchSize = 64,
+    PsdWriteProgress? onProgress,
+  }) => _PsdStreamingWriter(
+    output: output,
+    options: options,
+    rowBatchSize: rowBatchSize,
+    onProgress: onProgress,
+  ).write(document);
 }
 
 /// Collects decoded values from the layer-and-mask section.
