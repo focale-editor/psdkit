@@ -111,6 +111,19 @@ final editedLayer = layer.withEffects(
 
 Unchanged modern and legacy blocks round-trip byte for byte. Editing a legacy `lrFX` record upgrades it to modern `lfx2`, avoiding the limitations of the historical fixed structures. PsdKit stores effect definitions but does not rasterize them; the application remains responsible for matching layer preview channels and the merged image.
 
+## Layer compositions
+
+`PsdLayer.layerCompData` decodes the per-layer `shmd` / `cmls` metadata used by Photoshop layer compositions. It exposes historical visibility and position together with the complete blending descriptor, layer effects, opacity, fill opacity, and channel-specific Blend If ranges:
+
+```dart
+final compState = layer.layerCompData?.statesByCompIdentifier[42];
+print(compState?.visible);
+print(compState?.blendOptions?.opacityPercent);
+print(compState?.layerEffects?.effects.length);
+```
+
+Use `PsdLayerCompLayerData.create`, `PsdLayerCompLayerState.create`, and `withLayerCompData` to write editable states. Unrelated shared metadata and unknown descriptor properties remain intact when the original descriptors are retained. The document-wide composition catalogue remains available as the typed descriptor image resource with id `PsdImageResourceIds.layerComps`.
+
 ## Vector paths
 
 `PsdLayer.vectorMask` exposes `vmsk` and `vsms` layer masks. `PsdDocument.namedPaths` exposes saved document paths from Photoshop image resources. Both use `PsdVectorPath`, with semantic subpaths and exact 26-byte source records:
@@ -243,6 +256,7 @@ Formats governed by separate standards, including IPTC and EXIF, are exposed as 
 | Unicode names and layer ids                                       |  Yes |   Yes | `luni`, `lyid`, `lsct`, and `lsdk` helpers                                                            |
 | Editable text layers                                              |  Yes |   Yes | Unicode, transforms, bounds, orientation, fonts, sizes, colors, style ranges, and paragraph alignment |
 | Layer effects                                                     |  Yes |   Yes | Modern `lfx2`/`lmfx`, legacy `lrFX`, repeated effects, and complete descriptor preservation           |
+| Layer composition states                                          |  Yes |   Yes | `cmls` visibility, position, opacity, blending, Blend If, and effects                                  |
 | Vector masks and document paths                                   |  Yes |   Yes | Open/closed cubic Bézier paths, Boolean operations, fill rules, and unknown record preservation       |
 | Fill and adjustment layers                                        |  Yes |   Yes | Typed common adjustments, descriptor-backed modern settings, and raw fallback preservation            |
 | Smart objects and linked files                                    |  Yes |   Yes | Modern and legacy placed layers; embedded, external, and alias resources                              |

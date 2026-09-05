@@ -7,6 +7,7 @@ export 'src/adjustments.dart';
 export 'src/codec.dart';
 export 'src/effects.dart';
 export 'src/image_resources.dart';
+export 'src/layer_comps.dart';
 export 'src/model.dart';
 export 'src/paths.dart';
 export 'src/pixels.dart';
