@@ -20,7 +20,7 @@ final class PsdStylePreset {
     required this.identityDescriptor,
     required this.styleDescriptor,
     Uint8List? trailingData,
-  }) : trailingData = trailingData ?? Uint8List(0);
+  }) : trailingData = _immutableBytes(trailingData);
 
   /// Creates a Photoshop-compatible preset from semantic effects.
   factory PsdStylePreset.create({
@@ -121,9 +121,9 @@ final class PsdStyleLibrary {
     Uint8List? patternsData,
     required List<PsdStylePreset> styles,
     Uint8List? trailingData,
-  }) : patternsData = patternsData ?? Uint8List(0),
+  }) : patternsData = _immutableBytes(patternsData),
        styles = List<PsdStylePreset>.unmodifiable(styles),
-       trailingData = trailingData ?? Uint8List(0);
+       trailingData = _immutableBytes(trailingData);
 }
 
 /// Encodes and decodes Photoshop `.asl` style libraries.
@@ -236,6 +236,9 @@ abstract final class PsdStyleLibraryCodec {
     if (library.styles.length > maximumStyleCount) {
       throw const PsWriteException(message: 'ASL style count exceeds the supported limit');
     }
+    if (library.patternsData.length + library.trailingData.length > maximumBytes) {
+      throw const PsWriteException(message: 'ASL file exceeds the supported byte limit');
+    }
     final PsBinaryWriter writer = PsBinaryWriter()
       ..writeUint16(2)
       ..writeString('8BSL')
@@ -290,3 +293,8 @@ String _resolveZString(String value) {
   final int slash = value.lastIndexOf('/');
   return slash < 0 ? value : value.substring(slash + 1);
 }
+
+/// Returns an unmodifiable copy of optional caller-owned bytes.
+Uint8List _immutableBytes(Uint8List? bytes) => Uint8List.fromList(
+  bytes ?? Uint8List(0),
+).asUnmodifiableView();

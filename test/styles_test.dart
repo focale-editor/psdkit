@@ -85,5 +85,30 @@ void main() {
         throwsA(isA<PsFormatException>()),
       );
     });
+
+    test('defensively copies opaque library and record bytes', () {
+      final Uint8List recordBytes = Uint8List.fromList([1, 2]);
+      final Uint8List patternBytes = Uint8List.fromList([3, 4]);
+      final Uint8List libraryBytes = Uint8List.fromList([5, 6]);
+      final PsdStylePreset preset = PsdStylePreset(
+        identityDescriptor: const PsDescriptor(name: '', classId: 'null'),
+        styleDescriptor: const PsDescriptor(name: '', classId: 'Styl'),
+        trailingData: recordBytes,
+      );
+      final PsdStyleLibrary library = PsdStyleLibrary(
+        patternsData: patternBytes,
+        styles: [preset],
+        trailingData: libraryBytes,
+      );
+
+      recordBytes[0] = 9;
+      patternBytes[0] = 9;
+      libraryBytes[0] = 9;
+
+      expect(preset.trailingData, orderedEquals([1, 2]));
+      expect(library.patternsData, orderedEquals([3, 4]));
+      expect(library.trailingData, orderedEquals([5, 6]));
+      expect(() => preset.trailingData[0] = 9, throwsUnsupportedError);
+    });
   });
 }
