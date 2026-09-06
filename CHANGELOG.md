@@ -1,5 +1,10 @@
 # 📰 PsdKit changelog
 
+## v0.3.4
+Released on September 6, 2026.
+
+* **FIX**: Fixed various problems for decoding trailing styles data. ([#1be0839](https://github.com/focale-editor/psdkit/commit/1be0839))
+
 ## v0.3.3
 Released on September 6, 2026.
 
