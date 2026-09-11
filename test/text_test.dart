@@ -95,7 +95,50 @@ void main() {
       expect(decoded.content.styleRuns.map((run) => run.length), orderedEquals(<int>[3, 4]));
       expect(decoded.content.styleRuns.last.style.fontFamily, 'Inter-Regular');
       expect(decoded.content.paragraphs.single.justification, PsdTextJustification.center);
+      expect(
+        String.fromCharCodes(source.engineData!),
+        contains('/Justification 2'),
+      );
       expect(decoded.bounds.right, 210);
+    });
+
+    test('uses Adobe paragraph justification values', () {
+      const Map<PsdTextJustification, int> values = {
+        PsdTextJustification.left: 0,
+        PsdTextJustification.right: 1,
+        PsdTextJustification.center: 2,
+        PsdTextJustification.justifyLeft: 3,
+        PsdTextJustification.justifyRight: 4,
+        PsdTextJustification.justifyCenter: 5,
+        PsdTextJustification.justifyAll: 6,
+      };
+
+      for (final MapEntry<PsdTextJustification, int> entry in values.entries) {
+        final PsdTypeTool source = PsdTypeTool.fromText(
+          content: PsdTextContent(
+            text: 'A',
+            orientation: PsdTextOrientation.horizontal,
+            paragraphs: [
+              PsdTextParagraph(
+                start: 0,
+                length: 1,
+                justification: entry.key,
+              ),
+            ],
+          ),
+        );
+
+        expect(
+          String.fromCharCodes(source.engineData!),
+          contains('/Justification ${entry.value}'),
+        );
+        expect(
+          PsdTypeToolCodec.decode(
+            PsdTypeToolCodec.encode(source),
+          ).content.paragraphs.single.justification,
+          entry.key,
+        );
+      }
     });
 
     test('extracts text, font, size, color, and paragraph alignment', () {
@@ -113,7 +156,18 @@ void main() {
       expect(content.styleRuns.single.style.fontSize, 24);
       expect(content.styleRuns.single.style.color?.argb, 0xff1a334d);
       expect(content.styleRuns.single.style.fauxBold, isTrue);
-      expect(content.paragraphs.single.justification, PsdTextJustification.right);
+      expect(content.paragraphs.single.justification, PsdTextJustification.center);
+    });
+
+    test('removes Photoshop final engine paragraph mark', () {
+      final PsdTextContent content = _typeTool(
+        'Salut',
+        terminalParagraphMark: true,
+      ).content;
+
+      expect(content.text, 'Salut');
+      expect(content.styleRuns.single.length, 5);
+      expect(content.paragraphs.single.length, 5);
     });
 
     test('updates descriptor and UTF-16 EngineData without losing metadata', () {
@@ -169,7 +223,10 @@ void main() {
 }
 
 /// Builds a representative type-tool payload containing [text].
-PsdTypeTool _typeTool(String text) => PsdTypeTool(
+PsdTypeTool _typeTool(
+  String text, {
+  bool terminalParagraphMark = false,
+}) => PsdTypeTool(
   textDescriptor: PsDescriptor(
     name: '',
     classId: 'TxLr',
@@ -184,7 +241,12 @@ PsdTypeTool _typeTool(String text) => PsdTypeTool(
       ),
       PsDescriptorItem(
         key: 'EngineData',
-        value: PsRawValue(value: _engineData(text)),
+        value: PsRawValue(
+          value: _engineData(
+            text,
+            terminalParagraphMark: terminalParagraphMark,
+          ),
+        ),
       ),
     ],
   ),
@@ -194,14 +256,18 @@ PsdTypeTool _typeTool(String text) => PsdTypeTool(
 );
 
 /// Builds minimal Photoshop text-engine data containing [text].
-Uint8List _engineData(String text) {
+Uint8List _engineData(
+  String text, {
+  bool terminalParagraphMark = false,
+}) {
+  final String encodedText = terminalParagraphMark ? '$text\r' : text;
   final BytesBuilder bytes = BytesBuilder(copy: false)
     ..add(
       '''<< /EngineDict <<
 /Editor << /Text ('''
           .codeUnits,
     )
-    ..add(_utf16(text))
+    ..add(_utf16(encodedText))
     ..add(
       ''') >>
 /StyleRun << /RunArray [ << /StyleSheet << /StyleSheetData <<

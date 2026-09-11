@@ -35,6 +35,29 @@ enum PsdTextJustification {
   justifyAll,
 }
 
+/// Converts a semantic paragraph alignment to Adobe's text-engine value.
+int _encodeJustification(PsdTextJustification justification) => switch (justification) {
+  PsdTextJustification.left => 0,
+  PsdTextJustification.right => 1,
+  PsdTextJustification.center => 2,
+  PsdTextJustification.justifyLeft => 3,
+  PsdTextJustification.justifyRight => 4,
+  PsdTextJustification.justifyCenter => 5,
+  PsdTextJustification.justifyAll => 6,
+};
+
+/// Converts Adobe's text-engine paragraph value to a semantic alignment.
+PsdTextJustification _decodeJustification(int value) => switch (value) {
+  0 => PsdTextJustification.left,
+  1 => PsdTextJustification.right,
+  2 => PsdTextJustification.center,
+  3 => PsdTextJustification.justifyLeft,
+  4 => PsdTextJustification.justifyRight,
+  5 => PsdTextJustification.justifyCenter,
+  6 => PsdTextJustification.justifyAll,
+  _ => PsdTextJustification.left,
+};
+
 /// An RGBA color used by a Photoshop text style.
 final class PsdTextColor {
   /// Alpha component from 0 through 255.
@@ -436,7 +459,10 @@ abstract final class PsdTextEngine {
       final _PsdEngineDictionary? engine = _dictionary(root?['EngineDict']);
       final _PsdEngineDictionary? editor = _dictionary(engine?['Editor']);
       final String text = _decodeEngineString(editor?['Text']) ?? fallbackText;
-      final String logicalText = _withoutTerminalNull(text);
+      final String decodedText = _withoutTerminalNull(text);
+      // Photoshop's engine string carries a final paragraph mark that is not
+      // part of the descriptor text and must not become an editable blank line.
+      final String logicalText = decodedText == '$fallbackText\r' ? fallbackText : decodedText;
       final List<String> fonts = _readFonts(_dictionary(root?['ResourceDict']));
       return PsdTextContent(
         text: logicalText,
@@ -468,7 +494,7 @@ abstract final class PsdTextEngine {
     for (final _PsdNormalizedParagraph paragraph in paragraphs) {
       writer.ascii(
         '<< /ParagraphSheet << /DefaultStyleSheet 0 /Properties << '
-        '/Justification ${paragraph.justification.index} >> >> >> ',
+        '/Justification ${_encodeJustification(paragraph.justification)} >> >> >> ',
       );
     }
     writer.ascii('] /RunLengthArray [ ${paragraphs.map((run) => run.length).join(' ')} ] >> /StyleRun << /RunArray [ ');
@@ -679,7 +705,7 @@ abstract final class PsdTextEngine {
         PsdTextParagraph(
           start: start,
           length: length,
-          justification: PsdTextJustification.values[justification.clamp(0, PsdTextJustification.values.length - 1)],
+          justification: _decodeJustification(justification),
         ),
       );
       start += storedLength.clamp(0, textLength);
