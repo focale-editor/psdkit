@@ -796,39 +796,29 @@ String? _channelIdentifier(PsDescriptorValue? value) {
 }
 
 /// Reads a descriptor Boolean.
-bool? _boolean(PsDescriptorValue? value) => switch (value) {
-  PsBooleanValue(:final bool value) => value,
-  _ => null,
-};
+bool? _boolean(PsDescriptorValue? value) => value.asBoolean();
 
 /// Reads a finite descriptor number.
 double? _number(PsDescriptorValue? value) {
-  final double? result = switch (value) {
-    PsIntegerValue(:final int value) => value.toDouble(),
-    PsDoubleValue(:final double value) => value,
-    PsUnitFloatValue(:final double value) => value,
-    _ => null,
-  };
+  final double? result = value.asNumber()?.value;
   return result?.isFinite ?? false ? result : null;
 }
 
 /// Reads a signed descriptor integer.
-int? _integer(PsDescriptorValue? value) => switch (value) {
-  PsIntegerValue(:final int value) => value,
-  _ => null,
-};
+int? _integer(PsDescriptorValue? value) => value.asInteger();
 
 /// Reads one enumeration with the expected type identifier.
-String? _enumerated(PsDescriptorValue? value, {required String typeId}) => switch (value) {
-  PsEnumeratedValue(typeId: final String actual, :final String value) when actual == typeId => value,
-  _ => null,
-};
+String? _enumerated(PsDescriptorValue? value, {required String typeId}) {
+  final PsDescriptorEnumeration? enumeration = value.asEnumeration();
+  return enumeration?.typeId == typeId ? enumeration?.value : null;
+}
 
 /// Reads a finite percentage from a `#Prc` unit float.
-double? _percentage(PsDescriptorValue? value) => switch (value) {
-  PsUnitFloatValue(unit: '#Prc', :final double value) when value.isFinite && value >= 0 && value <= 100 => value,
-  _ => null,
-};
+double? _percentage(PsDescriptorValue? value) {
+  final PsDescriptorNumber? number = value.asNumber();
+  final double? percentage = number?.unit == '#Prc' ? number?.value : null;
+  return percentage != null && percentage.isFinite && percentage >= 0 && percentage <= 100 ? percentage : null;
+}
 
 /// Validates one optional percentage before writing it.
 void _validatePercentage(double? value, String label) {

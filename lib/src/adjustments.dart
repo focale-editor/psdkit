@@ -202,17 +202,8 @@ final class PsdLevelsAdjustment extends PsdAdjustment {
   PsdAdjustmentType get type => PsdAdjustmentType.levels;
 }
 
-/// One input/output point in a Photoshop curve.
-final class PsdCurvePoint {
-  /// Horizontal input value, normally from 0 through 255.
-  final int input;
-
-  /// Vertical output value, normally from 0 through 255.
-  final int output;
-
-  /// Creates a curve point.
-  const PsdCurvePoint({required this.input, required this.output});
-}
+/// Backward-compatible name for a shared Photoshop tone-curve point.
+typedef PsdCurvePoint = PsToneCurvePoint;
 
 /// A point curve associated with one Photoshop channel index.
 final class PsdCurve {
@@ -231,6 +222,57 @@ final class PsdCurve {
         PsdCurvePoint(input: 0, output: 0),
         PsdCurvePoint(input: 255, output: 255),
       ];
+
+  /// Whether every point maps its input to the same output.
+  bool get isIdentity => _toneCurve.isIdentity;
+
+  /// Whether point inputs are strictly increasing in source order.
+  bool get hasStrictlyIncreasingInputs => _toneCurve.hasStrictlyIncreasingInputs;
+
+  /// Evaluates one raw 0 through 255 input coordinate.
+  double evaluate(
+    double input, {
+    PsToneCurveInterpolation interpolation = PsToneCurveInterpolation.naturalCubic,
+    bool clampOutput = true,
+  }) => _toneCurve.evaluate(
+    input,
+    interpolation: interpolation,
+    clampOutput: clampOutput,
+  );
+
+  /// Evaluates an input normalized to the 0 through 1 range.
+  double evaluateNormalized(
+    double input, {
+    PsToneCurveInterpolation interpolation = PsToneCurveInterpolation.naturalCubic,
+    bool clampOutput = true,
+  }) => _toneCurve.evaluateNormalized(
+    input,
+    interpolation: interpolation,
+    clampOutput: clampOutput,
+  );
+
+  /// Builds an evenly sampled raw-coordinate lookup table.
+  Float64List toLookupTable({
+    int size = 256,
+    PsToneCurveInterpolation interpolation = PsToneCurveInterpolation.naturalCubic,
+    bool clampOutput = true,
+  }) => _toneCurve.toLookupTable(
+    size: size,
+    interpolation: interpolation,
+    clampOutput: clampOutput,
+  );
+
+  /// Builds an evenly sampled 8-bit lookup table.
+  Uint8List toUint8LookupTable({
+    int size = 256,
+    PsToneCurveInterpolation interpolation = PsToneCurveInterpolation.naturalCubic,
+  }) => _toneCurve.toUint8LookupTable(
+    size: size,
+    interpolation: interpolation,
+  );
+
+  /// Shared format-neutral semantics for these control points.
+  PsToneCurve get _toneCurve => PsToneCurve(points: points);
 }
 
 /// Point curves stored in a `curv` adjustment block.
@@ -789,12 +831,10 @@ PsdCurvesAdjustment _readCurves(PsBinaryReader reader) {
 
 /// Reads one curve after its channel index has been determined.
 PsdCurve _readCurve(PsBinaryReader reader, int channel) {
-  final int count = reader.readUint16();
+  final PsToneCurve curve = PsToneCurveCodec.read(reader);
   return PsdCurve(
     channel: channel,
-    points: <PsdCurvePoint>[
-      for (int index = 0; index < count; index++) PsdCurvePoint(output: reader.readUint16(), input: reader.readUint16()),
-    ],
+    points: curve.points,
   );
 }
 
@@ -987,12 +1027,7 @@ void _writeCurves(PsBinaryWriter writer, PsdCurvesAdjustment adjustment) {
 
 /// Writes one curve without a channel prefix.
 void _writeCurve(PsBinaryWriter writer, PsdCurve curve) {
-  writer.writeUint16(curve.points.length);
-  for (final PsdCurvePoint point in curve.points) {
-    writer
-      ..writeUint16(point.output)
-      ..writeUint16(point.input);
-  }
+  PsToneCurveCodec.write(writer, PsToneCurve(points: curve.points));
 }
 
 /// Writes modern hue/saturation settings.

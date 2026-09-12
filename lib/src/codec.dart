@@ -442,18 +442,21 @@ List<PsdTaggedBlock> _readTaggedBlocks(PsBinaryReader reader, PsdVersion version
     if (reader.remaining < 12) {
       break;
     }
-    final String signature = reader.readString(4);
-    if (signature != '8BIM' && signature != '8B64') {
-      throw PsFormatException(message: 'Invalid tagged-block signature "$signature"', source: reader.bytes, offset: reader.baseOffset + reader.offset - 4);
-    }
-    final String key = reader.readString(4);
-    final bool wide = version == PsdVersion.psb && _widePsbTaggedBlocks.contains(key);
-    final int length = reader.readLength(wide: wide, label: '$key tagged block');
-    final Uint8List data = reader.readBytes(length);
-    if (length.isOdd) {
+    final PsTaggedBlockHeader header = PsTaggedBlockCodec.readHeader(
+      reader,
+      wideLengthResolver: (signature, key) => version == PsdVersion.psb && _widePsbTaggedBlocks.contains(key),
+    );
+    final Uint8List data = reader.readBytes(header.declaredLength);
+    if (header.declaredLength.isOdd) {
       reader.skip(1);
     }
-    result.add(PsdTaggedBlock(key: key, signature: signature, data: data));
+    result.add(
+      PsdTaggedBlock(
+        key: header.key,
+        signature: header.signature,
+        data: data,
+      ),
+    );
   }
   if (reader.remaining != 0) {
     final Uint8List padding = reader.readBytes(reader.remaining);
@@ -655,17 +658,16 @@ Uint8List _writeLayerExtra(PsdLayer layer, PsdVersion version) {
 Uint8List _writeTaggedBlocks(List<PsdTaggedBlock> blocks, PsdVersion version) {
   final PsBinaryWriter writer = PsBinaryWriter();
   for (final PsdTaggedBlock block in blocks) {
-    _requireFourCharacters(block.signature, 'tagged-block signature');
-    _requireFourCharacters(block.key, 'tagged-block key');
-    final bool wide = version == PsdVersion.psb && _widePsbTaggedBlocks.contains(block.key);
-    writer
-      ..writeString(block.signature)
-      ..writeString(block.key)
-      ..writeLength(block.data.length, wide: wide)
-      ..writeBytes(block.data);
-    if (block.data.length.isOdd) {
-      writer.writeUint8(0);
-    }
+    PsTaggedBlockCodec.write(
+      writer,
+      PsTaggedBlock(
+        signature: block.signature,
+        key: block.key,
+        data: block.data,
+      ),
+      wideLengthResolver: (signature, key) => version == PsdVersion.psb && _widePsbTaggedBlocks.contains(key),
+      alignment: 2,
+    );
   }
   return writer.takeBytes();
 }

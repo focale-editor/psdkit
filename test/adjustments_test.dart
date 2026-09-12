@@ -6,6 +6,17 @@ import 'package:test/test.dart';
 /// Exercises Photoshop adjustment-layer encoding and decoding.
 void main() {
   group('adjustments', () {
+    test('exposes the shared tone-curve evaluation semantics', () {
+      const PsdCurve curve = PsdCurve.identity();
+
+      expect(curve.isIdentity, isTrue);
+      expect(curve.hasStrictlyIncreasingInputs, isTrue);
+      expect(curve.evaluate(64), closeTo(64, 1e-9));
+      expect(curve.evaluateNormalized(0.25), closeTo(0.25, 1e-9));
+      expect(curve.toLookupTable(size: 3), orderedEquals(<double>[0, 127.5, 255]));
+      expect(curve.toUint8LookupTable(size: 3), orderedEquals(<int>[0, 128, 255]));
+    });
+
     test('round-trips the corpus curves variant byte for byte', () {
       final Uint8List bytes = Uint8List.fromList(<int>[
         0,

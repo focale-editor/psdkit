@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:aslkit/aslkit.dart' as asl;
 import 'package:pscore/pscore.dart';
 import 'package:psdkit/src/effects.dart';
 import 'package:psdkit/src/layer_comps.dart';
@@ -145,90 +146,74 @@ abstract final class PsdStyleLibraryCodec {
     if (bytes.length > maximumBytes) {
       throw const PsFormatException(message: 'ASL file exceeds the supported byte limit');
     }
-    final PsBinaryReader reader = PsBinaryReader(bytes: bytes);
-    final int version = reader.readUint16();
-    if (version != 2 || reader.readString(4) != '8BSL') {
+    try {
+      final asl.AslFile file = asl.AslDecoder.decode(
+        bytes,
+        options: const asl.AslDecodeOptions(
+          mode: asl.AslDecodeMode.tolerant,
+          maxFileBytes: maximumBytes,
+          maxPatternSectionBytes: maximumBytes,
+          maxPatternBytes: maximumBytes,
+          maxDecodedPixelBytes: maximumBytes,
+          maxStyles: maximumStyleCount,
+          maxStyleBytes: maximumBytes,
+          maxTaggedBlockBytes: maximumBytes,
+          decodePatternChannelData: false,
+          preservePatternChannelData: false,
+          preservePatternRecordData: false,
+          preserveTaggedBlockData: false,
+          preserveTrailingData: false,
+          preserveSourceData: false,
+        ),
+      );
+      if (file.containerKind != asl.AslContainerKind.styleLibrary || file.version != 2 || file.styles.length != file.declaredStyleCount) {
+        throw PsFormatException(
+          message: 'Unsupported or incomplete Photoshop style-library envelope',
+          source: bytes,
+          offset: 0,
+        );
+      }
+      final List<PsdStylePreset> styles = <PsdStylePreset>[];
+      for (final asl.AslStyle style in file.styles) {
+        final PsDescriptor? identity = style.identificationDescriptor;
+        final PsDescriptor? information = style.styleDescriptor;
+        if (identity == null || information == null || style.identificationDescriptorVersion != 16 || style.styleDescriptorVersion != 16) {
+          throw PsFormatException(
+            message: 'Unsupported or malformed ASL style descriptor pair',
+            source: bytes,
+            offset: style.sourceOffset,
+          );
+        }
+        final PsdStylePreset preset = PsdStylePreset(
+          identityDescriptor: identity,
+          styleDescriptor: information,
+          trailingData: style.recordTrailingData,
+        );
+        if (preset.name.length > maximumNameLength || preset.id.length > maximumIdentifierLength) {
+          throw PsFormatException(
+            message: 'ASL style metadata exceeds the supported text limit',
+            source: bytes,
+            offset: style.sourceOffset,
+          );
+        }
+        styles.add(preset);
+      }
+      const int patternOffset = 12;
+      final int patternEnd = patternOffset + file.declaredPatternSectionLength;
+      final int trailingOffset = file.styles.isEmpty ? patternEnd + 4 : file.styles.last.sourceOffset + 4 + file.styles.last.declaredLength + file.styles.last.paddingData.length;
+      return PsdStyleLibrary(
+        patternsVersion: file.patternsVersion,
+        patternsData: Uint8List.sublistView(bytes, patternOffset, patternEnd),
+        styles: styles,
+        trailingData: Uint8List.sublistView(bytes, trailingOffset),
+      );
+    } on asl.AslFormatException catch (error) {
       throw PsFormatException(
-        message: 'Unsupported Photoshop style-library header',
+        message: error.message,
         source: bytes,
-        offset: 0,
+        offset: error.offset,
       );
     }
-    final int patternsVersion = reader.readUint16();
-    final int patternsLength = reader.readUint32();
-    if (patternsLength > reader.remaining) {
-      throw PsFormatException(
-        message: 'ASL pattern section is truncated',
-        source: bytes,
-        offset: reader.offset,
-      );
-    }
-    final Uint8List patternsData = reader.readBytes(patternsLength);
-    final int styleCount = reader.readUint32();
-    if (styleCount > maximumStyleCount) {
-      throw PsFormatException(
-        message: 'ASL style count exceeds the supported limit',
-        source: bytes,
-        offset: reader.offset - 4,
-      );
-    }
-    final List<PsdStylePreset> styles = [];
-    for (int index = 0; index < styleCount; index++) {
-      final int recordLength = reader.readUint32();
-      if (recordLength > reader.remaining) {
-        throw PsFormatException(
-          message: 'ASL style record is truncated',
-          source: bytes,
-          offset: reader.offset,
-        );
-      }
-      final PsBinaryReader record = reader.readReader(recordLength);
-      if (record.readUint32() != 16) {
-        throw PsFormatException(
-          message: 'Unsupported ASL identity descriptor version',
-          source: bytes,
-          offset: record.baseOffset,
-        );
-      }
-      final PsDescriptor identity = PsDescriptorCodec.decodeReader(record);
-      if (record.readUint32() != 16) {
-        throw PsFormatException(
-          message: 'Unsupported ASL style descriptor version',
-          source: bytes,
-          offset: record.baseOffset + record.offset - 4,
-        );
-      }
-      final PsDescriptor style = PsDescriptorCodec.decodeReader(record);
-      final Uint8List trailingData = record.readBytes(record.remaining);
-      final PsdStylePreset preset = PsdStylePreset(
-        identityDescriptor: identity,
-        styleDescriptor: style,
-        trailingData: trailingData,
-      );
-      if (preset.name.length > maximumNameLength || preset.id.length > maximumIdentifierLength) {
-        throw PsFormatException(
-          message: 'ASL style metadata exceeds the supported text limit',
-          source: bytes,
-          offset: record.baseOffset,
-        );
-      }
-      styles.add(preset);
-      final int padding = _paddingFor(recordLength);
-      if (padding > reader.remaining) {
-        throw PsFormatException(
-          message: 'ASL style record padding is truncated',
-          source: bytes,
-          offset: reader.offset,
-        );
-      }
-      reader.skip(padding);
-    }
-    return PsdStyleLibrary(
-      patternsVersion: patternsVersion,
-      patternsData: patternsData,
-      styles: styles,
-      trailingData: reader.readBytes(reader.remaining),
-    );
   }
 
   /// Encodes one complete ASL file deterministically.
@@ -239,48 +224,69 @@ abstract final class PsdStyleLibraryCodec {
     if (library.patternsData.length + library.trailingData.length > maximumBytes) {
       throw const PsWriteException(message: 'ASL file exceeds the supported byte limit');
     }
-    final PsBinaryWriter writer = PsBinaryWriter()
-      ..writeUint16(2)
-      ..writeString('8BSL')
-      ..writeUint16(library.patternsVersion)
-      ..writeUint32(library.patternsData.length)
-      ..writeBytes(library.patternsData)
-      ..writeUint32(library.styles.length);
     for (final PsdStylePreset style in library.styles) {
       if (style.name.length > maximumNameLength || style.id.length > maximumIdentifierLength) {
         throw const PsWriteException(message: 'ASL style metadata exceeds the supported text limit');
       }
-      final PsBinaryWriter record = PsBinaryWriter()
-        ..writeUint32(16)
-        ..writeBytes(PsDescriptorCodec.encode(style.identityDescriptor))
-        ..writeUint32(16)
-        ..writeBytes(PsDescriptorCodec.encode(style.styleDescriptor))
-        ..writeBytes(style.trailingData);
-      final Uint8List recordBytes = record.takeBytes();
-      // Photoshop stores the alignment padding after the counted record, so
-      // it must stay outside the declared length that [decode] reads back.
-      writer
-        ..writeUint32(recordBytes.length)
-        ..writeBytes(recordBytes)
-        ..writeZeros(_paddingFor(recordBytes.length));
     }
-    writer.writeBytes(library.trailingData);
-    final Uint8List encoded = writer.takeBytes();
-    if (encoded.length > maximumBytes) {
-      throw const PsWriteException(message: 'ASL file exceeds the supported byte limit');
+    try {
+      final asl.AslFile file = asl.AslFile(
+        containerKind: asl.AslContainerKind.styleLibrary,
+        version: 2,
+        signature: '8BSL',
+        patternsVersion: library.patternsVersion,
+        declaredPatternSectionLength: library.patternsData.length,
+        patternRecords: const <asl.AslPatternRecord>[],
+        patternSectionTrailingData: library.patternsData,
+        patternSectionTrailingByteCount: library.patternsData.length,
+        declaredStyleCount: library.styles.length,
+        styles: <asl.AslStyle>[
+          for (int index = 0; index < library.styles.length; index++)
+            asl.AslStyle(
+              index: index,
+              sourceOffset: 0,
+              declaredLength: 0,
+              identificationDescriptorVersion: 16,
+              identificationDescriptor: library.styles[index].identityDescriptor,
+              styleDescriptorVersion: 16,
+              styleDescriptor: library.styles[index].styleDescriptor,
+              serializedName: library.styles[index].name,
+              name: library.styles[index].name,
+              id: library.styles[index].id,
+              documentMode: null,
+              layerEffects: null,
+              blendOptions: null,
+              recordTrailingData: library.styles[index].trailingData,
+              paddingData: Uint8List(0),
+              recordData: null,
+              decodeError: null,
+            ),
+        ],
+        hierarchy: const <asl.AslHierarchyEntry>[],
+        hierarchyDescriptors: const <PsDescriptor>[],
+        taggedBlocks: const <asl.AslTaggedBlock>[],
+        trailingData: library.trailingData,
+        trailingByteCount: library.trailingData.length,
+        warnings: const <asl.AslWarning>[],
+        decodedPixelBytes: 0,
+        sourceData: null,
+      );
+      final Uint8List encoded = asl.AslEncoder.encode(
+        file,
+        options: const asl.AslEncodeOptions(mode: asl.AslEncodeMode.permissive),
+      );
+      if (encoded.length > maximumBytes) {
+        throw const PsWriteException(message: 'ASL file exceeds the supported byte limit');
+      }
+      return encoded;
+    } on asl.AslWriteException catch (error) {
+      throw PsWriteException(message: error.message);
     }
-    return encoded;
   }
-
-  /// Returns the four-byte alignment padding following [length].
-  static int _paddingFor(int length) => (4 - length % 4) % 4;
 }
 
 /// Reads one descriptor text value without coercing another value type.
-String _descriptorString(PsDescriptor descriptor, String key) => switch (descriptor.value(key)) {
-  PsStringValue(:final String value) => value.replaceFirst(RegExp(r'\u0000+$'), ''),
-  _ => '',
-};
+String _descriptorString(PsDescriptor descriptor, String key) => descriptor.stringValue(key) ?? '';
 
 /// Resolves Photoshop's `$$$/key=Display name` localization notation.
 String _resolveZString(String value) {

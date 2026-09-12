@@ -26,17 +26,8 @@ enum PsdLinkedResourceType {
   const PsdLinkedResourceType({required this.code});
 }
 
-/// A descriptor preceded by its Photoshop descriptor version.
-final class PsdVersionedDescriptor {
-  /// Descriptor format version, normally 16.
-  final int version;
-
-  /// Complete action descriptor.
-  final PsDescriptor descriptor;
-
-  /// Creates a versioned action descriptor.
-  const PsdVersionedDescriptor({this.version = 16, required this.descriptor});
-}
+/// Backward-compatible name for a shared versioned Action Descriptor.
+typedef PsdVersionedDescriptor = PsVersionedDescriptor;
 
 /// One Photoshop smart filter stored inside a placed-layer descriptor.
 ///
@@ -127,54 +118,31 @@ final class PsdSmartFilter {
   const PsdSmartFilter.fromDescriptor(this.descriptor);
 
   /// Numeric Photoshop filter identifier, when the entry exposes one.
-  int? get filterId => switch (descriptor.value('filterID')) {
-    PsIntegerValue(:final int value) => value,
-    _ => null,
-  };
+  int? get filterId => descriptor.integerValue('filterID');
 
   /// Human-readable filter name, when present.
-  String? get name => switch (descriptor.value('Nm  ')) {
-    PsStringValue(:final String value) => value,
-    _ => null,
-  };
+  String? get name => descriptor.stringValue('Nm  ', trimTerminalNulls: false);
 
   /// Action descriptor containing the filter-specific parameters.
-  PsDescriptor? get filter => switch (descriptor.value('Fltr')) {
-    PsObjectValue(:final PsDescriptor value) => value,
-    _ => null,
-  };
+  PsDescriptor? get filter => descriptor.objectValue('Fltr');
 
   /// Whether Photoshop evaluates this stack entry.
-  bool get enabled => switch (descriptor.value('enab')) {
-    PsBooleanValue(:final bool value) => value,
-    _ => true,
-  };
+  bool get enabled => descriptor.booleanValue('enab') ?? true;
 
   /// Whether Photoshop should expose an options dialog for this entry.
-  bool get hasOptions => switch (descriptor.value('hasoptions')) {
-    PsBooleanValue(:final bool value) => value,
-    _ => filter != null,
-  };
+  bool get hasOptions => descriptor.booleanValue('hasoptions') ?? filter != null;
 
   /// Normalized blending opacity applied to the filter result.
   double get opacity {
-    final PsDescriptorValue? options = descriptor.value('blendOptions');
-    final PsDescriptorValue? value = options is PsObjectValue ? options.value.value('Opct') : null;
+    final PsDescriptorNumber? value = descriptor.objectValue('blendOptions')?.numberValue('Opct');
     return switch (value) {
-      PsUnitFloatValue(unit: '#Prc', :final double value) => (value / 100).clamp(0, 1),
+      PsDescriptorNumber(unit: '#Prc', value: final double percentage) => (percentage / 100).clamp(0, 1),
       _ => 1,
     };
   }
 
   /// Photoshop blend-mode identifier applied to the filter result.
-  String get blendMode {
-    final PsDescriptorValue? options = descriptor.value('blendOptions');
-    final PsDescriptorValue? value = options is PsObjectValue ? options.value.value('Md  ') : null;
-    return switch (value) {
-      PsEnumeratedValue(:final String value) => value,
-      _ => 'Nrml',
-    };
-  }
+  String get blendMode => descriptor.objectValue('blendOptions')?.enumerationIdentifier('Md  ') ?? 'Nrml';
 }
 
 /// The shared settings and ordered filters attached to one smart object.
@@ -261,10 +229,7 @@ final class PsdSmartFilterStack {
   }
 
   /// Reads one Boolean property while tolerating older incomplete descriptors.
-  bool _boolean(String key, {required bool fallback}) => switch (descriptor.value(key)) {
-    PsBooleanValue(:final bool value) => value,
-    _ => fallback,
-  };
+  bool _boolean(String key, {required bool fallback}) => descriptor.booleanValue(key) ?? fallback;
 }
 
 /// Neutral RGB color used by filters without explicit color parameters.
@@ -413,10 +378,10 @@ final class PsdDescriptorSmartObject extends PsdSmartObjectLayerData {
   PsdPlacedTransform? get nonAffineTransform => _transformFromValue(descriptor.value('nonAffineTransform'));
 
   /// Photoshop smart-filter stack attached to this placed layer, when present.
-  PsdSmartFilterStack? get smartFilters => switch (descriptor.value('filterFX')) {
-    PsObjectValue(:final PsDescriptor value) => PsdSmartFilterStack.fromDescriptor(value),
-    _ => null,
-  };
+  PsdSmartFilterStack? get smartFilters {
+    final PsDescriptor? value = descriptor.objectValue('filterFX');
+    return value == null ? null : PsdSmartFilterStack.fromDescriptor(value);
+  }
 
   /// Returns a copy whose descriptor property [key] is [value].
   PsdDescriptorSmartObject withProperty(String key, PsDescriptorValue value) => PsdDescriptorSmartObject(
@@ -967,14 +932,7 @@ PsdLinkedResource _readLinkedResource(PsBinaryReader reader, {Uint8List? entryPa
 }
 
 /// Reads a descriptor after its 32-bit version.
-PsdVersionedDescriptor _readVersionedDescriptor(PsBinaryReader reader) {
-  final int version = reader.readUint32();
-  final ({PsDescriptor descriptor, int bytesRead}) decoded = PsDescriptorCodec.decodePrefix(
-    Uint8List.sublistView(reader.bytes, reader.offset),
-  );
-  reader.skip(decoded.bytesRead);
-  return PsdVersionedDescriptor(version: version, descriptor: decoded.descriptor);
-}
+PsdVersionedDescriptor _readVersionedDescriptor(PsBinaryReader reader) => PsVersionedDescriptorCodec.read(reader);
 
 /// Writes historical fixed-field placed-layer data.
 void _writeLegacyPlacedLayer(PsBinaryWriter writer, PsdLegacyPlacedLayer value) {
@@ -1055,9 +1013,7 @@ Uint8List _writeLinkedResource(PsdLinkedResource resource) {
 
 /// Writes a descriptor preceded by its version.
 void _writeVersionedDescriptor(PsBinaryWriter writer, PsdVersionedDescriptor value) {
-  writer
-    ..writeUint32(value.version)
-    ..writeBytes(PsDescriptorCodec.encode(value.descriptor));
+  PsVersionedDescriptorCodec.write(writer, value);
 }
 
 /// Converts a descriptor list of eight doubles to a placed transform.

@@ -149,78 +149,20 @@ Uint8List encodePsdMergedImage({
 }
 
 /// Decodes [height] PackBits rows after their shared length table.
-Uint8List _decodeRle(Uint8List input, int rowBytes, int height, bool wide) {
-  final int tableSize = height * (wide ? 4 : 2);
-  if (input.length < tableSize) {
-    throw const PsFormatException(message: 'Truncated RLE row-length table');
-  }
-  final ByteData lengths = ByteData.sublistView(input, 0, tableSize);
-  final Uint8List output = Uint8List(rowBytes * height);
-  int inputOffset = tableSize;
-  for (int row = 0; row < height; row++) {
-    final int encodedLength = wide ? lengths.getUint32(row * 4) : lengths.getUint16(row * 2);
-    final int end = inputOffset + encodedLength;
-    if (end > input.length) {
-      throw const PsFormatException(message: 'Truncated PackBits row');
-    }
-    int outputOffset = row * rowBytes;
-    final int outputEnd = outputOffset + rowBytes;
-    while (inputOffset < end && outputOffset < outputEnd) {
-      final int header = input[inputOffset++];
-      if (header <= 127) {
-        final int count = header + 1;
-        if (inputOffset + count > end || outputOffset + count > outputEnd) {
-          throw const PsFormatException(message: 'Invalid PackBits literal run');
-        }
-        output.setRange(outputOffset, outputOffset + count, input, inputOffset);
-        inputOffset += count;
-        outputOffset += count;
-      } else if (header >= 129) {
-        final int count = 257 - header;
-        if (inputOffset >= end || outputOffset + count > outputEnd) {
-          throw const PsFormatException(message: 'Invalid PackBits repeated run');
-        }
-        output.fillRange(outputOffset, outputOffset + count, input[inputOffset++]);
-        outputOffset += count;
-      }
-    }
-    if (outputOffset != outputEnd || inputOffset != end) {
-      throw const PsFormatException(message: 'PackBits row does not match its declared width');
-    }
-  }
-  if (inputOffset != input.length) {
-    throw const PsFormatException(message: 'Unexpected bytes after PackBits rows');
-  }
-  return output;
-}
+Uint8List _decodeRle(Uint8List input, int rowBytes, int height, bool wide) => PsPackBitsCodec.decodeRows(
+  input,
+  rowBytes: rowBytes,
+  rowCount: height,
+  wideRowLengths: wide,
+);
 
 /// Encodes [height] rows and prefixes their 16-bit or 32-bit lengths.
-Uint8List _encodeRle(Uint8List input, int rowBytes, int height, bool wide) {
-  final int lengthSize = wide ? 4 : 2;
-  final int tableSize = height * lengthSize;
-  // Rows are encoded straight into their final position; the length table is
-  // filled in as each row completes, so no intermediate row buffers are kept.
-  final Uint8List result = Uint8List(tableSize + height * PsPackBitsCodec.maxEncodedLength(rowBytes));
-  final ByteData table = ByteData.sublistView(result, 0, tableSize);
-  int offset = tableSize;
-  for (int row = 0; row < height; row++) {
-    final int start = offset;
-    offset = PsPackBitsCodec.encodeRowInto(Uint8List.sublistView(input, row * rowBytes, (row + 1) * rowBytes), result, offset);
-    final int length = offset - start;
-    if (!wide && length > 0xffff) {
-      throw const PsWriteException(message: 'A PSD PackBits row exceeds 65535 encoded bytes; use PSB or ZIP');
-    }
-    if (wide) {
-      table.setUint32(row * 4, length);
-    } else {
-      table.setUint16(row * 2, length);
-    }
-  }
-  final Uint8List payload = Uint8List.sublistView(result, 0, offset);
-  // The buffer was sized for incompressible rows. Returning a view would keep
-  // all of it alive, so compact well-compressed payloads instead.
-  return offset * 2 < result.length ? Uint8List.fromList(payload) : payload;
-}
+Uint8List _encodeRle(Uint8List input, int rowBytes, int height, bool wide) => PsPackBitsCodec.encodeRows(
+  input,
+  rowBytes: rowBytes,
+  rowCount: height,
+  wideRowLengths: wide,
+);
 
 /// Reverses horizontal sample differencing on decompressed bytes.
 Uint8List _undoPrediction(Uint8List input, int width, int height, int depth) {

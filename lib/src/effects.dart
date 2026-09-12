@@ -1084,24 +1084,13 @@ PsdEffectColor _readLegacyColor(PsBinaryReader reader, {PsdEffectColor fallback 
 }
 
 /// Reads a Boolean property from [descriptor].
-bool? _boolValue(PsDescriptor descriptor, String key) => switch (descriptor.value(key)) {
-  PsBooleanValue(:final bool value) => value,
-  _ => null,
-};
+bool? _boolValue(PsDescriptor descriptor, String key) => descriptor.booleanValue(key);
 
 /// Reads a numeric property from [descriptor].
-double? _numberValue(PsDescriptor descriptor, String key) => switch (descriptor.value(key)) {
-  PsUnitFloatValue(:final double value) => value,
-  PsDoubleValue(:final double value) => value,
-  PsIntegerValue(:final int value) => value.toDouble(),
-  _ => null,
-};
+double? _numberValue(PsDescriptor descriptor, String key) => descriptor.scalarValue(key);
 
 /// Reads an enumeration identifier from [descriptor].
-String? _enumValue(PsDescriptor descriptor, String key) => switch (descriptor.value(key)) {
-  PsEnumeratedValue(:final String value) => value,
-  _ => null,
-};
+String? _enumValue(PsDescriptor descriptor, String key) => descriptor.enumerationIdentifier(key);
 
 /// Reads an RGB descriptor value.
 PsdEffectColor? _colorValue(PsDescriptorValue? value) {
@@ -1166,11 +1155,8 @@ PsdEffectPattern? _patternValue(PsDescriptorValue? value) {
   return PsdEffectPattern(name: _stringValue(value.value, 'Nm  ') ?? '', id: _stringValue(value.value, 'Idnt') ?? '');
 }
 
-/// Reads a Unicode string property and removes its terminal NUL.
-String? _stringValue(PsDescriptor descriptor, String key) => switch (descriptor.value(key)) {
-  PsStringValue(:final String value) => value.endsWith('\u0000') ? value.substring(0, value.length - 1) : value,
-  _ => null,
-};
+/// Reads a Unicode string property and removes terminal NUL characters.
+String? _stringValue(PsDescriptor descriptor, String key) => descriptor.stringValue(key);
 
 /// Creates an RGB action descriptor for [color].
 PsDescriptor _colorDescriptor(PsdEffectColor color) => PsDescriptor(
