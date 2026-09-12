@@ -230,6 +230,40 @@ void main() {
       );
     });
 
+    test('round-trips RLE channels whose rows never compress', () {
+      // Rows where no byte repeats reach PackBits' worst case, so the shared
+      // row buffer the channel encoder preallocates must hold every row.
+      for (final int rowBytes in <int>[1, 2, 127, 128, 129, 255, 256, 257, 4096]) {
+        const int height = 3;
+        final Uint8List samples = Uint8List.fromList(<int>[
+          for (int index = 0; index < rowBytes * height; index++) (index * 7 + index ~/ 128) & 0xff,
+        ]);
+
+        final Uint8List encoded = encodePsdChannel(
+          compression: PsdCompression.rle,
+          data: samples,
+          width: rowBytes,
+          height: height,
+          depth: 8,
+          wideRowLengths: false,
+        );
+
+        expect(
+          decodePsdChannel(
+            compression: PsdCompression.rle,
+            payload: encoded,
+            width: rowBytes,
+            height: height,
+            depth: 8,
+            wideRowLengths: false,
+            maxDecodedBytes: samples.length,
+          ),
+          orderedEquals(samples),
+          reason: 'rows of $rowBytes bytes',
+        );
+      }
+    });
+
     test('round-trips compression boundaries at every sample depth', () {
       final Random random = Random(42);
       for (final int depth in <int>[1, 8, 16, 32]) {

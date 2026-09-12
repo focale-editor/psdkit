@@ -200,12 +200,12 @@ Uint8List _encodeRle(Uint8List input, int rowBytes, int height, bool wide) {
   final int tableSize = height * lengthSize;
   // Rows are encoded straight into their final position; the length table is
   // filled in as each row completes, so no intermediate row buffers are kept.
-  final Uint8List result = Uint8List(tableSize + height * psdPackBitsMaxEncodedLength(rowBytes));
+  final Uint8List result = Uint8List(tableSize + height * PsPackBitsCodec.maxEncodedLength(rowBytes));
   final ByteData table = ByteData.sublistView(result, 0, tableSize);
   int offset = tableSize;
   for (int row = 0; row < height; row++) {
     final int start = offset;
-    offset = encodePsdPackBitsRowInto(Uint8List.sublistView(input, row * rowBytes, (row + 1) * rowBytes), result, offset);
+    offset = PsPackBitsCodec.encodeRowInto(Uint8List.sublistView(input, row * rowBytes, (row + 1) * rowBytes), result, offset);
     final int length = offset - start;
     if (!wide && length > 0xffff) {
       throw const PsWriteException(message: 'A PSD PackBits row exceeds 65535 encoded bytes; use PSB or ZIP');
@@ -220,60 +220,6 @@ Uint8List _encodeRle(Uint8List input, int rowBytes, int height, bool wide) {
   // The buffer was sized for incompressible rows. Returning a view would keep
   // all of it alive, so compact well-compressed payloads instead.
   return offset * 2 < result.length ? Uint8List.fromList(payload) : payload;
-}
-
-/// Returns the largest PackBits output a row of [rowBytes] can produce.
-///
-/// Incompressible data costs one control byte per 128 literal bytes.
-int psdPackBitsMaxEncodedLength(int rowBytes) => rowBytes + (rowBytes + 127) ~/ 128 + 1;
-
-/// Encodes one independent PSD PackBits [row].
-///
-/// The returned bytes do not include the row length stored by the surrounding
-/// channel or merged-image table.
-Uint8List encodePsdPackBitsRow(Uint8List row) {
-  final Uint8List output = Uint8List(psdPackBitsMaxEncodedLength(row.length));
-  return Uint8List.sublistView(output, 0, encodePsdPackBitsRowInto(row, output, 0));
-}
-
-/// Encodes [row] into [output] at [start] and returns the next write offset.
-///
-/// [output] must hold [psdPackBitsMaxEncodedLength] bytes beyond [start]. The
-/// caller-owned buffer lets a whole channel be encoded without allocating per
-/// row or per run.
-int encodePsdPackBitsRowInto(Uint8List row, Uint8List output, int start) {
-  int write = start;
-  int offset = 0;
-  while (offset < row.length) {
-    int run = 1;
-    while (offset + run < row.length && run < 128 && row[offset + run] == row[offset]) {
-      run++;
-    }
-    if (run >= 3) {
-      output[write++] = 257 - run;
-      output[write++] = row[offset];
-      offset += run;
-      continue;
-    }
-    final int literalStart = offset;
-    offset += run;
-    while (offset < row.length && offset - literalStart < 128) {
-      run = 1;
-      while (offset + run < row.length && run < 128 && row[offset + run] == row[offset]) {
-        run++;
-      }
-      if (run >= 3) {
-        break;
-      }
-      final int remaining = 128 - (offset - literalStart);
-      offset += run.clamp(1, remaining);
-    }
-    final int count = offset - literalStart;
-    output[write++] = count - 1;
-    output.setRange(write, write + count, row, literalStart);
-    write += count;
-  }
-  return write;
 }
 
 /// Reverses horizontal sample differencing on decompressed bytes.

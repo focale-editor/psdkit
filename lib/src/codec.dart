@@ -207,11 +207,34 @@ final class _EncodedLayer {
   /// Layer metadata to serialize.
   final PsdLayer layer;
 
-  /// Complete channel payloads, including compression markers.
-  final List<Uint8List> channels;
+  /// Encoded channels in record order.
+  final List<_EncodedChannel> channels;
 
   /// Creates a serialized-channel staging value.
   const _EncodedLayer({required this.layer, required this.channels});
+}
+
+/// One compressed channel payload and the marker that introduces it.
+///
+/// The marker is kept apart from the payload so that a channel's samples are
+/// never copied merely to prepend two bytes.
+final class _EncodedChannel {
+  /// Encoding applied to [payload].
+  final PsdCompression compression;
+
+  /// Compressed samples, without the two-byte compression marker.
+  final Uint8List payload;
+
+  /// Creates one encoded channel.
+  const _EncodedChannel({required this.compression, required this.payload});
+
+  /// Stored byte length, including the compression marker.
+  int get length => payload.length + 2;
+
+  /// Writes the marker followed by the payload.
+  void writeTo(PsBinaryWriter writer) => writer
+    ..writeUint16(compression.code)
+    ..writeBytes(payload);
 }
 
 /// Reads every bounded Photoshop image-resource block.
@@ -545,22 +568,23 @@ Uint8List _writeLayerInfo(PsdDocument document, {required PsdVersion version, re
   }
   final List<_EncodedLayer> encodedLayers = <_EncodedLayer>[];
   for (final PsdLayer layer in document.layers) {
-    final List<Uint8List> channels = <Uint8List>[];
+    final List<_EncodedChannel> channels = <_EncodedChannel>[];
     for (final PsdChannel channel in layer.channels) {
       final PsdRectangle rectangle = _channelRectangle(layer, channel.id);
       final PsdCompression compression = compressionOverride ?? channel.compression;
-      final Uint8List payload = encodePsdChannel(
-        compression: compression,
-        data: channel.data,
-        width: rectangle.width,
-        height: rectangle.height,
-        depth: document.depth,
-        wideRowLengths: version == PsdVersion.psb,
+      channels.add(
+        _EncodedChannel(
+          compression: compression,
+          payload: encodePsdChannel(
+            compression: compression,
+            data: channel.data,
+            width: rectangle.width,
+            height: rectangle.height,
+            depth: document.depth,
+            wideRowLengths: version == PsdVersion.psb,
+          ),
+        ),
       );
-      final PsBinaryWriter encoded = PsBinaryWriter()
-        ..writeUint16(compression.code)
-        ..writeBytes(payload);
-      channels.add(encoded.takeBytes());
     }
     encodedLayers.add(_EncodedLayer(layer: layer, channels: channels));
   }
@@ -593,7 +617,9 @@ Uint8List _writeLayerInfo(PsdDocument document, {required PsdVersion version, re
       ..writeBytes(extra);
   }
   for (final _EncodedLayer layer in encodedLayers) {
-    layer.channels.forEach(writer.writeBytes);
+    for (final _EncodedChannel channel in layer.channels) {
+      channel.writeTo(writer);
+    }
   }
   if (writer.length.isOdd) {
     writer.writeUint8(0);

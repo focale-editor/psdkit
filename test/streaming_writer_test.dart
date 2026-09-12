@@ -125,6 +125,25 @@ void main() {
     expect(output.bytes, orderedEquals(expected));
   });
 
+  for (final PsdCompression compression in [PsdCompression.raw, PsdCompression.rle]) {
+    test('progressive $compression writing accepts empty layer rectangles', () async {
+      final PsdDocument document = _emptyRectangleFixture(compression);
+      final Uint8List expected = PsdCodec.encode(document);
+      final _MemoryRandomAccessOutput output = _MemoryRandomAccessOutput();
+
+      await PsdCodec.encodeTo(
+        PsdStreamDocument.fromDocument(document),
+        output,
+        rowBatchSize: 2,
+      );
+
+      expect(output.bytes, orderedEquals(expected));
+      final PsdDocument decoded = PsdCodec.decode(output.bytes);
+      expect(decoded.layers.first.sectionType, PsdSectionType.openFolder);
+      expect(decoded.layers.map((layer) => layer.name), ['Group', 'Zero width', 'Pixels']);
+    });
+  }
+
   test('progressive writer rejects ZIP instead of buffering a plane', () async {
     final PsdDocument document = _fixture(
       version: PsdVersion.psb,
@@ -140,6 +159,44 @@ void main() {
     );
   });
 }
+
+/// Builds a document whose group divider and zero-width layer store no rows.
+PsdDocument _emptyRectangleFixture(PsdCompression compression) => PsdDocument(
+  width: 4,
+  height: 4,
+  channels: 3,
+  depth: 8,
+  colorMode: PsdColorMode.rgb,
+  mergedImageCompression: compression,
+  mergedImage: [for (int channel = 0; channel < 3; channel++) Uint8List(16)..fillRange(0, 16, channel * 60)],
+  layers: [
+    PsdLayer(
+      rectangle: const PsdRectangle(top: 0, left: 0, bottom: 0, right: 0),
+      name: 'Group',
+      channels: [
+        for (int channel = 0; channel < 3; channel++) PsdChannel(id: channel, data: Uint8List(0), compression: compression),
+      ],
+      additionalInfo: [
+        PsdTaggedBlock(key: 'lsct', data: Uint8List.fromList([0, 0, 0, 1])),
+      ],
+    ),
+    PsdLayer(
+      // A non-empty height with no width still stores zero bytes per row.
+      rectangle: const PsdRectangle(top: 0, left: 2, bottom: 3, right: 2),
+      name: 'Zero width',
+      channels: [
+        for (int channel = 0; channel < 3; channel++) PsdChannel(id: channel, data: Uint8List(0), compression: compression),
+      ],
+    ),
+    PsdLayer(
+      rectangle: const PsdRectangle(top: 0, left: 0, bottom: 2, right: 4),
+      name: 'Pixels',
+      channels: [
+        for (final int id in [0, 1, 2, -1]) PsdChannel(id: id, data: Uint8List(8)..fillRange(0, 8, id + 3), compression: compression),
+      ],
+    ),
+  ],
+);
 
 /// Builds one high-depth fixture whose layers live in the alternate block.
 PsdDocument _sixteenBitFixture() {

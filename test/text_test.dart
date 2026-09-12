@@ -219,6 +219,25 @@ void main() {
       expect(decoded.layers.single.typeTool?.text, 'Bonjour');
       expect(decoded.layers.single.typeTool?.content.styleRuns.single.style.fontFamily, 'Inter-Regular');
     });
+
+    test('rejects deeply nested engine data instead of exhausting the stack', () {
+      const int depth = 100000;
+      final Map<String, Uint8List> hostile = <String, Uint8List>{
+        'dictionaries': Uint8List.fromList(('${'<< /Nested ' * depth}<< >>${' >>' * depth}').codeUnits),
+        'arrays': Uint8List.fromList(('${'[' * depth}${']' * depth}').codeUnits),
+      };
+
+      for (final MapEntry<String, Uint8List> entry in hostile.entries) {
+        final PsdTextContent content = PsdTextEngine.decode(
+          entry.value,
+          fallbackText: 'Secours',
+          orientation: PsdTextOrientation.horizontal,
+        );
+
+        expect(content.text, 'Secours', reason: entry.key);
+        expect(content.styleRuns, isEmpty, reason: entry.key);
+      }
+    });
   });
 }
 

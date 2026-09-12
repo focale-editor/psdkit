@@ -50,6 +50,35 @@ void main() {
       expect(decoded.styles.single.blendingOptions!.blendMode, 'Mltp');
     });
 
+    test('keeps record alignment padding outside the declared length', () {
+      // A one-byte trailer makes the record length a non-multiple of four, so
+      // the three padding bytes must not be counted by the length field or
+      // they reappear inside the next decode's trailing data.
+      final PsdStyleLibrary source = PsdStyleLibrary(
+        patternsData: Uint8List(0),
+        styles: [
+          PsdStylePreset(
+            identityDescriptor: const PsDescriptor(name: '', classId: 'null'),
+            styleDescriptor: const PsDescriptor(name: '', classId: 'Styl'),
+            trailingData: Uint8List.fromList([0xab]),
+          ),
+        ],
+      );
+
+      final Uint8List encoded = PsdStyleLibraryCodec.encode(source);
+      final PsdStyleLibrary decoded = PsdStyleLibraryCodec.decode(encoded);
+
+      expect(decoded.styles.single.trailingData, orderedEquals([0xab]));
+      expect(PsdStyleLibraryCodec.encode(decoded), orderedEquals(encoded));
+
+      final PsBinaryReader reader = PsBinaryReader(bytes: encoded);
+      reader.skip(12);
+      expect(reader.readUint32(), 1);
+      final int recordLength = reader.readUint32();
+      expect(recordLength % 4, isNot(0));
+      expect(reader.remaining, recordLength + (4 - recordLength % 4) % 4);
+    });
+
     test('resolves localized style names', () {
       final PsdStylePreset preset = PsdStylePreset(
         identityDescriptor: const PsDescriptor(

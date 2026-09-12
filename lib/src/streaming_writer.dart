@@ -650,7 +650,7 @@ final class _PsdStreamingWriter {
         );
         _validateRows(rows, rowBytes: rowBytes, rowCount: count);
         for (int row = 0; row < count; row++) {
-          final Uint8List encoded = encodePsdPackBitsRow(
+          final Uint8List encoded = PsPackBitsCodec.encodeRow(
             Uint8List.sublistView(
               rows,
               row * rowBytes,

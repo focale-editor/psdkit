@@ -110,6 +110,19 @@ void main() {
       expect(PsdLayerEffectsCodec.decode(PsdLayerEffectsCodec.encode(edited)).effects.single.opacity, 80);
     });
 
+    test('reads legacy lrFX pixel, degree, and percent values as 16.16 fixed point', () {
+      // Photoshop stores a seven-pixel blur at 120 degrees as 7 * 65536 and
+      // 120 * 65536; reading the raw integer inflated every value by 65536.
+      final PsdLayerEffects legacy = PsdLayerEffectsCodec.decode(_legacyDropShadow(), key: 'lrFX');
+
+      final PsdLayerEffect shadow = legacy.effects.single;
+      expect(shadow.type, PsdLayerEffectType.dropShadow);
+      expect(shadow.size, closeTo(7, 0.0001));
+      expect(shadow.spread, closeTo(30, 0.0001));
+      expect(shadow.angle, closeTo(120, 0.0001));
+      expect(shadow.distance, closeTo(5, 0.0001));
+    });
+
     test('attaches effects and removes conflicting legacy blocks', () {
       final PsdLayer layer = PsdLayer(
         rectangle: const PsdRectangle(top: 0, left: 0, bottom: 1, right: 1),
@@ -154,6 +167,29 @@ Uint8List _legacySolidFill() {
     _legacyEntry('sofi', fill),
   ]);
 }
+
+/// Builds a legacy drop shadow whose metrics use 16.16 fixed point.
+Uint8List _legacyDropShadow() {
+  final Uint8List shadow = _bytes(<Uint8List>[
+    _uint32(0),
+    _fixed(7),
+    _fixed(30),
+    _fixed(120),
+    _fixed(5),
+    _legacyRgb(0, 0, 0),
+    Uint8List.fromList('8BIMmltp'.codeUnits),
+    Uint8List.fromList(<int>[1, 1, 128]),
+    _legacyRgb(0, 0, 0),
+  ]);
+  return _bytes(<Uint8List>[
+    _uint16(0),
+    _uint16(1),
+    _legacyEntry('dsdw', shadow),
+  ]);
+}
+
+/// Encodes [value] as one big-endian signed 16.16 fixed-point number.
+Uint8List _fixed(int value) => _uint32(value * 65536);
 
 /// Wraps [value] in one legacy effect entry identified by [key].
 Uint8List _legacyEntry(String key, Uint8List value) => _bytes(<Uint8List>[
