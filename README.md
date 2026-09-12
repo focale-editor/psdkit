@@ -61,7 +61,7 @@ The first three returned planes are red, green, and blue; the optional fourth pl
 
 ## Editable text
 
-`PsdLayer.typeTool` exposes the `TySh` tagged block. Its `content` getter converts Adobe `EngineData` into plain text, orientation, font, font size, RGBA color, tracking, leading, bold/italic decorations, style ranges, and paragraph alignment:
+`PsdLayer.typeTool` exposes the modern `TySh` tagged block. Its `content` getter converts Adobe `EngineData` into plain text and complete editable character and paragraph runs. This includes font metadata, grayscale/RGB/CMYK fill and stroke colors, scaling, kerning, leading, OpenType flags, decorations, indents, spacing, hyphenation, composer settings, baseline grid, antialiasing, and point- or box-text geometry:
 
 ```dart
 final PsdTypeTool? typeTool = document.layers.first.typeTool;
@@ -92,9 +92,19 @@ final content = PsdTextContent(
 final typeTool = PsdTypeTool.fromText(
   content: content,
   bounds: const PsdTextBounds(left: 0, top: 0, right: 300, bottom: 80),
+  descriptorBounds: PsdTextDescriptorBounds.pixels(
+    left: 0,
+    top: 0,
+    right: 300,
+    bottom: 80,
+  ),
 );
 final textLayer = rasterPreviewLayer.withTypeTool(typeTool);
 ```
+
+The final `TySh` bounds are single-precision values and are kept separate from optional unit-bearing `bounds` and `boundingBox` descriptor values. Common warp settings are available through `PsdTypeTool.warp` and `withWarp`; unknown custom-warp descriptor entries remain untouched.
+
+Photoshop 5.0/5.5 `tySh` records are available through `PsdLayer.legacyTypeTool` and `withLegacyTypeTool`. Their published face, style, line, color, and transform structures can be decoded and re-encoded with `PsdLegacyTypeToolCodec`. Document-level `Txt2` bytes are available through `PsdDocument.globalTextEngineData`; its `structure` getter provides an immutable representation of the Adobe text-engine dictionaries and arrays.
 
 Photoshop stores rendered preview channels alongside editable type metadata. PsdKit encodes both but deliberately does not rasterize fonts; the application must supply the layer channels and merged image matching the text it displays.
 

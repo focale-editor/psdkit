@@ -290,6 +290,12 @@ final class PsdLayer {
     return block == null ? null : PsdTypeToolCodec.tryDecode(block.data);
   }
 
+  /// Decoded Photoshop 5.x type-tool data, when the legacy block is present.
+  PsdLegacyTypeTool? get legacyTypeTool {
+    final PsdTaggedBlock? block = taggedBlock('tySh');
+    return block == null ? null : PsdLegacyTypeToolCodec.tryDecode(block.data);
+  }
+
   /// Decoded Photoshop layer effects, preferring the modern descriptor block.
   PsdLayerEffects? get effects {
     for (final String key in const <String>['lfx2', 'lmfx', 'lrFX']) {
@@ -384,12 +390,55 @@ final class PsdLayer {
           blocks.add(PsdTaggedBlock(key: 'TySh', data: PsdTypeToolCodec.encode(typeTool)));
         }
         replaced = true;
-      } else {
+      } else if (block.key != 'tySh') {
         blocks.add(block);
       }
     }
     if (!replaced) {
       blocks.add(PsdTaggedBlock(key: 'TySh', data: PsdTypeToolCodec.encode(typeTool)));
+    }
+    return PsdLayer(
+      rectangle: rectangle,
+      name: name,
+      channels: channels,
+      blendMode: blendMode,
+      opacity: opacity,
+      clipping: clipping,
+      flags: flags,
+      mask: mask,
+      blendingRanges: blendingRanges,
+      additionalInfo: blocks,
+    );
+  }
+
+  /// Returns a copy whose `tySh` block contains Photoshop 5.x [typeTool] data.
+  ///
+  /// Any modern `TySh` block is removed to avoid two conflicting text records.
+  PsdLayer withLegacyTypeTool(PsdLegacyTypeTool typeTool) {
+    final List<PsdTaggedBlock> blocks = <PsdTaggedBlock>[];
+    bool replaced = false;
+    for (final PsdTaggedBlock block in additionalInfo) {
+      if (block.key == 'tySh') {
+        if (!replaced) {
+          blocks.add(
+            PsdTaggedBlock(
+              key: 'tySh',
+              data: PsdLegacyTypeToolCodec.encode(typeTool),
+            ),
+          );
+        }
+        replaced = true;
+      } else if (block.key != 'TySh') {
+        blocks.add(block);
+      }
+    }
+    if (!replaced) {
+      blocks.add(
+        PsdTaggedBlock(
+          key: 'tySh',
+          data: PsdLegacyTypeToolCodec.encode(typeTool),
+        ),
+      );
     }
     return PsdLayer(
       rectangle: rectangle,
@@ -596,6 +645,40 @@ final class PsdDocument {
   List<PsdLinkedResource> get linkedResources => <PsdLinkedResource>[
     for (final PsdLinkedResourceBlock block in linkedResourceBlocks) ...block.resources,
   ];
+
+  /// Document-level `Txt2` text-engine data, when present.
+  PsdGlobalTextEngineData? get globalTextEngineData {
+    for (final PsdTaggedBlock block in additionalLayerInfo.reversed) {
+      if (block.key == 'Txt2') {
+        return PsdGlobalTextEngineData(data: block.data);
+      }
+    }
+    return null;
+  }
+
+  /// Returns a copy whose document-level `Txt2` block contains [engineData].
+  ///
+  /// Passing `null` removes every existing global text-engine block.
+  PsdDocument withGlobalTextEngineData(PsdGlobalTextEngineData? engineData) => PsdDocument(
+    version: version,
+    width: width,
+    height: height,
+    channels: channels,
+    depth: depth,
+    colorMode: colorMode,
+    colorModeData: colorModeData,
+    imageResources: imageResources,
+    layers: layers,
+    mergedImage: mergedImage,
+    mergedImageCompression: mergedImageCompression,
+    mergedTransparency: mergedTransparency,
+    globalLayerMaskData: globalLayerMaskData,
+    additionalLayerInfo: <PsdTaggedBlock>[
+      for (final PsdTaggedBlock block in additionalLayerInfo)
+        if (block.key != 'Txt2') block,
+      if (engineData != null) PsdTaggedBlock(key: 'Txt2', data: engineData.data),
+    ],
+  );
 
   /// Returns a copy whose document path resources are [paths].
   PsdDocument withNamedPaths(List<PsdNamedPath> paths) {
