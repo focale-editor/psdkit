@@ -1,5 +1,15 @@
 # 📰 PsdKit changelog
 
+## v0.3.5
+Released on September 12, 2026.
+
+* **DOCS**: Moved technical reference to docs/PSD.md and streamlined README. ([#431739c](https://github.com/focale-editor/psdkit/commit/431739c))
+* **FEAT**: Added legacy type-tool support, global text engine data, and expanded text formatting semantics. ([#060a2ee](https://github.com/focale-editor/psdkit/commit/060a2ee))
+* **FEAT**: Added text shape metadata presence tracking and improved text descriptor fallbacks. ([#02eb6c7](https://github.com/focale-editor/psdkit/commit/02eb6c7))
+* **FIX**: Fixed legacy layer effects decoding, engine data parser limits, and pixel conversion performance. ([#8c57784](https://github.com/focale-editor/psdkit/commit/8c57784))
+* **FIX**: Fixed paragraph justification mapping and trailing paragraph mark handling in text engine data. ([#8866572](https://github.com/focale-editor/psdkit/commit/8866572))
+* **CHORE**: Updated `pscore`. ([#4c90a49](https://github.com/focale-editor/psdkit/commit/4c90a49))
+
 ## v0.3.4
 Released on September 6, 2026.
 
