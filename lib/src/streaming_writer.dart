@@ -40,6 +40,9 @@ final class PsdMemoryPlanarSource implements PsdPlanarSource {
   final Uint8List bytes;
 
   /// Stored bytes in one row.
+  ///
+  /// Zero is valid for the empty planes of a group divider or of any layer
+  /// whose rectangle has no width; [bytes] must then be empty as well.
   final int rowBytes;
 
   /// Creates a source over [bytes] without copying them.
@@ -49,7 +52,8 @@ final class PsdMemoryPlanarSource implements PsdPlanarSource {
     required this.bytes,
     required this.rowBytes,
   }) {
-    if (rowBytes < 1 || bytes.lengthInBytes % rowBytes != 0) {
+    final bool divides = rowBytes == 0 ? bytes.lengthInBytes == 0 : bytes.lengthInBytes % rowBytes == 0;
+    if (rowBytes < 0 || !divides) {
       throw ArgumentError.value(
         rowBytes,
         'rowBytes',

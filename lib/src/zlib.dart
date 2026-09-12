@@ -6,4 +6,4 @@ import 'package:zcodec/zcodec.dart';
 Uint8List psdZlibDecode(Uint8List input, {required int maxOutputBytes}) => ZlibCodec(maxOutputBytes: maxOutputBytes).decode(input);
 
 /// Compresses bytes into a zlib stream using the pure-Dart codec.
-Uint8List psdZlibEncode(Uint8List input) => Uint8List.fromList(const ZlibCodec().encode(input));
+Uint8List psdZlibEncode(Uint8List input) => const ZlibCodec().encode(input);

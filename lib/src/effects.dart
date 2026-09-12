@@ -974,10 +974,10 @@ PsdLayerEffect? _decodeLegacyEffect(String key, PsBinaryReader reader) => switch
 /// Decodes a historical outer or inner shadow.
 PsdLayerEffect _decodeLegacyShadow(PsBinaryReader reader, PsdLayerEffectType type) {
   reader.readUint32();
-  final int size = reader.readInt32();
-  final int spread = reader.readInt32();
-  final int angle = reader.readInt32();
-  final int distance = reader.readInt32();
+  final double size = _readLegacyFixed(reader);
+  final double spread = _readLegacyFixed(reader);
+  final double angle = _readLegacyFixed(reader);
+  final double distance = _readLegacyFixed(reader);
   final PsdEffectColor fallback = _readLegacyColor(reader);
   reader.readString(4);
   final String blendMode = reader.readString(4);
@@ -991,10 +991,10 @@ PsdLayerEffect _decodeLegacyShadow(PsBinaryReader reader, PsdLayerEffectType typ
     blendMode: blendMode,
     opacity: opacity * 100 / 255,
     color: native,
-    size: size.toDouble(),
-    spread: spread.toDouble(),
-    angle: angle.toDouble(),
-    distance: distance.toDouble(),
+    size: size,
+    spread: spread,
+    angle: angle,
+    distance: distance,
     useGlobalAngle: global,
   );
 }
@@ -1002,8 +1002,8 @@ PsdLayerEffect _decodeLegacyShadow(PsBinaryReader reader, PsdLayerEffectType typ
 /// Decodes a historical outer or inner glow.
 PsdLayerEffect _decodeLegacyGlow(PsBinaryReader reader, PsdLayerEffectType type) {
   reader.readUint32();
-  final int size = reader.readInt32();
-  final int spread = reader.readInt32();
+  final double size = _readLegacyFixed(reader);
+  final double spread = _readLegacyFixed(reader);
   final PsdEffectColor fallback = _readLegacyColor(reader);
   reader.readString(4);
   final String blendMode = reader.readString(4);
@@ -1019,8 +1019,8 @@ PsdLayerEffect _decodeLegacyGlow(PsBinaryReader reader, PsdLayerEffectType type)
     blendMode: blendMode,
     opacity: opacity * 100 / 255,
     color: native,
-    size: size.toDouble(),
-    spread: spread.toDouble(),
+    size: size,
+    spread: spread,
   );
 }
 
@@ -1045,9 +1045,9 @@ PsdLayerEffect _decodeLegacySolidFill(PsBinaryReader reader) {
 /// Decodes the common semantic portion of a historical bevel effect.
 PsdLayerEffect _decodeLegacyBevel(PsBinaryReader reader) {
   reader.readUint32();
-  final int angle = reader.readInt32();
-  final int strength = reader.readInt32();
-  final int size = reader.readInt32();
+  final double angle = _readLegacyFixed(reader);
+  final double strength = _readLegacyFixed(reader);
+  final double size = _readLegacyFixed(reader);
   reader.skip(16);
   final PsdEffectColor highlight = _readLegacyColor(reader);
   _readLegacyColor(reader);
@@ -1059,13 +1059,19 @@ PsdLayerEffect _decodeLegacyBevel(PsBinaryReader reader) {
   return PsdLayerEffect.create(
     type: PsdLayerEffectType.bevelEmboss,
     enabled: enabled,
-    opacity: strength.toDouble(),
+    opacity: strength,
     color: nativeHighlight,
-    size: size.toDouble(),
-    angle: angle.toDouble(),
+    size: size,
+    angle: angle,
     useGlobalAngle: global,
   );
 }
+
+/// Reads one historical 16.16 fixed-point pixel, degree, or percent value.
+///
+/// Photoshop 5.0 effect records store these quantities scaled by 65536, so a
+/// seven-pixel blur is written as `458752`.
+double _readLegacyFixed(PsBinaryReader reader) => reader.readInt32() / 65536;
 
 /// Reads a ten-byte Photoshop legacy color record.
 PsdEffectColor _readLegacyColor(PsBinaryReader reader, {PsdEffectColor fallback = PsdEffectColor.black}) {

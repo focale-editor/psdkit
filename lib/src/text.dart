@@ -2,6 +2,12 @@ import 'dart:typed_data';
 
 import 'package:pscore/pscore.dart';
 
+/// Maximum dictionary and array nesting accepted from untrusted engine data.
+///
+/// Photoshop writes far shallower structures; the bound keeps a hostile file
+/// from exhausting the stack through the parser's recursion.
+const int _maximumEngineDepth = 64;
+
 /// Direction in which Photoshop lays out a text layer.
 enum PsdTextOrientation {
   /// Text advances horizontally.
@@ -676,7 +682,7 @@ abstract final class PsdTextEngine {
           ),
         ),
       );
-      start += storedLength.clamp(0, textLength);
+      start += length;
     }
     return result;
   }
@@ -708,7 +714,7 @@ abstract final class PsdTextEngine {
           justification: _decodeJustification(justification),
         ),
       );
-      start += storedLength.clamp(0, textLength);
+      start += length;
     }
     return result;
   }
@@ -1013,6 +1019,9 @@ final class _PsdEngineParser {
   /// Current byte offset.
   int _offset;
 
+  /// Number of dictionaries and arrays currently open.
+  int _depth = 0;
+
   /// Creates an engine-data parser.
   _PsdEngineParser({required this._bytes, this._offset = 0});
 
@@ -1117,12 +1126,14 @@ final class _PsdEngineParser {
 
   /// Reads a `<< ... >>` dictionary.
   _PsdEngineDictionary _readDictionary() {
+    _enter();
     _offset += 2;
     final Map<String, Object?> values = <String, Object?>{};
     while (true) {
       _skipTrivia();
       if (_startsWith('>>')) {
         _offset += 2;
+        _depth--;
         return _PsdEngineDictionary(values: values);
       }
       if (_offset >= _bytes.length || _bytes[_offset] != 0x2f) {
@@ -1135,6 +1146,7 @@ final class _PsdEngineParser {
 
   /// Reads a `[ ... ]` array.
   List<Object?> _readArray() {
+    _enter();
     _offset++;
     final List<Object?> values = <Object?>[];
     while (true) {
@@ -1144,9 +1156,17 @@ final class _PsdEngineParser {
       }
       if (_bytes[_offset] == 0x5d) {
         _offset++;
+        _depth--;
         return values;
       }
       values.add(_readValue());
+    }
+  }
+
+  /// Opens one nesting level, rejecting input that would exhaust the stack.
+  void _enter() {
+    if (++_depth > _maximumEngineDepth) {
+      throw const FormatException('EngineData nesting exceeds the supported depth');
     }
   }
 

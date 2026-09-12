@@ -745,7 +745,7 @@ abstract final class PsdSmartObjectCodec {
     try {
       final PsBinaryReader reader = PsBinaryReader(bytes: data);
       return key == 'plLd' ? _readLegacyPlacedLayer(reader) : _readDescriptorSmartObject(reader, key);
-    } on PsFormatException {
+    } on FormatException {
       return PsdRawSmartObject(blockKey: key, data: data);
     }
   }

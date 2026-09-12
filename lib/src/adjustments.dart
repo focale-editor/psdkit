@@ -654,7 +654,7 @@ abstract final class PsdAdjustmentCodec {
         'SoCo' || 'GdFl' || 'PtFl' || 'vibA' || 'blwh' || 'clrL' => _readDescriptorAdjustment(reader, key),
         _ => PsdRawAdjustment(blockKey: key, type: _typeForKey(key), data: data),
       };
-    } on PsFormatException {
+    } on FormatException {
       return PsdRawAdjustment(blockKey: key, type: _typeForKey(key), data: data);
     }
   }

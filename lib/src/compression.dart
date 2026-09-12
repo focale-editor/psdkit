@@ -36,7 +36,10 @@ Uint8List decodePsdChannel({
   if (decoded.length != expected) {
     throw PsFormatException(message: 'Decoded channel has ${decoded.length} bytes; expected $expected');
   }
-  return Uint8List.fromList(decoded);
+  // A RAW payload is a view into the source file and must be detached so the
+  // whole file cannot be pinned by one channel; the other codecs already
+  // returned a private buffer.
+  return compression == PsdCompression.raw ? Uint8List.fromList(decoded) : decoded;
 }
 
 /// Inflates [input] with an exact allocation bound and normalizes failures.
@@ -193,17 +196,17 @@ Uint8List _decodeRle(Uint8List input, int rowBytes, int height, bool wide) {
 
 /// Encodes [height] rows and prefixes their 16-bit or 32-bit lengths.
 Uint8List _encodeRle(Uint8List input, int rowBytes, int height, bool wide) {
-  final List<Uint8List> rows = <Uint8List>[];
-  for (int row = 0; row < height; row++) {
-    rows.add(encodePsdPackBitsRow(Uint8List.sublistView(input, row * rowBytes, (row + 1) * rowBytes)));
-  }
   final int lengthSize = wide ? 4 : 2;
-  final int payloadLength = rows.fold<int>(height * lengthSize, (total, row) => total + row.length);
-  final Uint8List result = Uint8List(payloadLength);
-  final ByteData table = ByteData.sublistView(result);
-  int offset = height * lengthSize;
+  final int tableSize = height * lengthSize;
+  // Rows are encoded straight into their final position; the length table is
+  // filled in as each row completes, so no intermediate row buffers are kept.
+  final Uint8List result = Uint8List(tableSize + height * psdPackBitsMaxEncodedLength(rowBytes));
+  final ByteData table = ByteData.sublistView(result, 0, tableSize);
+  int offset = tableSize;
   for (int row = 0; row < height; row++) {
-    final int length = rows[row].length;
+    final int start = offset;
+    offset = encodePsdPackBitsRowInto(Uint8List.sublistView(input, row * rowBytes, (row + 1) * rowBytes), result, offset);
+    final int length = offset - start;
     if (!wide && length > 0xffff) {
       throw const PsWriteException(message: 'A PSD PackBits row exceeds 65535 encoded bytes; use PSB or ZIP');
     }
@@ -212,19 +215,34 @@ Uint8List _encodeRle(Uint8List input, int rowBytes, int height, bool wide) {
     } else {
       table.setUint16(row * 2, length);
     }
-    result.setRange(offset, offset + length, rows[row]);
-    offset += length;
   }
-  return result;
+  final Uint8List payload = Uint8List.sublistView(result, 0, offset);
+  // The buffer was sized for incompressible rows. Returning a view would keep
+  // all of it alive, so compact well-compressed payloads instead.
+  return offset * 2 < result.length ? Uint8List.fromList(payload) : payload;
 }
 
-/// Encodes one [row] with the PackBits run-length algorithm.
+/// Returns the largest PackBits output a row of [rowBytes] can produce.
+///
+/// Incompressible data costs one control byte per 128 literal bytes.
+int psdPackBitsMaxEncodedLength(int rowBytes) => rowBytes + (rowBytes + 127) ~/ 128 + 1;
+
 /// Encodes one independent PSD PackBits [row].
 ///
 /// The returned bytes do not include the row length stored by the surrounding
 /// channel or merged-image table.
 Uint8List encodePsdPackBitsRow(Uint8List row) {
-  final BytesBuilder output = BytesBuilder(copy: false);
+  final Uint8List output = Uint8List(psdPackBitsMaxEncodedLength(row.length));
+  return Uint8List.sublistView(output, 0, encodePsdPackBitsRowInto(row, output, 0));
+}
+
+/// Encodes [row] into [output] at [start] and returns the next write offset.
+///
+/// [output] must hold [psdPackBitsMaxEncodedLength] bytes beyond [start]. The
+/// caller-owned buffer lets a whole channel be encoded without allocating per
+/// row or per run.
+int encodePsdPackBitsRowInto(Uint8List row, Uint8List output, int start) {
+  int write = start;
   int offset = 0;
   while (offset < row.length) {
     int run = 1;
@@ -232,7 +250,8 @@ Uint8List encodePsdPackBitsRow(Uint8List row) {
       run++;
     }
     if (run >= 3) {
-      output.add(<int>[257 - run, row[offset]]);
+      output[write++] = 257 - run;
+      output[write++] = row[offset];
       offset += run;
       continue;
     }
@@ -250,10 +269,11 @@ Uint8List encodePsdPackBitsRow(Uint8List row) {
       offset += run.clamp(1, remaining);
     }
     final int count = offset - literalStart;
-    output.add(<int>[count - 1]);
-    output.add(Uint8List.sublistView(row, literalStart, offset));
+    output[write++] = count - 1;
+    output.setRange(write, write + count, row, literalStart);
+    write += count;
   }
-  return output.takeBytes();
+  return write;
 }
 
 /// Reverses horizontal sample differencing on decompressed bytes.
@@ -261,15 +281,16 @@ Uint8List _undoPrediction(Uint8List input, int width, int height, int depth) {
   if (depth == 1) {
     throw const PsFormatException(message: 'ZIP prediction is not valid for 1-bit data');
   }
-  final Uint8List output = Uint8List.fromList(input);
   final int bytesPerSample = depth ~/ 8;
   final int rowBytes = width * bytesPerSample;
-  if (output.length != rowBytes * height) {
-    return output;
+  if (input.length != rowBytes * height) {
+    return Uint8List.fromList(input);
   }
   if (depth == 32) {
-    return _undoFloatPrediction(output, width, height);
+    // The float path makes its own working copy, so do not copy twice.
+    return _undoFloatPrediction(input, width, height);
   }
+  final Uint8List output = Uint8List.fromList(input);
   final ByteData values = ByteData.sublistView(output);
   for (int row = 0; row < height; row++) {
     final int start = row * rowBytes;

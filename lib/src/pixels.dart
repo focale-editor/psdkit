@@ -100,27 +100,35 @@ abstract final class PsdPixels {
     }
     final int pixelCount = width * height;
     final Uint8List output = Uint8List(pixelCount * 4);
+    // One big-endian view per plane: rebuilding them per sample dominated the
+    // cost of 16-bit and 32-bit documents.
+    final List<ByteData> views = <ByteData>[for (final Uint8List component in components) ByteData.sublistView(component)];
+    const int red = 0;
+    final int green = components.length > 1 ? 1 : 0;
+    final int blue = components.length > 2 ? 2 : 0;
+    final bool hasAlpha = alphaIndex >= 0 && alphaIndex < components.length;
 
     /// Reads one component sample using the document depth.
-    int sample(Uint8List bytes, int pixel, {bool bitmap = false}) => _sample(bytes, pixel, width, depth, bitmap: bitmap);
+    int sample(int index, int pixel, {bool bitmap = false}) => _sample(components[index], views[index], pixel, width, depth, bitmap: bitmap);
     for (int pixel = 0; pixel < pixelCount; pixel++) {
-      final List<int> color = switch (colorMode) {
-        PsdColorMode.bitmap => _gray(sample(components[0], pixel, bitmap: true)),
-        PsdColorMode.grayscale || PsdColorMode.duotone => _gray(sample(components[0], pixel)),
-        PsdColorMode.indexed => _indexed(colorModeData, sample(components[0], pixel)),
-        PsdColorMode.rgb || PsdColorMode.multichannel => <int>[
-          sample(components[0], pixel),
-          sample(components.length > 1 ? components[1] : components[0], pixel),
-          sample(components.length > 2 ? components[2] : components[0], pixel),
-        ],
-        PsdColorMode.cmyk => _cmyk(<int>[for (int index = 0; index < 4; index++) sample(components[index], pixel)]),
-        PsdColorMode.lab => _lab(<int>[for (int index = 0; index < 3; index++) sample(components[index], pixel)]),
-      };
       final int offset = pixel * 4;
-      output[offset] = color[0];
-      output[offset + 1] = color[1];
-      output[offset + 2] = color[2];
-      output[offset + 3] = alphaIndex >= 0 && alphaIndex < components.length ? sample(components[alphaIndex], pixel) : 255;
+      switch (colorMode) {
+        case PsdColorMode.bitmap:
+          _writeGray(output, offset, sample(0, pixel, bitmap: true));
+        case PsdColorMode.grayscale || PsdColorMode.duotone:
+          _writeGray(output, offset, sample(0, pixel));
+        case PsdColorMode.indexed:
+          _writeIndexed(output, offset, colorModeData, sample(0, pixel));
+        case PsdColorMode.rgb || PsdColorMode.multichannel:
+          output[offset] = sample(red, pixel);
+          output[offset + 1] = sample(green, pixel);
+          output[offset + 2] = sample(blue, pixel);
+        case PsdColorMode.cmyk:
+          _writeCmyk(output, offset, sample(0, pixel), sample(1, pixel), sample(2, pixel), sample(3, pixel));
+        case PsdColorMode.lab:
+          _writeLab(output, offset, sample(0, pixel), sample(1, pixel), sample(2, pixel));
+      }
+      output[offset + 3] = hasAlpha ? sample(alphaIndex, pixel) : 255;
     }
     return PsdRgbaImage(width: width, height: height, bytes: output);
   }
@@ -134,8 +142,11 @@ int _baseChannels(PsdColorMode mode) => switch (mode) {
   PsdColorMode.multichannel => 1,
 };
 
-/// Converts one sample from [bytes] into an unsigned 8-bit value.
-int _sample(Uint8List bytes, int pixel, int width, int depth, {bool bitmap = false}) {
+/// Converts one sample into an unsigned 8-bit value.
+///
+/// [data] must be a big-endian view of [bytes]; the caller keeps one view per
+/// plane so that deep documents do not allocate a view for every sample.
+int _sample(Uint8List bytes, ByteData data, int pixel, int width, int depth, {bool bitmap = false}) {
   switch (depth) {
     case 1:
       final int row = pixel ~/ width;
@@ -145,9 +156,9 @@ int _sample(Uint8List bytes, int pixel, int width, int depth, {bool bitmap = fal
     case 8:
       return bytes[pixel];
     case 16:
-      return (ByteData.sublistView(bytes).getUint16(pixel * 2) * 255 / 65535).round();
+      return (data.getUint16(pixel * 2) * 255 / 65535).round();
     case 32:
-      final double value = ByteData.sublistView(bytes).getFloat32(pixel * 4);
+      final double value = data.getFloat32(pixel * 4);
       if (!value.isFinite) {
         return 0;
       }
@@ -156,37 +167,41 @@ int _sample(Uint8List bytes, int pixel, int width, int depth, {bool bitmap = fal
   throw PsFormatException(message: 'Unsupported sample depth $depth');
 }
 
-/// Expands one grayscale [value] into three RGB components.
-List<int> _gray(int value) => <int>[value, value, value];
+/// Writes one grayscale [value] as three RGB components at [offset].
+void _writeGray(Uint8List output, int offset, int value) {
+  output[offset] = value;
+  output[offset + 1] = value;
+  output[offset + 2] = value;
+}
 
 /// Resolves an indexed-colour [index] through the planar [palette].
-List<int> _indexed(Uint8List palette, int index) {
+void _writeIndexed(Uint8List output, int offset, Uint8List palette, int index) {
   if (palette.length < 768) {
     throw const PsFormatException(message: 'Indexed color data must contain a 768-byte palette');
   }
-  return <int>[palette[index], palette[256 + index], palette[512 + index]];
+  output[offset] = palette[index];
+  output[offset + 1] = palette[256 + index];
+  output[offset + 2] = palette[512 + index];
 }
 
-/// Converts four 8-bit CMYK [values] into sRGB.
-List<int> _cmyk(List<int> values) {
+/// Converts four 8-bit CMYK components into sRGB at [offset].
+void _writeCmyk(Uint8List output, int offset, int cyan, int magenta, int yellow, int black) {
   // PSD stores CMYK channels inverted: 255 means no ink for both each colour
   // component and black.
-  final double cyanInverse = values[0] / 255;
-  final double magentaInverse = values[1] / 255;
-  final double yellowInverse = values[2] / 255;
-  final double blackInverse = values[3] / 255;
-  return <int>[
-    (255 * cyanInverse * blackInverse).round(),
-    (255 * magentaInverse * blackInverse).round(),
-    (255 * yellowInverse * blackInverse).round(),
-  ];
+  final double cyanInverse = cyan / 255;
+  final double magentaInverse = magenta / 255;
+  final double yellowInverse = yellow / 255;
+  final double blackInverse = black / 255;
+  output[offset] = (255 * cyanInverse * blackInverse).round();
+  output[offset + 1] = (255 * magentaInverse * blackInverse).round();
+  output[offset + 2] = (255 * yellowInverse * blackInverse).round();
 }
 
-/// Converts three 8-bit CIE Lab [values] into sRGB.
-List<int> _lab(List<int> values) {
-  final double lightness = values[0] * 100 / 255;
-  final double a = values[1] - 128;
-  final double b = values[2] - 128;
+/// Converts three 8-bit CIE Lab components into sRGB at [offset].
+void _writeLab(Uint8List output, int offset, int lightnessValue, int aValue, int bValue) {
+  final double lightness = lightnessValue * 100 / 255;
+  final double a = aValue - 128;
+  final double b = bValue - 128;
   final double fy = (lightness + 16) / 116;
   final double fx = fy + a / 500;
   final double fz = fy - b / 200;
@@ -196,7 +211,9 @@ List<int> _lab(List<int> values) {
   final double linearRed = 3.1338561 * x - 1.6168667 * y - 0.4906146 * z;
   final double linearGreen = -0.9787684 * x + 1.9161415 * y + 0.033454 * z;
   final double linearBlue = 0.0719453 * x - 0.2289914 * y + 1.4052427 * z;
-  return <int>[_srgb(linearRed), _srgb(linearGreen), _srgb(linearBlue)];
+  output[offset] = _srgb(linearRed);
+  output[offset + 1] = _srgb(linearGreen);
+  output[offset + 2] = _srgb(linearBlue);
 }
 
 /// Applies the inverse CIE Lab transfer curve to [value].

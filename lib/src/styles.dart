@@ -256,12 +256,13 @@ abstract final class PsdStyleLibraryCodec {
         ..writeUint32(16)
         ..writeBytes(PsDescriptorCodec.encode(style.styleDescriptor))
         ..writeBytes(style.trailingData);
-      final int padding = _paddingFor(record.length);
-      record.writeZeros(padding);
       final Uint8List recordBytes = record.takeBytes();
+      // Photoshop stores the alignment padding after the counted record, so
+      // it must stay outside the declared length that [decode] reads back.
       writer
         ..writeUint32(recordBytes.length)
-        ..writeBytes(recordBytes);
+        ..writeBytes(recordBytes)
+        ..writeZeros(_paddingFor(recordBytes.length));
     }
     writer.writeBytes(library.trailingData);
     final Uint8List encoded = writer.takeBytes();
