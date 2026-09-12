@@ -1,5 +1,11 @@
 # 📰 PsdKit changelog
 
+## v0.4.0
+Released on September 13, 2026.
+
+* **BREAKING FEAT**: Added text shape metadata presence tracking and improved text descriptor fallbacks. ([#0e49615](https://github.com/focale-editor/psdkit/commit/0e49615))
+* **FEAT**: Added dart:convert Codec support for PSD documents. ([#04ee7d6](https://github.com/focale-editor/psdkit/commit/04ee7d6))
+
 ## v0.3.5
 Released on September 12, 2026.
 
