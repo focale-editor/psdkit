@@ -149,6 +149,7 @@ void main() {
       expect(typeTool.text, 'Salut');
       expect(content.text, 'Salut');
       expect(content.orientation, PsdTextOrientation.horizontal);
+      expect(content.hasShapeMetadata, isFalse);
       expect(content.styleRuns, hasLength(1));
       expect(content.styleRuns.single.start, 0);
       expect(content.styleRuns.single.length, 5);
@@ -352,6 +353,7 @@ void main() {
       expect(content.gridding, PsdTextGridding.round);
       expect(content.useFractionalGlyphWidths, isFalse);
       expect(content.shapeType, PsdTextShapeType.box);
+      expect(content.hasShapeMetadata, isTrue);
       expect(content.boxBounds.right, 201.5);
       expect(content.gridInfo.alignLineHeightToGrid, isTrue);
       expect(content.superscriptSize, 0.6);
@@ -375,6 +377,32 @@ void main() {
       expect(paragraph.adjustments.axis, orderedEquals(<double>[1, 2, 3]));
       expect(String.fromCharCodes(decoded.engineData!), contains('/DocumentResources'));
       expect(String.fromCharCodes(decoded.engineData!), contains('/Rendered'));
+    });
+
+    test('uses EngineData antialiasing when the descriptor omits it', () {
+      final PsdTypeTool typeTool = _typeTool(
+        'Salut',
+        engineAntiAlias: 3,
+      );
+
+      expect(typeTool.antiAlias, PsdTextAntiAlias.sharp);
+      expect(typeTool.content.antiAlias, PsdTextAntiAlias.smooth);
+    });
+
+    test('distinguishes unknown warp styles from an explicit no-warp value', () {
+      final PsdTypeTool source = _typeTool('Salut');
+      final PsdTypeTool unknown = PsdTypeTool(
+        textDescriptor: source.textDescriptor,
+        warpDescriptor: source.warpDescriptor.withValue(
+          'warpStyle',
+          const PsEnumeratedValue(
+            typeId: 'warpStyle',
+            value: 'futureWarpStyle',
+          ),
+        ),
+      );
+
+      expect(unknown.warp.style, PsdTextWarpStyle.custom);
     });
 
     test('resolves inherited styles and Boolean decoration values', () {
@@ -541,6 +569,7 @@ void main() {
 PsdTypeTool _typeTool(
   String text, {
   bool terminalParagraphMark = false,
+  int? engineAntiAlias,
 }) => PsdTypeTool(
   textDescriptor: PsDescriptor(
     name: '',
@@ -560,6 +589,7 @@ PsdTypeTool _typeTool(
           value: _engineData(
             text,
             terminalParagraphMark: terminalParagraphMark,
+            antiAlias: engineAntiAlias,
           ),
         ),
       ),
@@ -574,6 +604,7 @@ PsdTypeTool _typeTool(
 Uint8List _engineData(
   String text, {
   bool terminalParagraphMark = false,
+  int? antiAlias,
 }) {
   final String encodedText = terminalParagraphMark ? '$text\r' : text;
   final BytesBuilder bytes = BytesBuilder(copy: false)
@@ -585,6 +616,7 @@ Uint8List _engineData(
     ..add(_utf16(encodedText))
     ..add(
       ''') >>
+${antiAlias == null ? '' : '/AntiAlias $antiAlias'}
 /StyleRun << /RunArray [ << /StyleSheet << /StyleSheetData <<
 /Font 0 /FontSize 24 /FauxBold true /FauxItalic false
 /Underline 0 /Strikethrough 0 /Tracking -10 /AutoLeading true

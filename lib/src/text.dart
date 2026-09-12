@@ -704,6 +704,13 @@ final class PsdTextContent {
   /// Point-text or paragraph-box geometry.
   final PsdTextShapeType shapeType;
 
+  /// Whether [shapeType], [pointBase], and [boxBounds] were present in the source.
+  ///
+  /// Older writers may omit the rendered shape tree. Consumers can then use a
+  /// format-specific compatibility fallback without mistaking an explicit
+  /// point-text record for missing geometry.
+  final bool hasShapeMetadata;
+
   /// Anchor used by point text.
   final PsdTextPoint pointBase;
 
@@ -736,6 +743,7 @@ final class PsdTextContent {
     this.useFractionalGlyphWidths = true,
     this.gridInfo = const PsdTextGridInfo(),
     this.shapeType = PsdTextShapeType.point,
+    this.hasShapeMetadata = true,
     this.pointBase = PsdTextPoint.zero,
     this.boxBounds = PsdTextBox.zero,
     this.superscriptSize = 0.583,
@@ -1336,7 +1344,10 @@ final class PsdTypeTool {
   /// Descriptor containing text warp settings.
   final PsDescriptor warpDescriptor;
 
-  /// Text box or point-text bounds.
+  /// Legacy single-precision bounds stored after the two descriptors.
+  ///
+  /// These are independent from the text-engine point or box geometry and the
+  /// unit-bearing bounds inside [textDescriptor].
   final PsdTextBounds bounds;
 
   /// Bytes from newer Photoshop versions that follow the documented bounds.
@@ -1405,7 +1416,7 @@ final class PsdTypeTool {
   };
 
   /// Antialiasing mode stored by the type-tool descriptor.
-  PsdTextAntiAlias get antiAlias => _decodeDescriptorAntiAlias(textDescriptor.value('AntA'));
+  PsdTextAntiAlias get antiAlias => _tryDecodeDescriptorAntiAlias(textDescriptor.value('AntA')) ?? PsdTextAntiAlias.sharp;
 
   /// Optional layout bounds from the text descriptor.
   PsdTextDescriptorBounds? get descriptorBounds => _readDescriptorBounds(textDescriptor.value('bounds'));
@@ -1423,14 +1434,19 @@ final class PsdTypeTool {
   PsdTextWarp get warp => _readWarp(warpDescriptor, fallbackRotation: orientation);
 
   /// Semantic text, styles, and paragraphs suitable for application models.
-  PsdTextContent get content => PsdTextEngine.decode(
-    engineData,
-    fallbackText: text,
-    orientation: orientation,
-    fallbackAntiAlias: antiAlias,
-    antiAliasOverride: antiAlias,
-    gridding: gridding,
-  );
+  PsdTextContent get content {
+    final PsdTextAntiAlias? descriptorAntiAlias = _tryDecodeDescriptorAntiAlias(
+      textDescriptor.value('AntA'),
+    );
+    return PsdTextEngine.decode(
+      engineData,
+      fallbackText: text,
+      orientation: orientation,
+      fallbackAntiAlias: descriptorAntiAlias ?? PsdTextAntiAlias.sharp,
+      antiAliasOverride: descriptorAntiAlias,
+      gridding: gridding,
+    );
+  }
 
   /// Raw Adobe text-engine program stored under `EngineData`.
   Uint8List? get engineData => switch (textDescriptor.value('EngineData')) {
@@ -1629,6 +1645,7 @@ abstract final class PsdTextEngine {
         orientation: orientation,
         antiAlias: fallbackAntiAlias,
         gridding: gridding,
+        hasShapeMetadata: false,
       );
     }
     try {
@@ -1656,6 +1673,7 @@ abstract final class PsdTextEngine {
         useFractionalGlyphWidths: _engineBoolean(engine?['UseFractionalGlyphWidths']) ?? true,
         gridInfo: _readGridInfo(engine),
         shapeType: shape.type,
+        hasShapeMetadata: shape.isPresent,
         pointBase: shape.point,
         boxBounds: shape.box,
         superscriptSize: _number(resources?['SuperscriptSize']) ?? 0.583,
@@ -1670,6 +1688,7 @@ abstract final class PsdTextEngine {
         orientation: orientation,
         antiAlias: fallbackAntiAlias,
         gridding: gridding,
+        hasShapeMetadata: false,
       );
     }
   }
@@ -2087,6 +2106,7 @@ abstract final class PsdTextEngine {
     final List<double>? box = _numbers(photoshop?['BoxBounds']);
     final PsdTextShapeType type = _integer(photoshop?['ShapeType']) == 1 ? PsdTextShapeType.box : PsdTextShapeType.point;
     return _PsdTextShapeData(
+      isPresent: photoshop != null && (photoshop.values.containsKey('ShapeType') || point != null || box != null),
       type: type,
       point: point != null && point.length >= 2 ? PsdTextPoint(x: point[0], y: point[1]) : PsdTextPoint.zero,
       box: box != null && box.length >= 4 ? PsdTextBox(left: box[0], top: box[1], right: box[2], bottom: box[3]) : PsdTextBox.zero,
@@ -2313,6 +2333,9 @@ final class _PsdNormalizedParagraph {
 
 /// Geometry decoded from the text engine's rendered tree.
 final class _PsdTextShapeData {
+  /// Whether the rendered tree contained Photoshop shape metadata.
+  final bool isPresent;
+
   /// Point-text or box-text mode.
   final PsdTextShapeType type;
 
@@ -2324,6 +2347,7 @@ final class _PsdTextShapeData {
 
   /// Creates decoded text geometry.
   const _PsdTextShapeData({
+    required this.isPresent,
     required this.type,
     required this.point,
     required this.box,
@@ -2580,6 +2604,7 @@ String _encodeWarpStyle(PsdTextWarpStyle style) => switch (style) {
 
 /// Decodes an Adobe warp-style enumeration value.
 PsdTextWarpStyle _decodeWarpStyle(String value) => switch (value) {
+  'warpNone' => PsdTextWarpStyle.none,
   'warpArc' => PsdTextWarpStyle.arc,
   'warpArcLower' => PsdTextWarpStyle.arcLower,
   'warpArcUpper' => PsdTextWarpStyle.arcUpper,
@@ -2597,7 +2622,7 @@ PsdTextWarpStyle _decodeWarpStyle(String value) => switch (value) {
   'warpTwist' => PsdTextWarpStyle.twist,
   'warpCylinder' => PsdTextWarpStyle.cylinder,
   'warpCustom' => PsdTextWarpStyle.custom,
-  _ => PsdTextWarpStyle.none,
+  _ => PsdTextWarpStyle.custom,
 };
 
 /// Encodes an antialiasing mode for the surrounding action descriptor.
@@ -2612,19 +2637,20 @@ String _encodeDescriptorAntiAlias(PsdTextAntiAlias antiAlias) => switch (antiAli
 };
 
 /// Decodes an antialiasing mode from the surrounding action descriptor.
-PsdTextAntiAlias _decodeDescriptorAntiAlias(PsDescriptorValue? value) {
+PsdTextAntiAlias? _tryDecodeDescriptorAntiAlias(PsDescriptorValue? value) {
   final String? encoded = switch (value) {
     PsEnumeratedValue(:final String value) => value,
     _ => null,
   };
   return switch (encoded) {
     'Anno' => PsdTextAntiAlias.none,
+    'AnSh' || 'antiAliasSharp' => PsdTextAntiAlias.sharp,
     'AnCr' => PsdTextAntiAlias.crisp,
     'AnSt' => PsdTextAntiAlias.strong,
     'AnSm' => PsdTextAntiAlias.smooth,
     'antiAliasPlatformGray' => PsdTextAntiAlias.platform,
     'antiAliasPlatformLCD' => PsdTextAntiAlias.platformLcd,
-    _ => PsdTextAntiAlias.sharp,
+    _ => null,
   };
 }
 
