@@ -26,6 +26,19 @@ await File('output.psd').writeAsBytes(output, flush: true);
 
 `PsdWriteOptions.version` can override the source container version. Use `PsdVersion.psb` when writing a large-document PSB.
 
+For integration with APIs based on `dart:convert`, `psdDocumentCodec` implements `Codec<PsdDocument, List<int>>`. The byte type is deliberately `List<int>` so the codec can be composed with standard Dart codecs:
+
+```dart
+import 'dart:convert';
+
+final Codec<PsdDocument, String> psdAsBase64 =
+    psdDocumentCodec.fuse(base64);
+final String encoded = psdAsBase64.encode(document);
+final PsdDocument decoded = psdAsBase64.decode(encoded);
+```
+
+Construct `PsdDocumentCodec` with `readOptions` and `writeOptions` to configure both directions. Its converters operate on complete files and do not provide incremental input; use the progressive writer described below when encoded output must remain memory-bounded.
+
 ## Updating copy-based models
 
 Editing methods such as `withTypeTool`, `withEffects`, and `withAdjustment` return an updated `PsdLayer`. Place that layer in the document's flat layer list before encoding it. The following helper copies all other document data unchanged:

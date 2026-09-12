@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
@@ -299,6 +300,54 @@ void main() {
           }
         }
       }
+    });
+  });
+
+  group('PsdDocumentCodec', () {
+    test('converts documents through typed and ordinary byte lists', () {
+      const Codec<PsdDocument, List<int>> codec = psdDocumentCodec;
+      final PsdDocument source = _document();
+
+      final List<int> encoded = codec.encoder.convert(source);
+      final PsdDocument decoded = codec.decoder.convert(List<int>.of(encoded));
+
+      expect(encoded, isA<Uint8List>());
+      expect(decoded.width, source.width);
+      expect(decoded.height, source.height);
+      expect(decoded.mergedImage.first, orderedEquals(source.mergedImage.first));
+    });
+
+    test('supports codec composition and inversion', () {
+      final PsdDocument source = _document();
+      final Codec<PsdDocument, String> base64Psd = psdDocumentCodec.fuse(base64);
+      final Codec<List<int>, PsdDocument> inverted = psdDocumentCodec.inverted;
+
+      final PsdDocument composed = base64Psd.decode(base64Psd.encode(source));
+      final PsdDocument invertedDocument = inverted.encode(psdDocumentCodec.encode(source));
+      final List<int> invertedBytes = inverted.decode(source);
+
+      expect(composed.layers.single.name, source.layers.single.name);
+      expect(invertedDocument.mergedImage.first, orderedEquals(source.mergedImage.first));
+      expect(PsdCodec.decode(Uint8List.fromList(invertedBytes)).width, source.width);
+    });
+
+    test('applies configured read and write options', () {
+      const PsdDocumentCodec codec = PsdDocumentCodec(
+        readOptions: PsdReadOptions(maxPixels: 2),
+        writeOptions: PsdWriteOptions(compression: PsdCompression.raw),
+      );
+
+      final Uint8List encoded = codec.encode(_document());
+
+      expect(PsdCodec.decode(encoded).mergedImageCompression, PsdCompression.raw);
+      expect(() => codec.decode(encoded), throwsA(isA<PsFormatException>()));
+    });
+
+    test('rejects integers outside the byte range', () {
+      final List<int> encoded = List<int>.of(psdDocumentCodec.encode(_document()));
+      encoded[0] = 0x138;
+
+      expect(() => psdDocumentCodec.decode(encoded), throwsRangeError);
     });
   });
 

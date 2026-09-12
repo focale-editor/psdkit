@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:pscore/pscore.dart';
@@ -153,6 +154,78 @@ abstract final class PsdCodec {
     rowBatchSize: rowBatchSize,
     onProgress: onProgress,
   ).write(document);
+}
+
+/// Converts complete PSD and PSB documents through the `dart:convert` API.
+///
+/// The byte representation uses [List<int>] so this codec can be fused with
+/// standard Dart codecs such as `base64`. [encode] returns a [Uint8List], and
+/// [decode] avoids copying inputs that are already [Uint8List] instances.
+///
+/// Both conversions retain a complete document in memory. Use
+/// [PsdCodec.encodeTo] for bounded-memory RAW or PackBits output.
+final class PsdDocumentCodec extends Codec<PsdDocument, List<int>> {
+  /// Limits applied while decoding documents.
+  final PsdReadOptions readOptions;
+
+  /// Defaults applied while encoding documents.
+  final PsdWriteOptions writeOptions;
+
+  /// Creates a codec with the requested read and write behavior.
+  const PsdDocumentCodec({
+    this.readOptions = const PsdReadOptions(),
+    this.writeOptions = const PsdWriteOptions(),
+  });
+
+  @override
+  Converter<PsdDocument, List<int>> get encoder => _PsdDocumentEncoder(options: writeOptions);
+
+  @override
+  Converter<List<int>, PsdDocument> get decoder => _PsdDocumentDecoder(options: readOptions);
+
+  @override
+  Uint8List encode(PsdDocument input) => PsdCodec.encode(input, options: writeOptions);
+
+  @override
+  PsdDocument decode(List<int> encoded) => PsdCodec.decode(_asUint8List(encoded), options: readOptions);
+}
+
+/// Converts complete PSD and PSB documents with the default options.
+const PsdDocumentCodec psdDocumentCodec = PsdDocumentCodec();
+
+/// Adapts the PSD writer to the `dart:convert` converter contract.
+final class _PsdDocumentEncoder extends Converter<PsdDocument, List<int>> {
+  /// Options forwarded to the PSD writer.
+  final PsdWriteOptions options;
+
+  /// Creates an encoder using [options].
+  const _PsdDocumentEncoder({required this.options});
+
+  @override
+  Uint8List convert(PsdDocument input) => PsdCodec.encode(input, options: options);
+}
+
+/// Adapts the PSD reader to the `dart:convert` converter contract.
+final class _PsdDocumentDecoder extends Converter<List<int>, PsdDocument> {
+  /// Limits forwarded to the PSD reader.
+  final PsdReadOptions options;
+
+  /// Creates a decoder using [options].
+  const _PsdDocumentDecoder({required this.options});
+
+  @override
+  PsdDocument convert(List<int> input) => PsdCodec.decode(_asUint8List(input), options: options);
+}
+
+/// Returns [bytes] as typed bytes without copying an existing [Uint8List].
+Uint8List _asUint8List(List<int> bytes) {
+  if (bytes is Uint8List) {
+    return bytes;
+  }
+  for (final int byte in bytes) {
+    RangeError.checkValueInInterval(byte, 0, 255, 'bytes');
+  }
+  return Uint8List.fromList(bytes);
 }
 
 /// Collects decoded values from the layer-and-mask section.
