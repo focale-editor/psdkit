@@ -301,6 +301,40 @@ void main() {
         }
       }
     });
+
+    test('decodes merged images into independent channels at every depth', () {
+      final Random random = Random(7);
+      for (final int depth in <int>[8, 16, 32]) {
+        for (final int channelCount in <int>[1, 3]) {
+          const int width = 129;
+          const int height = 5;
+          final List<Uint8List> channels = <Uint8List>[
+            for (int channel = 0; channel < channelCount; channel++) Uint8List.fromList(<int>[for (int index = 0; index < psdRowBytes(width, depth) * height; index++) random.nextInt(256)]),
+          ];
+          for (final PsdCompression compression in <PsdCompression>[PsdCompression.zip, PsdCompression.zipPrediction]) {
+            final Uint8List encoded = encodePsdMergedImage(compression: compression, channels: channels, width: width, height: height, depth: depth, wideRowLengths: false);
+
+            final List<Uint8List> decoded = decodePsdMergedImage(
+              compression: compression,
+              payload: encoded,
+              channels: channelCount,
+              width: width,
+              height: height,
+              depth: depth,
+              wideRowLengths: false,
+              maxDecodedBytes: channels.first.length * channelCount,
+            );
+
+            final String reason = '$compression, $channelCount channels at $depth-bit';
+            expect(decoded, hasLength(channelCount), reason: reason);
+            for (int channel = 0; channel < channelCount; channel++) {
+              expect(decoded[channel], orderedEquals(channels[channel]), reason: reason);
+              expect(decoded[channel].buffer.lengthInBytes, channels[channel].length, reason: reason);
+            }
+          }
+        }
+      }
+    });
   });
 
   group('PsdDocumentCodec', () {

@@ -26,12 +26,7 @@ Uint8List decodePsdChannel({
     PsdCompression.raw => payload,
     PsdCompression.rle => _decodeRle(payload, rowBytes, height, wideRowLengths),
     PsdCompression.zip => _decodeZip(payload, expected),
-    PsdCompression.zipPrediction => _undoPrediction(
-      _decodeZip(payload, expected),
-      width,
-      height,
-      depth,
-    ),
+    PsdCompression.zipPrediction => _undoPrediction(_decodeZip(payload, expected), width, height, depth),
   };
   if (decoded.length != expected) {
     throw PsFormatException(message: 'Decoded channel has ${decoded.length} bytes; expected $expected');
@@ -99,21 +94,25 @@ List<Uint8List> decodePsdMergedImage({
     case PsdCompression.zip:
       decoded = _decodeZip(payload, totalSize);
     case PsdCompression.zipPrediction:
-      final Uint8List predicted = _decodeZip(payload, totalSize);
-      if (predicted.length != totalSize) {
-        throw PsFormatException(message: 'Decoded merged image has ${predicted.length} bytes; expected $totalSize');
+      decoded = _decodeZip(payload, totalSize);
+      if (decoded.length != totalSize) {
+        throw PsFormatException(message: 'Decoded merged image has ${decoded.length} bytes; expected $totalSize');
       }
-      final BytesBuilder result = BytesBuilder(copy: false);
       for (int channel = 0; channel < channels; channel++) {
-        result.add(_undoPrediction(Uint8List.sublistView(predicted, channel * channelSize, (channel + 1) * channelSize), width, height, depth));
+        _undoPrediction(Uint8List.sublistView(decoded, channel * channelSize, (channel + 1) * channelSize), width, height, depth);
       }
-      decoded = result.takeBytes();
   }
   if (decoded.length != totalSize) {
     throw PsFormatException(message: 'Decoded merged image has ${decoded.length} bytes; expected $totalSize');
   }
+  // Decoded buffers are private, so a single channel can keep a buffer that
+  // it fills exactly. Otherwise channels are copied apart so that none pins
+  // the others or unused capacity.
+  if (channels == 1 && compression != PsdCompression.raw && decoded.buffer.lengthInBytes == totalSize) {
+    return <Uint8List>[decoded];
+  }
   return <Uint8List>[
-    for (int channel = 0; channel < channels; channel++) Uint8List.fromList(Uint8List.sublistView(decoded, channel * channelSize, (channel + 1) * channelSize)),
+    for (int channel = 0; channel < channels; channel++) decoded.sublist(channel * channelSize, (channel + 1) * channelSize),
   ];
 }
 
@@ -164,36 +163,41 @@ Uint8List _encodeRle(Uint8List input, int rowBytes, int height, bool wide) => Ps
   wideRowLengths: wide,
 );
 
-/// Reverses horizontal sample differencing on decompressed bytes.
-Uint8List _undoPrediction(Uint8List input, int width, int height, int depth) {
+/// Reverses horizontal sample differencing in place and returns [samples].
+///
+/// [samples] must be a private buffer, such as freshly inflated data. A buffer
+/// of the wrong length is returned unchanged for the caller to reject.
+Uint8List _undoPrediction(Uint8List samples, int width, int height, int depth) {
   if (depth == 1) {
     throw const PsFormatException(message: 'ZIP prediction is not valid for 1-bit data');
   }
-  final int bytesPerSample = depth ~/ 8;
-  final int rowBytes = width * bytesPerSample;
-  if (input.length != rowBytes * height) {
-    return Uint8List.fromList(input);
+  final int rowBytes = width * (depth ~/ 8);
+  if (samples.length != rowBytes * height || rowBytes == 0) {
+    return samples;
   }
-  if (depth == 32) {
-    // The float path makes its own working copy, so do not copy twice.
-    return _undoFloatPrediction(input, width, height);
-  }
-  final Uint8List output = Uint8List.fromList(input);
-  final ByteData values = ByteData.sublistView(output);
-  for (int row = 0; row < height; row++) {
-    final int start = row * rowBytes;
-    for (int column = 1; column < width; column++) {
-      final int offset = start + column * bytesPerSample;
-      final int previous = offset - bytesPerSample;
-      switch (depth) {
-        case 8:
-          output[offset] = (output[offset] + output[previous]) & 0xff;
-        case 16:
-          values.setUint16(offset, (values.getUint16(offset) + values.getUint16(previous)) & 0xffff);
+  switch (depth) {
+    case 8:
+      for (int rowStart = 0; rowStart < samples.length; rowStart += rowBytes) {
+        int previous = samples[rowStart];
+        for (int offset = rowStart + 1; offset < rowStart + rowBytes; offset++) {
+          previous = (previous + samples[offset]) & 0xff;
+          samples[offset] = previous;
+        }
       }
-    }
+    case 16:
+      // Samples are big-endian; each running sum is written back byte by byte.
+      for (int rowStart = 0; rowStart < samples.length; rowStart += rowBytes) {
+        int previous = (samples[rowStart] << 8) | samples[rowStart + 1];
+        for (int offset = rowStart + 2; offset < rowStart + rowBytes; offset += 2) {
+          previous = (previous + ((samples[offset] << 8) | samples[offset + 1])) & 0xffff;
+          samples[offset] = previous >>> 8;
+          samples[offset + 1] = previous & 0xff;
+        }
+      }
+    case 32:
+      _undoFloatPrediction(samples, width);
   }
-  return output;
+  return samples;
 }
 
 /// Applies horizontal sample differencing before ZIP compression.
@@ -225,24 +229,28 @@ Uint8List _applyPrediction(Uint8List input, int width, int height, int depth) {
   return output;
 }
 
-/// Reverses Photoshop's byte-plane shuffle and byte predictor for 32-bit rows.
-Uint8List _undoFloatPrediction(Uint8List input, int width, int height) {
+/// Reverses Photoshop's byte predictor and byte-plane shuffle in place.
+///
+/// Each row stores the first byte of every pixel, then every second byte, and
+/// so on, with each byte predicted from the one before it. Only one row of
+/// working storage is allocated.
+void _undoFloatPrediction(Uint8List samples, int width) {
   final int rowBytes = width * 4;
-  final Uint8List predicted = Uint8List.fromList(input);
-  final Uint8List output = Uint8List(input.length);
-  for (int row = 0; row < height; row++) {
-    final int rowStart = row * rowBytes;
-    final int rowEnd = rowStart + rowBytes;
-    for (int offset = rowStart + 1; offset < rowEnd; offset++) {
-      predicted[offset] = (predicted[offset] + predicted[offset - 1]) & 0xff;
+  final Uint8List planes = Uint8List(rowBytes);
+  for (int rowStart = 0; rowStart < samples.length; rowStart += rowBytes) {
+    int previous = samples[rowStart];
+    planes[0] = previous;
+    for (int index = 1; index < rowBytes; index++) {
+      previous = (previous + samples[rowStart + index]) & 0xff;
+      planes[index] = previous;
     }
-    for (int pixel = 0; pixel < width; pixel++) {
-      for (int byte = 0; byte < 4; byte++) {
-        output[rowStart + pixel * 4 + byte] = predicted[rowStart + byte * width + pixel];
+    for (int byte = 0; byte < 4; byte++) {
+      final int planeStart = byte * width;
+      for (int pixel = 0; pixel < width; pixel++) {
+        samples[rowStart + pixel * 4 + byte] = planes[planeStart + pixel];
       }
     }
   }
-  return output;
 }
 
 /// Applies Photoshop's byte-plane shuffle and byte predictor to 32-bit rows.
