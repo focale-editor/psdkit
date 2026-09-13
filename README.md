@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="screenshots/overview.png" alt="PsdKit package illustration" width="180">
+</p>
+
 # PsdKit
 
 Read, inspect, edit, and write Adobe Photoshop PSD and PSB files in Dart.
@@ -131,3 +135,7 @@ dart run tool/quality_check.dart
 ```
 
 Additional corpus validation commands are documented in the [technical reference](docs/PSD.md#corpus-validation).
+
+---
+
+Built for **[Focale](https://focale-editor.app)**, an advanced local image editor. Discover what these packages make possible in a real creative workflow.

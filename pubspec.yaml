@@ -4,6 +4,17 @@ version: 0.4.0
 homepage: https://github.com/focale-editor/psdkit
 repository: https://github.com/focale-editor/psdkit
 
+topics:
+  - photoshop
+  - psd
+  - image-processing
+  - codec
+  - file-format
+
+screenshots:
+  - description: 'A flat illustration of an editable PSD or PSB document.'
+    path: screenshots/overview.png
+
 environment:
   sdk: '>=3.13.0 <4.0.0'
 

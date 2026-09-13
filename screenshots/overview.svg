@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>PsdKit package overview</title>
+  <desc>An editable image document marked with a geometric P for PSD and PSB files.</desc>
+  <defs>
+    <radialGradient id="inner-circle" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#000000" stop-opacity="1"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="blue-ring" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#007cf9" stop-opacity="0"/>
+      <stop offset="1" stop-color="#007cf9"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="82" fill="#181f33"/>
+  <g transform="translate(38.4 38.4) scale(.534233)" opacity=".94">
+    <circle cx="407.5" cy="407.5" r="400" fill="url(#inner-circle)"/>
+    <g fill="#303950">
+      <path d="m272.4 156.6s-84 31.2-133.5 148.6l273.4-51.7z"/>
+      <path d="m134.7 321.9s-37 81.6 11.4 199.4l156.1-230.4z"/>
+      <path d="m155.7 533s31.2 83.9 148.6 133.5L252.6 393z"/>
+      <path d="m321 670.6s81.5 37 199.4-11.4L290 503.2z"/>
+      <path d="m536.5 652.3s84-31.2 133.5-148.6l-273.5 51.7z"/>
+      <path d="m662.8 287.6-156 230.5L674.2 487s36.9-81.5-11.4-199.4z"/>
+      <path d="m652.3 276s-31.2-83.9-148.6-133.5L555.4 416z"/>
+      <path d="m487 138.4s-81.5-37-199.4 11.4l230.5 156z"/>
+    </g>
+    <circle cx="404.7" cy="404.7" r="324.7" fill="none" stroke="#303950" stroke-width="30"/>
+    <circle cx="407.2" cy="407.2" r="386.2" fill="none" stroke="#303950" stroke-width="30"/>
+    <circle cx="404.7" cy="404.7" r="324.7" fill="none" stroke="url(#blue-ring)" stroke-width="30"/>
+  </g>
+  <circle cx="256" cy="256" r="104" fill="#11182a" fill-opacity=".94" stroke="#303950" stroke-width="3"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M207 188h67l31 31v105H207Z" stroke="#edf6ff" stroke-width="9"/>
+    <path d="M274 188v31h31" stroke="#007cf9" stroke-width="8"/>
+    <path d="M225 304v-72h34c21 0 34 11 34 29s-13 29-34 29h-17v14h-17Zm17-30h16c11 0 18-4 18-13s-7-13-18-13h-16v26Z" fill="#007cf9" stroke="none"/>
+  </g>
+</svg>
