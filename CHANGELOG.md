@@ -1,5 +1,11 @@
 # 📰 PsdKit changelog
 
+## v0.4.1
+Released on September 13, 2026.
+
+* **DOCS**: Added contributing guide, package screenshot, and pubspec metadata. ([#b47a762](https://github.com/focale-editor/psdkit/commit/b47a762))
+* **CHORE**: Optimized ZIP prediction decoding to operate in place. ([#b9c5222](https://github.com/focale-editor/psdkit/commit/b9c5222))
+
 ## v0.4.0
 Released on September 13, 2026.
 
