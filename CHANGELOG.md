@@ -1,5 +1,10 @@
 # 📰 PsdKit changelog
 
+## v0.4.2
+Released on September 22, 2026.
+
+* **FIX**: Constrained maximum writable pixels to the PSB canvas limit. ([#36c4be2](https://github.com/focale-editor/psdkit/commit/36c4be2))
+
 ## v0.4.1
 Released on September 13, 2026.
 
