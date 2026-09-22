@@ -261,7 +261,7 @@ final class _PsdStreamingWriter {
       width: document.width,
       height: document.height,
       depth: document.depth,
-      maxPixels: 0x7fffffffffffffff,
+      maxPixels: _maximumWritablePixels,
       writing: true,
     );
     if (source.mergedImage.length != document.channels) {

@@ -7,6 +7,9 @@ import 'package:psdkit/src/model.dart';
 
 part 'streaming_writer.dart';
 
+/// Largest canvas allowed by PSB, exactly representable on every platform.
+const int _maximumWritablePixels = 300000 * 300000;
+
 /// Tagged blocks whose payload length expands to 64 bits in PSB files.
 const Set<String> _widePsbTaggedBlocks = <String>{
   'LMsk',
@@ -94,7 +97,7 @@ abstract final class PsdCodec {
       width: document.width,
       height: document.height,
       depth: document.depth,
-      maxPixels: 0x7fffffffffffffff,
+      maxPixels: _maximumWritablePixels,
       writing: true,
     );
     if (document.mergedImage.length != document.channels) {
