@@ -321,6 +321,54 @@ Use `PsdDescriptorSmartObject.withLinkedResourceId`, `withTransform`, and `withP
 
 PsdKit deliberately does not access paths found in external-link descriptors. The host application should resolve those paths through its own permission and file-storage layer. Photoshop rendering, smart filters, and live re-rasterization also remain application responsibilities; PSD structures and nested files are imported and exported without loss.
 
+### Smart-filter pixel caches and shared masks
+
+`PsdFilterEffectsCodec` reads and writes document-level `FEid` and `FXid`
+payloads (versions 1–3). `document.filterEffectBlocks` decodes their framing
+without inflating pixels. `document.filterEffectFor(layer)` resolves a unique
+cache through `PsdDescriptorSmartObject.placementId` (`placed`), **not** the
+shared source identity (`Idnt`); ambiguous duplicate identifiers return null.
+Malformed blocks throw `PsFormatException` rather than masquerading as absent
+masks. `document.withFilterEffects(value)` replaces the cache blocks in a copy.
+Keep and encode that returned document, as with the other immutable helpers.
+
+Each `PsdFilterEffect` contains sparse compressed channels and an independently
+bounded optional `PsdFilterEffectMask`. Null channel slots are unwritten; a
+channel with null compression is a written empty slot. The optional mask
+presence byte and body/trailing extensions are preserved. Typical RGB records
+have 26 slots, with RGB at 0–2 and sheet alpha at 25. The shared filter mask is
+the separate `mask`, not an ordinary layer-mask channel. `FMsk` contains only
+overlay colour/opacity, not these samples.
+
+```dart
+final PsdFilterEffect? effect = document.filterEffectFor(layer);
+if (effect?.mask case final PsdFilterEffectMask mask) {
+  final Uint8List values = mask.channel.decodePixels(
+    width: mask.rectangle.width,
+    height: mask.rectangle.height,
+    depth: effect!.depth,
+    maxDecodedBytes: 16 * 1024 * 1024,
+  );
+  // Interpret the grayscale plane at its document-space rectangle.
+}
+```
+
+Planes support raw, PackBits, ZIP and ZIP prediction through the existing
+channel codecs. **Filter-cache PackBits row lengths are 32-bit in both PSD and
+PSB.** Unknown compression codes remain opaque for round trips and fail on
+explicit pixel decoding. Decode is bounded by 4,096 records, 58 slots per
+record and 256 MiB encoded data by default; individual pixel decoding defaults
+to 64 MiB and checks geometry/depth before allocation. Applications should
+also enforce aggregate memory limits when inflating several planes. Encoding
+admits the complete payload before assembling it. This API is buffered and
+does not promise unbounded streaming of filter caches.
+
+`filter_effects_corpus_test.dart` round-trips a nonuniform Photoshop mask from
+psd-tools byte for byte. Additional ag-psd fixtures verify 57 caches, independent
+instance IDs and wide PackBits/ZIP-prediction decoding. The library stores
+these structures; reconstructing a live smart-filter editing pipeline and
+rendering its result remain the host application's responsibilities.
+
 ## Image resources
 
 Every `PsdImageResource` can be decoded through its `decoded` getter. Standard resources expose typed values for resolution and units, colors, print settings, grids and guides, alpha channels, halftone and transfer curves, thumbnails, ICC headers, XMP, URL lists, pixel aspect ratio, application versions, selected layers, descriptors, slices, and document paths:
@@ -374,7 +422,7 @@ Formats governed by separate standards, including IPTC and EXIF, are exposed as 
 | Smart objects and linked files                                        |  Yes |   Yes | Modern and legacy placed layers; embedded, external, and alias resources                              |
 | Image resources                                                       |  Yes |   Yes | Typed standard resources; external, private, and unknown payloads remain losslessly accessible        |
 
-"Yes" means that PsdKit semantically exposes the listed structure and can write it back. It does not mean that every Photoshop resource is interpreted or rasterized. Undocumented or unsupported resources, tagged blocks, descriptor variants, smart filters, and application-specific rendering remain opaque but are preserved when possible.
+"Yes" means that PsdKit semantically exposes the listed structure and can write it back. It does not mean that every Photoshop resource is interpreted or rasterized. Undocumented or unsupported resources, tagged blocks and descriptor variants remain opaque but are preserved when possible. Smart-filter descriptors and pixel-cache framing are exposed separately from application-specific filter rendering.
 
 Unknown image resources and tagged layer blocks are deliberately retained. Reading and rewriting a document therefore does not discard Photoshop-specific information merely because PsdKit does not interpret it yet. This distinction is intentional: the public Adobe specification describes many structures without defining their visual interpretation.
 

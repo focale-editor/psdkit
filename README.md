@@ -96,6 +96,7 @@ The most common entry points are organized around what an application needs to d
 | Inspect or replace a vector mask          | `layer.vectorMask`, `layer.withVectorMask(...)`                             |
 | Read or change a fill or adjustment layer | `layer.adjustment`, `layer.withAdjustment(...)`                             |
 | Find the file used by a smart object      | `document.linkedResourceFor(layer)`                                         |
+| Read a smart-filter cache and shared mask | `document.filterEffectFor(layer)`                                           |
 | Read saved document paths                 | `document.namedPaths`                                                       |
 | Read or update document metadata          | `document.decodedImageResource(...)`, `document.withImageResourceData(...)` |
 

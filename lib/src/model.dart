@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:pscore/pscore.dart';
 import 'package:psdkit/src/adjustments.dart';
 import 'package:psdkit/src/effects.dart';
+import 'package:psdkit/src/filter_effects.dart';
 import 'package:psdkit/src/paths.dart';
 import 'package:psdkit/src/smart_objects.dart';
 import 'package:psdkit/src/text.dart';
@@ -732,6 +733,59 @@ final class PsdDocument {
     }
     return null;
   }
+
+  /// Decodes filter-effect metadata without inflating any cache or mask pixels.
+  ///
+  /// Malformed payloads throw [PsFormatException]; callers may keep the original
+  /// tagged blocks opaque rather than interpreting them as absent masks.
+  List<PsdFilterEffects> get filterEffectBlocks => [
+    for (final PsdTaggedBlock block in additionalLayerInfo)
+      if (psdFilterEffectsKeys.contains(block.key)) PsdFilterEffectsCodec.decode(block.data),
+  ];
+
+  /// Finds an unambiguous cache by placement identity, never by source identity.
+  PsdFilterEffect? filterEffectFor(PsdLayer layer) {
+    final PsdSmartObjectLayerData? smartObject = layer.smartObject;
+    final String? id = smartObject is PsdDescriptorSmartObject ? smartObject.placementId : null;
+    if (id == null || id.isEmpty) {
+      return null;
+    }
+    PsdFilterEffect? result;
+    for (final PsdFilterEffects block in filterEffectBlocks) {
+      for (final PsdFilterEffect effect in block.effects) {
+        if (effect.id != id) {
+          continue;
+        }
+        if (result != null) {
+          return null;
+        }
+        result = effect;
+      }
+    }
+    return result;
+  }
+
+  /// Returns a copy replacing all filter-cache blocks with one `FEid` payload.
+  PsdDocument withFilterEffects(PsdFilterEffects effects) => PsdDocument(
+    version: version,
+    width: width,
+    height: height,
+    channels: channels,
+    depth: depth,
+    colorMode: colorMode,
+    colorModeData: colorModeData,
+    imageResources: imageResources,
+    layers: layers,
+    mergedImage: mergedImage,
+    mergedImageCompression: mergedImageCompression,
+    mergedTransparency: mergedTransparency,
+    globalLayerMaskData: globalLayerMaskData,
+    additionalLayerInfo: [
+      for (final PsdTaggedBlock block in additionalLayerInfo)
+        if (!psdFilterEffectsKeys.contains(block.key)) block,
+      PsdTaggedBlock(key: 'FEid', data: PsdFilterEffectsCodec.encode(effects)),
+    ],
+  );
 
   /// Returns a copy whose linked-resource blocks are [blocks].
   PsdDocument withLinkedResourceBlocks(List<PsdLinkedResourceBlock> blocks) => PsdDocument(

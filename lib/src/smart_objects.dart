@@ -383,6 +383,15 @@ final class PsdDescriptorSmartObject extends PsdSmartObjectLayerData {
     return value == null ? null : PsdSmartFilterStack.fromDescriptor(value);
   }
 
+  /// Instance identity associating this placement with an `FEid` pixel cache.
+  ///
+  /// Unlike [linkedResourceId], this must differ between instances sharing one
+  /// source when their filter masks or projected previews differ.
+  String? get placementId {
+    final String? value = descriptor.stringValue('placed');
+    return value != null && value.endsWith('\u0000') ? value.substring(0, value.length - 1) : value;
+  }
+
   /// Returns a copy whose descriptor property [key] is [value].
   PsdDescriptorSmartObject withProperty(String key, PsDescriptorValue value) => PsdDescriptorSmartObject(
     blockKey: blockKey,
