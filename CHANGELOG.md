@@ -1,5 +1,10 @@
 # 📰 PsdKit changelog
 
+## v0.4.3
+Released on September 28, 2026.
+
+* **FEAT**: Added bounded, lazy `FEid`/`FXid` filter-cache and shared-mask codecs, per-placement cache lookup, and raw/PackBits/ZIP plane helpers. ([#195267c](https://github.com/focale-editor/psdkit/commit/195267c))
+
 ## v0.4.2
 Released on September 22, 2026.
 
