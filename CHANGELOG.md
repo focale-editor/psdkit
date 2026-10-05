@@ -1,5 +1,10 @@
 # 📰 PsdKit changelog
 
+## v0.4.4
+Released on October 5, 2026.
+
+* **DOCS**: Updated package overview screenshot. ([#47a4197](https://github.com/focale-editor/psdkit/commit/47a4197))
+
 ## v0.4.3
 Released on September 28, 2026.
 
