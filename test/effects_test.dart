@@ -143,6 +143,26 @@ void main() {
       expect(edited.taggedBlock('cust')?.data, orderedEquals(<int>[1, 2, 3]));
       expect(edited.effects?.effects.single.type, PsdLayerEffectType.colorOverlay);
     });
+
+    test('exposes the shared view, including colors outside RGB', () {
+      final PsdLayerEffect overlay = PsdLayerEffect.create(type: PsdLayerEffectType.colorOverlay).withProperty(
+        'Clr ',
+        const PsObjectValue(
+          value: PsDescriptor(
+            name: '',
+            classId: 'CMYC',
+            items: <PsDescriptorItem>[PsDescriptorItem(key: 'Cyn ', value: PsDoubleValue(value: 75))],
+          ),
+        ),
+      );
+      final PsdLayerEffects effects = PsdLayerEffects.create(effects: <PsdLayerEffect>[overlay]);
+
+      expect(overlay.color, isNull);
+      expect(overlay.view.color?.colorSpace, PsColorSpace.cmyk);
+      expect(overlay.view.color?.component('Cyn ')?.value, 75);
+      expect(effects.view.firstEffectOf(PsLayerEffectKind.colorOverlay)?.kind, PsLayerEffectKind.colorOverlay);
+      expect(PsdLayerEffectType.fromKind(PsLayerEffectKind.bevelAndEmboss), PsdLayerEffectType.bevelEmboss);
+    });
   });
 }
 

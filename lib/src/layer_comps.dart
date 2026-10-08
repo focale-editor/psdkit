@@ -89,70 +89,31 @@ final class PsdLayerCompBlendRange {
         message: 'Layer-comp Blend If handles must be ordered bytes',
       );
     }
-    return PsDescriptor(
-      name: '\u0000',
-      classId: 'Blnd',
-      items: [
-        PsDescriptorItem(
-          key: 'Chnl',
-          value: PsReferenceValue(
-            values: [
-              PsEnumeratedReferenceValue(
-                name: '',
-                classId: 'Chnl',
-                typeId: 'Chnl',
-                value: channel,
-              ),
-            ],
-          ),
-        ),
-        PsDescriptorItem(
-          key: 'SrcB',
-          value: PsIntegerValue(value: sourceBlack),
-        ),
-        PsDescriptorItem(
-          key: 'Srcl',
-          value: PsIntegerValue(value: sourceBlackSplit),
-        ),
-        PsDescriptorItem(
-          key: 'SrcW',
-          value: PsIntegerValue(value: sourceWhiteSplit),
-        ),
-        PsDescriptorItem(
-          key: 'Srcm',
-          value: PsIntegerValue(value: sourceWhite),
-        ),
-        PsDescriptorItem(
-          key: 'DstB',
-          value: PsIntegerValue(value: destinationBlack),
-        ),
-        PsDescriptorItem(
-          key: 'Dstl',
-          value: PsIntegerValue(value: destinationBlackSplit),
-        ),
-        PsDescriptorItem(
-          key: 'DstW',
-          value: PsIntegerValue(value: destinationWhiteSplit),
-        ),
-        PsDescriptorItem(
-          key: 'Dstt',
-          value: PsIntegerValue(value: destinationWhite),
-        ),
-      ],
-    );
+    return PsBlendRange.create(
+      channel: channel,
+      sourceBlackLow: sourceBlack,
+      sourceBlackHigh: sourceBlackSplit,
+      sourceWhiteLow: sourceWhiteSplit,
+      sourceWhiteHigh: sourceWhite,
+      destinationBlackLow: destinationBlack,
+      destinationBlackHigh: destinationBlackSplit,
+      destinationWhiteLow: destinationWhiteSplit,
+      destinationWhiteHigh: destinationWhite,
+    ).descriptor;
   }
 
   /// Decodes one Blend If range, returning `null` for malformed descriptors.
   static PsdLayerCompBlendRange? tryFromDescriptor(PsDescriptor descriptor) {
+    final PsBlendRange range = PsBlendRange.fromDescriptor(descriptor);
     final String? channel = _channelIdentifier(descriptor.value('Chnl'));
-    final int? sourceBlack = _integer(descriptor.value('SrcB'));
-    final int? sourceBlackSplit = _integer(descriptor.value('Srcl'));
-    final int? sourceWhiteSplit = _integer(descriptor.value('SrcW'));
-    final int? sourceWhite = _integer(descriptor.value('Srcm'));
-    final int? destinationBlack = _integer(descriptor.value('DstB'));
-    final int? destinationBlackSplit = _integer(descriptor.value('Dstl'));
-    final int? destinationWhiteSplit = _integer(descriptor.value('DstW'));
-    final int? destinationWhite = _integer(descriptor.value('Dstt'));
+    final int? sourceBlack = range.sourceBlackLow;
+    final int? sourceBlackSplit = range.sourceBlackHigh;
+    final int? sourceWhiteSplit = range.sourceWhiteLow;
+    final int? sourceWhite = range.sourceWhiteHigh;
+    final int? destinationBlack = range.destinationBlackLow;
+    final int? destinationBlackSplit = range.destinationBlackHigh;
+    final int? destinationWhiteSplit = range.destinationWhiteLow;
+    final int? destinationWhite = range.destinationWhiteHigh;
     if (channel == null ||
         sourceBlack == null ||
         sourceBlackSplit == null ||

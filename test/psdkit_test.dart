@@ -449,6 +449,48 @@ void main() {
       expect(PsdPixels.decodeMerged(document).bytes, orderedEquals(<int>[255, 0, 0, 255]));
     });
   });
+
+  group('PsdDocument patterns', () {
+    test('round-trips document patterns through the depth-specific block', () {
+      final PsdDocument source = PsdDocument(
+        width: 1,
+        height: 1,
+        channels: 3,
+        depth: 16,
+        colorMode: PsdColorMode.rgb,
+        mergedImage: <Uint8List>[for (int channel = 0; channel < 3; channel++) Uint8List(2)],
+        additionalLayerInfo: <PsdTaggedBlock>[
+          PsdTaggedBlock(key: 'Patt', data: Uint8List(0)),
+          PsdTaggedBlock(key: 'cust', data: Uint8List.fromList(<int>[1])),
+        ],
+      );
+
+      final PsdDocument edited = source.withPatterns(<PsPattern>[_pattern('dots', 7), _pattern('grid', 9)]);
+      final PsdDocument decoded = PsdCodec.decode(PsdCodec.encode(edited));
+
+      expect(decoded.additionalLayerInfo.map((block) => block.key), <String>['cust', 'Pat2']);
+      expect(decoded.patterns.map((pattern) => pattern.id), <String>['dots', 'grid']);
+      expect(decoded.patternFor('grid')?.slots.first.channel?.decodedData, orderedEquals(<int>[9]));
+      expect(decoded.patternFor('missing'), isNull);
+      expect(decoded.withPatterns(const <PsPattern>[]).additionalLayerInfo.map((block) => block.key), <String>['cust']);
+    });
+
+    test('skips malformed pattern blocks without failing', () {
+      final PsdDocument document = PsdDocument(
+        width: 1,
+        height: 1,
+        channels: 1,
+        depth: 8,
+        colorMode: PsdColorMode.grayscale,
+        mergedImage: <Uint8List>[Uint8List(1)],
+        additionalLayerInfo: <PsdTaggedBlock>[
+          PsdTaggedBlock(key: 'Patt', data: Uint8List.fromList(<int>[0, 0, 0, 9, 1, 2])),
+        ],
+      );
+
+      expect(document.patterns, isEmpty);
+    });
+  });
 }
 
 /// Builds the representative layered document shared by codec tests.
@@ -518,3 +560,43 @@ extension<T> on Iterable<T> {
     }
   }
 }
+
+/// Creates a one-pixel grayscale pattern whose single sample is [value].
+PsPattern _pattern(String id, int value) => PsPattern(
+  version: 1,
+  colorMode: PsPatternColorMode.grayscale,
+  colorModeCode: PsPatternColorMode.grayscale.code,
+  vertical: 1,
+  horizontal: 1,
+  name: id,
+  id: id,
+  idData: Uint8List.fromList(id.codeUnits),
+  palette: null,
+  indexedMetadata: null,
+  virtualMemoryVersion: 3,
+  bounds: const PsRectangle(top: 0, left: 0, bottom: 1, right: 1),
+  declaredChannelCount: 1,
+  slots: <PsPatternChannelSlot>[
+    PsPatternChannelSlot(
+      index: 0,
+      writtenCode: 1,
+      declaredLength: null,
+      data: Uint8List(0),
+      channel: PsPatternChannel(
+        primaryDepth: 8,
+        depth: 8,
+        bounds: const PsRectangle(top: 0, left: 0, bottom: 1, right: 1),
+        compression: PsPatternCompression.raw,
+        compressionCode: 0,
+        encodedData: Uint8List.fromList(<int>[value]),
+        decodedData: Uint8List.fromList(<int>[value]),
+        trailingData: Uint8List(0),
+      ),
+    ),
+    PsPatternChannelSlot(index: 1, writtenCode: 0, declaredLength: null, data: Uint8List(0), channel: null),
+    PsPatternChannelSlot(index: 2, writtenCode: 0, declaredLength: null, data: Uint8List(0), channel: null),
+  ],
+  virtualMemoryTrailingData: Uint8List(0),
+  recordTrailingData: Uint8List(0),
+  recordData: null,
+);

@@ -3,7 +3,9 @@ import 'dart:typed_data';
 import 'package:pscore/pscore.dart';
 import 'package:psdkit/src/adjustments.dart';
 import 'package:psdkit/src/effects.dart';
+import 'package:psdkit/src/fill_content.dart';
 import 'package:psdkit/src/filter_effects.dart';
+import 'package:psdkit/src/layer_options.dart';
 import 'package:psdkit/src/paths.dart';
 import 'package:psdkit/src/smart_objects.dart';
 import 'package:psdkit/src/text.dart';
@@ -361,6 +363,51 @@ final class PsdLayer {
     );
   }
 
+  /// Paint of a fill or shape layer.
+  ///
+  /// The `vscg` shape-fill block takes precedence over the fill-layer block,
+  /// matching how Photoshop reads shape layers.
+  PsdFillContent? get fill {
+    final PsdTaggedBlock? shapeFill = taggedBlock('vscg');
+    if (shapeFill != null) {
+      final PsdFillContent? decoded = PsdFillContent.tryDecodeShapeFill(shapeFill.data);
+      if (decoded != null) {
+        return decoded;
+      }
+    }
+    return switch (adjustment) {
+      final PsdDescriptorAdjustment adjustment => adjustment.fill,
+      _ => null,
+    };
+  }
+
+  /// Stroke and fill visibility of a shape layer, when present and well formed.
+  PsdShapeStroke? get shapeStroke {
+    final PsdTaggedBlock? block = taggedBlock('vstk');
+    return block == null ? null : PsdShapeStroke.tryDecode(block.data);
+  }
+
+  /// Advanced blending options such as fill opacity and knockout.
+  PsdLayerBlendingOptions get blendingOptions => PsdLayerBlendingOptions.decode(taggedBlock);
+
+  /// Editing locks from the `lspf` block and the record's transparency flag.
+  PsdLayerProtection get protection {
+    final PsdLayerProtection stored = PsdLayerProtection.decode(taggedBlock('lspf'));
+    return flags & PsdLayerProtection.transparencyBit == 0 ? stored : PsdLayerProtection(flags: stored.flags | PsdLayerProtection.transparencyBit);
+  }
+
+  /// Layers-panel color label, or `null` for a label newer than this release.
+  PsdSheetColor? get sheetColor {
+    final PsdTaggedBlock? block = taggedBlock('lclr');
+    return block == null || block.data.length < 2 ? PsdSheetColor.none : PsdSheetColor.fromCode(ByteData.sublistView(block.data).getUint16(0));
+  }
+
+  /// Artboard settings of a group layer, when present and well formed.
+  PsdArtboard? get artboard {
+    final PsdTaggedBlock? block = taggedBlock('artb');
+    return block == null ? null : PsdArtboard.tryDecode(block.data);
+  }
+
   /// Returns the last tagged block matching [key].
   PsdTaggedBlock? taggedBlock(String key) {
     for (final PsdTaggedBlock block in additionalInfo.reversed) {
@@ -547,6 +594,62 @@ final class PsdLayer {
       additionalInfo: blocks,
     );
   }
+
+  /// Returns a copy painted with [content].
+  ///
+  /// The fill-layer block is replaced, and an existing `vscg` shape-fill block
+  /// is updated as well so both representations stay consistent.
+  PsdLayer withFill(PsdFillContent content) => _withBlocks(
+    {...psdAdjustmentKeys, 'vscg'},
+    [
+      PsdTaggedBlock(key: content.kind.blockKey, data: PsdAdjustmentCodec.encode(content.toAdjustment())),
+      if (taggedBlock('vscg') != null) content.toShapeFillBlock(),
+    ],
+  );
+
+  /// Returns a copy whose `vstk` block encodes [stroke], or none when `null`.
+  PsdLayer withShapeStroke(PsdShapeStroke? stroke) => _withBlocks(const {'vstk'}, [?stroke?.toBlock()]);
+
+  /// Returns a copy whose advanced blending blocks encode [options].
+  PsdLayer withBlendingOptions(PsdLayerBlendingOptions options) => _withBlocks(PsdLayerBlendingOptions.blockKeys, options.toBlocks());
+
+  /// Returns a copy locked by [protection].
+  ///
+  /// The record's transparency flag is kept in sync with the `lspf` block.
+  PsdLayer withProtection(PsdLayerProtection protection) => _withBlocks(
+    const {'lspf'},
+    [protection.toBlock()],
+    flags: protection.transparency ? flags | PsdLayerProtection.transparencyBit : flags & ~PsdLayerProtection.transparencyBit,
+  );
+
+  /// Returns a copy labeled with [color].
+  PsdLayer withSheetColor(PsdSheetColor color) => _withBlocks(
+    const {'lclr'},
+    [
+      PsdTaggedBlock(key: 'lclr', data: (ByteData(8)..setUint16(0, color.code)).buffer.asUint8List()),
+    ],
+  );
+
+  /// Returns a copy marked as [artboard], or unmarked when it is `null`.
+  PsdLayer withArtboard(PsdArtboard? artboard) => _withBlocks(const {'artb'}, [?artboard?.toBlock()]);
+
+  /// Returns a copy whose blocks under [keys] are replaced by [replacements].
+  PsdLayer _withBlocks(Set<String> keys, List<PsdTaggedBlock> replacements, {int? flags}) => PsdLayer(
+    rectangle: rectangle,
+    name: name,
+    channels: channels,
+    blendMode: blendMode,
+    opacity: opacity,
+    clipping: clipping,
+    flags: flags ?? this.flags,
+    mask: mask,
+    blendingRanges: blendingRanges,
+    additionalInfo: [
+      for (final PsdTaggedBlock block in additionalInfo)
+        if (!keys.contains(block.key)) block,
+      ...replacements,
+    ],
+  );
 }
 
 /// An in-memory PSD or PSB document.
@@ -656,6 +759,91 @@ final class PsdDocument {
     }
     return null;
   }
+
+  /// Document-wide artboard defaults from the `artd` block, when present.
+  PsdArtboardDefaults? get artboardDefaults {
+    for (final PsdTaggedBlock block in additionalLayerInfo.reversed) {
+      if (block.key == 'artd') {
+        return PsdArtboardDefaults.tryDecode(block.data);
+      }
+    }
+    return null;
+  }
+
+  /// Returns a copy whose `artd` block encodes [defaults], or none when `null`.
+  PsdDocument withArtboardDefaults(PsdArtboardDefaults? defaults) => PsdDocument(
+    version: version,
+    width: width,
+    height: height,
+    channels: channels,
+    depth: depth,
+    colorMode: colorMode,
+    colorModeData: colorModeData,
+    imageResources: imageResources,
+    layers: layers,
+    mergedImage: mergedImage,
+    mergedImageCompression: mergedImageCompression,
+    mergedTransparency: mergedTransparency,
+    globalLayerMaskData: globalLayerMaskData,
+    additionalLayerInfo: [
+      for (final PsdTaggedBlock block in additionalLayerInfo)
+        if (block.key != 'artd') block,
+      ?defaults?.toBlock(),
+    ],
+  );
+
+  /// Patterns embedded in document-level `Patt`, `Pat2`, and `Pat3` blocks.
+  ///
+  /// Layer effects and fills refer to these patterns by identifier. Malformed
+  /// records are skipped, so a damaged block never hides the remaining ones.
+  List<PsPattern> get patterns => [
+    for (final PsdTaggedBlock block in additionalLayerInfo)
+      if (_patternBlockKeys.contains(block.key)) ..._decodePatternBlock(block.data),
+  ];
+
+  /// Returns the embedded pattern whose identifier is [id], when present.
+  PsPattern? patternFor(String id) {
+    for (final PsPattern pattern in patterns) {
+      if (pattern.id == id) {
+        return pattern;
+      }
+    }
+    return null;
+  }
+
+  /// Returns a copy whose document-level pattern blocks contain [patterns].
+  ///
+  /// The patterns are written to the block matching the document [depth]:
+  /// `Patt` for 8-bit, `Pat2` for 16-bit, and `Pat3` for 32-bit documents.
+  /// Passing an empty list removes every pattern block.
+  PsdDocument withPatterns(List<PsPattern> patterns) => PsdDocument(
+    version: version,
+    width: width,
+    height: height,
+    channels: channels,
+    depth: depth,
+    colorMode: colorMode,
+    colorModeData: colorModeData,
+    imageResources: imageResources,
+    layers: layers,
+    mergedImage: mergedImage,
+    mergedImageCompression: mergedImageCompression,
+    mergedTransparency: mergedTransparency,
+    globalLayerMaskData: globalLayerMaskData,
+    additionalLayerInfo: [
+      for (final PsdTaggedBlock block in additionalLayerInfo)
+        if (!_patternBlockKeys.contains(block.key)) block,
+      if (patterns.isNotEmpty)
+        PsdTaggedBlock(
+          key: switch (depth) {
+            16 => 'Pat2',
+            32 => 'Pat3',
+            _ => 'Patt',
+          },
+          data: PsPatternBlockEncoder.encodeAll(patterns),
+        ),
+    ],
+  );
 
   /// Returns a copy whose document-level `Txt2` block contains [engineData].
   ///
@@ -844,4 +1032,22 @@ final class PsdWriteOptions {
 
   /// Creates write options.
   const PsdWriteOptions({this.version, this.compression});
+}
+
+/// Document-level tagged-block keys holding embedded patterns.
+const Set<String> _patternBlockKeys = {'Patt', 'Pat2', 'Pat3'};
+
+/// Maximum number of patterns accepted from one untrusted pattern block.
+const int _maximumPatternsPerBlock = 100000;
+
+/// Decodes every well-formed pattern record in one pattern block [data].
+List<PsPattern> _decodePatternBlock(Uint8List data) {
+  try {
+    return PsPatternBlockDecoder.decodeAll(
+      reader: PsBinaryReader(bytes: data),
+      maxPatterns: _maximumPatternsPerBlock,
+    ).patterns;
+  } on PsFormatException {
+    return const [];
+  }
 }

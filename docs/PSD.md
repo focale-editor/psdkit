@@ -215,6 +215,25 @@ final PsdLayer editedLayer = layer.withEffects(
 
 Unchanged modern and legacy blocks round-trip byte for byte. Editing a legacy `lrFX` record upgrades it to modern `lfx2`, avoiding the limitations of the historical fixed structures. PsdKit stores effect definitions but does not rasterize them; the application remains responsible for matching layer preview channels and the merged image.
 
+## Blending options, locks, labels, and artboards
+
+Photoshop stores several Layer Style and Layers-panel settings in small tagged blocks. `PsdLayer` decodes them into typed models and writes them back in Photoshop's own block layout:
+
+```dart
+final PsdLayerBlendingOptions blending = layer.blendingOptions;
+print('${blending.fillOpacity} ${blending.knockout} ${blending.restrictedChannels}');
+print('${layer.protection.position} ${layer.sheetColor} ${layer.artboard?.presetName}');
+
+final PsdLayer edited = layer
+    .withBlendingOptions(PsdLayerBlendingOptions(fillOpacity: 128, knockout: PsdKnockout.shallow))
+    .withProtection(PsdLayerProtection.create(position: true))
+    .withSheetColor(PsdSheetColor.green);
+```
+
+`PsdLayerBlendingOptions` covers fill opacity (`iOpa`), clipped and interior blending (`clbl`, `infx`), knockout (`knko`), transparency shapes layer (`tsly`), masks that hide effects (`lmgm`, `vmgm`), and channel restrictions (`brst`). Absent blocks decode to Photoshop's defaults; blocks that cannot be interpreted also decode to defaults and are listed in `malformedKeys`. `PsdLayer.protection` merges the `lspf` locks with the transparency bit of the layer record, and `withProtection` keeps both in sync. `PsdLayer.sheetColor` reads the `lclr` label, where index 0 means no label; a label added by a newer Photoshop release returns `null` while the block stays intact.
+
+Group layers that act as artboards carry an `artb` descriptor exposed as `PsdLayer.artboard`, and documents with artboards store their defaults in an `artd` block exposed as `PsdDocument.artboardDefaults`. Both offer `create` factories for new artboards.
+
 ## Layer compositions
 
 `PsdLayer.layerCompData` decodes the per-layer `shmd` and `cmls` metadata used by Photoshop layer compositions. It exposes historical visibility and position together with the complete blending descriptor, layer effects, opacity, fill opacity, and channel-specific Blend If ranges:
@@ -291,6 +310,30 @@ final PsdLayer editedLayer = layer.withAdjustment(
 ```
 
 Unknown legacy hue/saturation and gradient-map variants are returned as `PsdRawAdjustment`; their exact payload remains writable. Descriptor-backed values retain unknown Adobe properties and can be changed with `PsdDescriptorAdjustment.withProperty`. PsdKit stores the editable settings but does not render their visual result, so the host application remains responsible for preview channels and the merged image.
+
+### Fill paints and shape strokes
+
+Solid-color, gradient, and pattern fill layers expose typed paints through `PsdLayer.fill`, which also reads the `vscg` shape-fill block of modern shape layers. `PsdLayer.shapeStroke` decodes the `vstk` block with its width, alignment, caps, joins, dashes, blending, and paint:
+
+```dart
+if (layer.fill case PsdGradientFill(:final gradient, :final style, :final angle)) {
+  print('${gradient?.colorStops.length} stops, $style at $angle°');
+}
+final PsdShapeStroke? stroke = layer.shapeStroke;
+print('${stroke?.strokeEnabled} ${stroke?.width}px ${stroke?.alignment}');
+
+final PsdLayer edited = layer
+    .withFill(PsdSolidColorFill.create(color: PsColor.rgb(red: 33, green: 150, blue: 243)))
+    .withShapeStroke(
+      PsdShapeStroke.create(
+        content: PsdSolidColorFill.create(color: PsColor.rgb(red: 0, green: 0, blue: 0)),
+        width: 2,
+        alignment: PsdShapeStrokeAlignment.inside,
+      ),
+    );
+```
+
+Paints are views over their complete descriptors and reuse the shared PsCore colors, gradients, and pattern references, so colors outside RGB and unknown properties are preserved. `withFill` keeps an existing `vscg` block consistent with the fill-layer block.
 
 ## Smart objects
 
@@ -416,9 +459,11 @@ Formats governed by separate standards, including IPTC and EXIF, are exposed as 
 | Unicode names and layer ids                                           |  Yes |   Yes | `luni`, `lyid`, `lsct`, and `lsdk` helpers                                                            |
 | Editable text layers                                                  |  Yes |   Yes | Unicode, transforms, bounds, orientation, fonts, sizes, colors, style ranges, and paragraph alignment |
 | Layer effects                                                         |  Yes |   Yes | Modern `lfx2`/`lmfx`, legacy `lrFX`, repeated effects, and complete descriptor preservation           |
+| Blending options, locks, labels, and artboards                        |  Yes |   Yes | `iOpa`, `clbl`, `infx`, `knko`, `tsly`, `lmgm`, `vmgm`, `brst`, `lspf`, `lclr`, `artb`, and `artd`   |
 | Layer-composition states                                              |  Yes |   Yes | `cmls` visibility, position, opacity, blending, Blend If, and effects                                 |
 | Vector masks and document paths                                       |  Yes |   Yes | Open and closed cubic Bézier paths, Boolean operations, fill rules, and unknown record preservation   |
 | Fill and adjustment layers                                            |  Yes |   Yes | Typed common adjustments, descriptor-backed modern settings, and raw fallback preservation            |
+| Fill paints and shape strokes                                         |  Yes |   Yes | Typed `SoCo`, `GdFl`, `PtFl`, and `vscg` paints, and `vstk` stroke styles                            |
 | Smart objects and linked files                                        |  Yes |   Yes | Modern and legacy placed layers; embedded, external, and alias resources                              |
 | Image resources                                                       |  Yes |   Yes | Typed standard resources; external, private, and unknown payloads remain losslessly accessible        |
 

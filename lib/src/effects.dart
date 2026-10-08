@@ -5,68 +5,53 @@ import 'package:pscore/pscore.dart';
 /// Identifies a Photoshop layer-effect family.
 enum PsdLayerEffectType {
   /// A shadow cast outside the layer.
-  dropShadow,
+  dropShadow(PsLayerEffectKind.dropShadow),
 
   /// A shadow cast inside the layer.
-  innerShadow,
+  innerShadow(PsLayerEffectKind.innerShadow),
 
   /// A glow outside the layer.
-  outerGlow,
+  outerGlow(PsLayerEffectKind.outerGlow),
 
   /// A glow inside the layer.
-  innerGlow,
+  innerGlow(PsLayerEffectKind.innerGlow),
 
   /// A bevel and emboss effect.
-  bevelEmboss,
+  bevelEmboss(PsLayerEffectKind.bevelAndEmboss),
 
   /// A satin shading effect.
-  satin,
+  satin(PsLayerEffectKind.satin),
 
   /// A solid color overlay.
-  colorOverlay,
+  colorOverlay(PsLayerEffectKind.colorOverlay),
 
   /// A gradient overlay.
-  gradientOverlay,
+  gradientOverlay(PsLayerEffectKind.gradientOverlay),
 
   /// A pattern overlay.
-  patternOverlay,
+  patternOverlay(PsLayerEffectKind.patternOverlay),
 
   /// A layer stroke.
-  stroke,
+  stroke(PsLayerEffectKind.stroke),
 
   /// An effect whose descriptor class is not recognized yet.
-  unknown,
+  unknown(PsLayerEffectKind.unknown);
+
+  /// Matching format-neutral effect family.
+  final PsLayerEffectKind kind;
+
+  /// Creates a type mirroring [kind].
+  const PsdLayerEffectType(this.kind);
+
+  /// Returns the type mirroring a format-neutral [kind].
+  static PsdLayerEffectType fromKind(PsLayerEffectKind kind) => values.firstWhere((type) => type.kind == kind);
 }
 
-/// Placement of a Photoshop layer stroke.
-enum PsdStrokePosition {
-  /// Draws the stroke inside the layer edge.
-  inside,
+/// Backward-compatible name for the shared stroke placement.
+typedef PsdStrokePosition = PsStrokePosition;
 
-  /// Centers the stroke on the layer edge.
-  center,
-
-  /// Draws the stroke outside the layer edge.
-  outside,
-}
-
-/// Geometry used by a gradient effect.
-enum PsdGradientStyle {
-  /// A straight linear gradient.
-  linear,
-
-  /// A radial gradient.
-  radial,
-
-  /// An angle gradient.
-  angle,
-
-  /// A reflected linear gradient.
-  reflected,
-
-  /// A diamond gradient.
-  diamond,
-}
+/// Backward-compatible name for the shared gradient geometry.
+typedef PsdGradientStyle = PsGradientStyle;
 
 /// An RGBA color used by a layer effect.
 final class PsdEffectColor {
@@ -90,6 +75,20 @@ final class PsdEffectColor {
 
   /// The color packed as an ARGB integer.
   int get argb => alpha << 24 | red << 16 | green << 8 | blue;
+
+  /// Returns an opaque color from an RGB [color], or `null` for other spaces.
+  static PsdEffectColor? fromColor(PsColor color) {
+    final double? red = color.red;
+    final double? green = color.green;
+    final double? blue = color.blue;
+    if (red == null || green == null || blue == null) {
+      return null;
+    }
+    return PsdEffectColor(alpha: 255, red: red.clamp(0, 255).round(), green: green.clamp(0, 255).round(), blue: blue.clamp(0, 255).round());
+  }
+
+  /// Converts this color to a Photoshop RGB color descriptor view.
+  PsColor toColor() => PsColor.rgb(red: red.toDouble(), green: green.toDouble(), blue: blue.toDouble());
 }
 
 /// One color stop in a Photoshop gradient.
@@ -135,6 +134,40 @@ final class PsdEffectGradient {
 
   /// Creates a custom effect gradient.
   const PsdEffectGradient({this.name = 'Custom', required this.colors, this.opacities = const <PsdGradientOpacityStop>[]});
+
+  /// Returns the RGB custom stops of [gradient], skipping non-RGB colors.
+  factory PsdEffectGradient.fromGradient(PsGradient gradient) => PsdEffectGradient(
+    name: gradient.name ?? '',
+    colors: [
+      for (final PsGradientColorStop stop in gradient.colorStops)
+        if (stop.color case final PsColor color)
+          if (PsdEffectColor.fromColor(color) case final PsdEffectColor rgb)
+            PsdGradientColorStop(
+              color: rgb,
+              location: stop.location ?? 0,
+              midpoint: stop.midpoint ?? 50,
+            ),
+    ],
+    opacities: [
+      for (final PsGradientTransparencyStop stop in gradient.transparencyStops)
+        PsdGradientOpacityStop(
+          opacity: stop.opacity?.value ?? 100,
+          location: stop.location ?? 0,
+          midpoint: stop.midpoint ?? 50,
+        ),
+    ],
+  );
+
+  /// Converts this gradient to a Photoshop custom-stops gradient view.
+  PsGradient toGradient() => PsGradient.custom(
+    name: name,
+    colorStops: [
+      for (final PsdGradientColorStop stop in colors) PsGradientColorStop.create(color: stop.color.toColor(), location: stop.location, midpoint: stop.midpoint),
+    ],
+    transparencyStops: [
+      for (final PsdGradientOpacityStop stop in opacities) PsGradientTransparencyStop.create(opacity: stop.opacity, location: stop.location, midpoint: stop.midpoint),
+    ],
+  );
 }
 
 /// A Photoshop pattern reference used by a layer effect.
@@ -147,6 +180,9 @@ final class PsdEffectPattern {
 
   /// Creates a pattern reference.
   const PsdEffectPattern({required this.name, required this.id});
+
+  /// Converts this reference to a Photoshop pattern reference view.
+  PsPatternReference toReference() => PsPatternReference.create(name: name, id: id);
 }
 
 /// One semantic Photoshop effect backed by its complete action descriptor.
@@ -184,20 +220,38 @@ final class PsdLayerEffect {
     double offsetX = 0,
     double offsetY = 0,
   }) {
-    final List<PsDescriptorItem> items = <PsDescriptorItem>[
-      PsDescriptorItem(
-        key: 'enab',
-        value: PsBooleanValue(value: enabled),
-      ),
-      const PsDescriptorItem(key: 'present', value: PsBooleanValue(value: true)),
-      const PsDescriptorItem(key: 'showInDialog', value: PsBooleanValue(value: true)),
-    ];
-    _appendEffectProperties(
-      items,
-      type: type,
+    if (type == PsdLayerEffectType.unknown) {
+      // Unknown effects have no Photoshop class, so they keep a bare record.
+      return PsdLayerEffect(
+        type: type,
+        descriptor: PsDescriptor(
+          name: '\u0000',
+          classId: 'null',
+          items: [
+            PsDescriptorItem(
+              key: 'enab',
+              value: PsBooleanValue(value: enabled),
+            ),
+            const PsDescriptorItem(key: 'present', value: PsBooleanValue(value: true)),
+            const PsDescriptorItem(key: 'showInDialog', value: PsBooleanValue(value: true)),
+            PsDescriptorItem(
+              key: 'Md  ',
+              value: PsEnumeratedValue(typeId: 'BlnM', value: blendMode),
+            ),
+            PsDescriptorItem(
+              key: 'Opct',
+              value: PsUnitFloatValue(unit: '#Prc', value: opacity),
+            ),
+          ],
+        ),
+      );
+    }
+    final PsLayerEffect effect = PsLayerEffect.create(
+      kind: type.kind,
+      enabled: enabled,
       blendMode: blendMode,
       opacity: opacity,
-      color: color,
+      color: color.toColor(),
       size: size,
       angle: angle,
       distance: distance,
@@ -205,9 +259,9 @@ final class PsdLayerEffect {
       noise: noise,
       useGlobalAngle: useGlobalAngle,
       strokePosition: strokePosition,
-      gradient: gradient,
+      gradient: gradient?.toGradient(),
       gradientStyle: gradientStyle,
-      pattern: pattern,
+      pattern: pattern?.toReference(),
       reverse: reverse,
       dither: dither,
       aligned: aligned,
@@ -215,73 +269,59 @@ final class PsdLayerEffect {
       offsetX: offsetX,
       offsetY: offsetY,
     );
-    return PsdLayerEffect(
-      type: type,
-      descriptor: PsDescriptor(name: '\u0000', classId: _effectClassId(type), items: items),
-    );
+    return PsdLayerEffect(type: type, descriptor: effect.descriptor);
   }
+
+  /// Complete format-neutral view, including every non-RGB color space.
+  PsLayerEffect get view => PsLayerEffect(key: type.kind.rootKey ?? descriptor.classId, instanceIndex: 0, kind: type.kind, descriptor: descriptor);
 
   /// Whether the individual effect is enabled.
-  bool get enabled => _boolValue(descriptor, 'enab') ?? true;
+  bool get enabled => descriptor.booleanValue('enab') ?? true;
 
   /// Photoshop blend-mode identifier such as `Nrml` or `Mltp`.
-  String get blendMode => _enumValue(descriptor, 'Md  ') ?? _enumValue(descriptor, 'hglM') ?? 'Nrml';
+  String get blendMode => descriptor.enumerationIdentifier('Md  ') ?? descriptor.enumerationIdentifier('hglM') ?? 'Nrml';
 
   /// Effect opacity percentage.
-  double get opacity => _numberValue(descriptor, 'Opct') ?? _numberValue(descriptor, 'hglO') ?? 100;
+  double get opacity => descriptor.scalarValue('Opct') ?? descriptor.scalarValue('hglO') ?? 100;
 
-  /// Primary effect color, when the effect uses one.
-  PsdEffectColor? get color => _colorValue(descriptor.value('Clr ')) ?? _colorValue(descriptor.value('hglC'));
+  /// Primary effect color, when the effect uses an RGB one.
+  PsdEffectColor? get color => _rgb(view.color) ?? _rgb(view.highlightColor);
 
   /// Blur or stroke size in pixels, when applicable.
-  double? get size => _numberValue(descriptor, type == PsdLayerEffectType.stroke ? 'Sz  ' : 'blur');
+  double? get size => descriptor.scalarValue(type == PsdLayerEffectType.stroke ? 'Sz  ' : 'blur');
 
   /// Lighting or gradient angle in degrees, when applicable.
-  double? get angle => _numberValue(descriptor, descriptor.value('lagl') == null ? 'Angl' : 'lagl');
+  double? get angle => descriptor.scalarValue(descriptor.value('lagl') == null ? 'Angl' : 'lagl');
 
   /// Shadow distance in pixels, when applicable.
-  double? get distance => _numberValue(descriptor, 'Dstn');
+  double? get distance => descriptor.scalarValue('Dstn');
 
   /// Shadow spread or glow choke in pixels.
-  double? get spread => _numberValue(descriptor, 'Ckmt');
+  double? get spread => descriptor.scalarValue('Ckmt');
 
   /// Noise percentage, when applicable.
-  double? get noise => _numberValue(descriptor, 'Nose');
+  double? get noise => descriptor.scalarValue('Nose');
 
   /// Whether the effect follows the document-wide lighting angle.
-  bool get useGlobalAngle => _boolValue(descriptor, 'uglg') ?? false;
+  bool get useGlobalAngle => descriptor.booleanValue('uglg') ?? false;
 
   /// Stroke placement, when this is a stroke effect.
-  PsdStrokePosition? get strokePosition {
-    if (type != PsdLayerEffectType.stroke) {
-      return null;
-    }
-    return switch (_enumValue(descriptor, 'Styl')) {
-      'InsF' => PsdStrokePosition.inside,
-      'CtrF' => PsdStrokePosition.center,
-      _ => PsdStrokePosition.outside,
-    };
-  }
+  PsdStrokePosition? get strokePosition => type == PsdLayerEffectType.stroke ? PsStrokePosition.fromIdentifier(descriptor.enumerationIdentifier('Styl')) : null;
 
   /// Custom gradient, when this effect contains one.
-  PsdEffectGradient? get gradient => _gradientValue(descriptor.value('Grad'));
+  PsdEffectGradient? get gradient => switch (view.gradient) {
+    final PsGradient gradient => PsdEffectGradient.fromGradient(gradient),
+    null => null,
+  };
 
   /// Gradient geometry, when this is a gradient effect.
-  PsdGradientStyle? get gradientStyle {
-    if (descriptor.value('Grad') == null) {
-      return null;
-    }
-    return switch (_enumValue(descriptor, 'Type')) {
-      'Rdl ' => PsdGradientStyle.radial,
-      'Angl' => PsdGradientStyle.angle,
-      'Rflc' => PsdGradientStyle.reflected,
-      'Dmnd' => PsdGradientStyle.diamond,
-      _ => PsdGradientStyle.linear,
-    };
-  }
+  PsdGradientStyle? get gradientStyle => descriptor.value('Grad') == null ? null : PsGradientStyle.fromIdentifier(descriptor.enumerationIdentifier('Type'));
 
   /// Pattern reference, when this effect contains one.
-  PsdEffectPattern? get pattern => _patternValue(descriptor.value('Ptrn'));
+  PsdEffectPattern? get pattern => switch (view.pattern) {
+    final PsPatternReference pattern => PsdEffectPattern(name: pattern.name ?? '', id: pattern.id ?? ''),
+    null => null,
+  };
 
   /// Returns a copy with one raw descriptor property replaced.
   PsdLayerEffect withProperty(String key, PsDescriptorValue value) => PsdLayerEffect(type: type, descriptor: descriptor.withValue(key, value));
@@ -298,8 +338,11 @@ final class PsdLayerEffect {
   /// Returns a copy whose primary color is [value].
   PsdLayerEffect withColor(PsdEffectColor value) => withProperty(
     type == PsdLayerEffectType.bevelEmboss ? 'hglC' : 'Clr ',
-    PsObjectValue(value: _colorDescriptor(value)),
+    PsObjectValue(value: value.toColor().descriptor),
   );
+
+  /// Converts an optional [color] to RGB.
+  static PsdEffectColor? _rgb(PsColor? color) => color == null ? null : PsdEffectColor.fromColor(color);
 }
 
 /// A complete editable modern or imported legacy layer-effects record.
@@ -356,21 +399,27 @@ final class PsdLayerEffects {
   /// Creates a semantic modern view retaining [data] for legacy round trips.
   PsdLayerEffects._legacy({required this.descriptor, required Uint8List data}) : version = 0, descriptorVersion = 16, blockKey = 'lrFX', trailingData = Uint8List(0), _legacyData = data;
 
+  /// Complete format-neutral view, including every non-RGB color space.
+  PsLayerEffects get view => PsLayerEffects.fromDescriptor(descriptor);
+
   /// Whether all layer effects are enabled globally.
-  bool get enabled => _boolValue(descriptor, 'masterFXSwitch') ?? true;
+  bool get enabled => descriptor.booleanValue('masterFXSwitch') ?? true;
 
   /// Global effect scale percentage.
-  double get scale => _numberValue(descriptor, 'Scl ') ?? 100;
+  double get scale => descriptor.scalarValue('Scl ') ?? 100;
 
   /// Effects in descriptor order, including repeated effect families.
-  List<PsdLayerEffect> get effects => _readEffects(descriptor);
+  List<PsdLayerEffect> get effects => [
+    for (final PsLayerEffect effect in view.effects)
+      if (effect.kind != PsLayerEffectKind.unknown) PsdLayerEffect(type: PsdLayerEffectType.fromKind(effect.kind), descriptor: effect.descriptor),
+  ];
 
   /// Returns a modern record containing [effects] and preserving other root keys.
   PsdLayerEffects withEffects(List<PsdLayerEffect> effects) {
     final List<PsDescriptorItem> items = <PsDescriptorItem>[
       for (final PsDescriptorItem item in descriptor.items)
-        if (!_effectRootKeys.contains(item.key)) item,
-      ..._writeEffectItems(effects),
+        if (PsLayerEffectKind.fromKey(item.key) == PsLayerEffectKind.unknown) item,
+      ...PsLayerEffects.rootItems([for (final PsdLayerEffect effect in effects) (kind: effect.type.kind, descriptor: effect.descriptor)]),
     ];
     return PsdLayerEffects(
       version: version,
@@ -432,503 +481,6 @@ abstract final class PsdLayerEffectsCodec {
           ..writeBytes(PsDescriptorCodec.encode(effects.descriptor))
           ..writeBytes(effects.trailingData))
         .takeBytes();
-  }
-}
-
-/// Root descriptor keys containing one or more layer effects.
-const Set<String> _effectRootKeys = <String>{
-  'DrSh',
-  'dropShadowMulti',
-  'IrSh',
-  'innerShadowMulti',
-  'OrGl',
-  'outerGlowMulti',
-  'IrGl',
-  'innerGlowMulti',
-  'ebbl',
-  'bevelEmbossMulti',
-  'ChFX',
-  'satinMulti',
-  'SoFi',
-  'solidFillMulti',
-  'GrFl',
-  'gradientFillMulti',
-  'patternFill',
-  'patternFillMulti',
-  'FrFX',
-  'frameFXMulti',
-};
-
-/// Reads every recognized effect from [descriptor].
-List<PsdLayerEffect> _readEffects(PsDescriptor descriptor) {
-  final List<PsdLayerEffect> result = <PsdLayerEffect>[];
-  for (final PsDescriptorItem item in descriptor.items) {
-    final PsdLayerEffectType? type = _effectTypeForRootKey(item.key);
-    if (type == null) {
-      continue;
-    }
-    switch (item.value) {
-      case PsObjectValue(:final PsDescriptor value):
-        result.add(PsdLayerEffect(type: type, descriptor: value));
-      case PsListValue(:final List<PsDescriptorValue> values):
-        for (final PsDescriptorValue value in values) {
-          if (value case PsObjectValue(:final PsDescriptor value)) {
-            result.add(PsdLayerEffect(type: type, descriptor: value));
-          }
-        }
-      default:
-        break;
-    }
-  }
-  return result;
-}
-
-/// Serializes semantic [effects] into singular or multi-effect root items.
-List<PsDescriptorItem> _writeEffectItems(List<PsdLayerEffect> effects) {
-  final List<PsDescriptorItem> result = <PsDescriptorItem>[];
-  for (final PsdLayerEffectType type in PsdLayerEffectType.values) {
-    if (type == PsdLayerEffectType.unknown) {
-      continue;
-    }
-    final List<PsdLayerEffect> matches = effects.where((effect) => effect.type == type).toList();
-    if (matches.isEmpty) {
-      continue;
-    }
-    if (matches.length == 1) {
-      result.add(
-        PsDescriptorItem(
-          key: _effectRootKey(type),
-          value: PsObjectValue(value: matches.single.descriptor),
-        ),
-      );
-    } else {
-      result.add(
-        PsDescriptorItem(
-          key: _effectMultiRootKey(type),
-          value: PsListValue(values: <PsDescriptorValue>[for (final PsdLayerEffect effect in matches) PsObjectValue(value: effect.descriptor)]),
-        ),
-      );
-    }
-  }
-  return result;
-}
-
-/// Adds properties required by the selected effect [type].
-void _appendEffectProperties(
-  List<PsDescriptorItem> items, {
-  required PsdLayerEffectType type,
-  required String blendMode,
-  required double opacity,
-  required PsdEffectColor color,
-  required double size,
-  required double angle,
-  required double distance,
-  required double spread,
-  required double noise,
-  required bool useGlobalAngle,
-  required PsdStrokePosition strokePosition,
-  required PsdEffectGradient? gradient,
-  required PsdGradientStyle gradientStyle,
-  required PsdEffectPattern? pattern,
-  required bool reverse,
-  required bool dither,
-  required bool aligned,
-  required double scale,
-  required double offsetX,
-  required double offsetY,
-}) {
-  if (type != PsdLayerEffectType.bevelEmboss) {
-    items
-      ..add(
-        PsDescriptorItem(
-          key: 'Md  ',
-          value: PsEnumeratedValue(typeId: 'BlnM', value: blendMode),
-        ),
-      )
-      ..add(
-        PsDescriptorItem(
-          key: 'Opct',
-          value: PsUnitFloatValue(unit: '#Prc', value: opacity),
-        ),
-      );
-  }
-  switch (type) {
-    case PsdLayerEffectType.dropShadow || PsdLayerEffectType.innerShadow:
-      items
-        ..add(
-          PsDescriptorItem(
-            key: 'Clr ',
-            value: PsObjectValue(value: _colorDescriptor(color)),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'uglg',
-            value: PsBooleanValue(value: useGlobalAngle),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'lagl',
-            value: PsUnitFloatValue(unit: '#Ang', value: angle),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Dstn',
-            value: PsUnitFloatValue(unit: '#Pxl', value: distance),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Ckmt',
-            value: PsUnitFloatValue(unit: '#Pxl', value: spread),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'blur',
-            value: PsUnitFloatValue(unit: '#Pxl', value: size),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Nose',
-            value: PsUnitFloatValue(unit: '#Prc', value: noise),
-          ),
-        )
-        ..add(const PsDescriptorItem(key: 'AntA', value: PsBooleanValue(value: false)))
-        ..add(
-          PsDescriptorItem(
-            key: 'TrnS',
-            value: PsObjectValue(value: _linearContourDescriptor()),
-          ),
-        )
-        ..add(const PsDescriptorItem(key: 'layerConceals', value: PsBooleanValue(value: true)));
-    case PsdLayerEffectType.outerGlow || PsdLayerEffectType.innerGlow:
-      items
-        ..add(
-          PsDescriptorItem(
-            key: 'Clr ',
-            value: PsObjectValue(value: _colorDescriptor(color)),
-          ),
-        )
-        ..add(
-          const PsDescriptorItem(
-            key: 'GlwT',
-            value: PsEnumeratedValue(typeId: 'BETE', value: 'SfBL'),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Ckmt',
-            value: PsUnitFloatValue(unit: '#Pxl', value: spread),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'blur',
-            value: PsUnitFloatValue(unit: '#Pxl', value: size),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Nose',
-            value: PsUnitFloatValue(unit: '#Prc', value: noise),
-          ),
-        )
-        ..add(
-          const PsDescriptorItem(
-            key: 'ShdN',
-            value: PsUnitFloatValue(unit: '#Prc', value: 0),
-          ),
-        )
-        ..add(const PsDescriptorItem(key: 'AntA', value: PsBooleanValue(value: false)))
-        ..add(
-          PsDescriptorItem(
-            key: 'TrnS',
-            value: PsObjectValue(value: _linearContourDescriptor()),
-          ),
-        )
-        ..add(
-          const PsDescriptorItem(
-            key: 'Inpr',
-            value: PsUnitFloatValue(unit: '#Prc', value: 50),
-          ),
-        );
-      if (type == PsdLayerEffectType.innerGlow) {
-        items.add(
-          const PsDescriptorItem(
-            key: 'glwS',
-            value: PsEnumeratedValue(typeId: 'IGSr', value: 'SrcE'),
-          ),
-        );
-      }
-    case PsdLayerEffectType.colorOverlay:
-      items.add(
-        PsDescriptorItem(
-          key: 'Clr ',
-          value: PsObjectValue(value: _colorDescriptor(color)),
-        ),
-      );
-    case PsdLayerEffectType.gradientOverlay:
-      items
-        ..add(
-          PsDescriptorItem(
-            key: 'Grad',
-            value: PsObjectValue(value: _gradientDescriptor(gradient ?? _defaultGradient(color))),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Angl',
-            value: PsUnitFloatValue(unit: '#Ang', value: angle),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Type',
-            value: PsEnumeratedValue(typeId: 'GrdT', value: _gradientStyleId(gradientStyle)),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Rvrs',
-            value: PsBooleanValue(value: reverse),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Dthr',
-            value: PsBooleanValue(value: dither),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Algn',
-            value: PsBooleanValue(value: aligned),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Scl ',
-            value: PsUnitFloatValue(unit: '#Prc', value: scale),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Ofst',
-            value: PsObjectValue(value: _pointDescriptor(offsetX, offsetY, unit: '#Prc')),
-          ),
-        );
-    case PsdLayerEffectType.patternOverlay:
-      items
-        ..add(
-          PsDescriptorItem(
-            key: 'Ptrn',
-            value: PsObjectValue(
-              value: _patternDescriptor(pattern ?? const PsdEffectPattern(name: '', id: '')),
-            ),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Scl ',
-            value: PsUnitFloatValue(unit: '#Prc', value: scale),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Algn',
-            value: PsBooleanValue(value: aligned),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'phase',
-            value: PsObjectValue(value: _pointDescriptor(offsetX, offsetY)),
-          ),
-        );
-    case PsdLayerEffectType.stroke:
-      final String fillType = gradient != null ? 'GrFl' : (pattern != null ? 'Ptrn' : 'SClr');
-      items
-        ..add(
-          PsDescriptorItem(
-            key: 'Styl',
-            value: PsEnumeratedValue(typeId: 'FStl', value: _strokePositionId(strokePosition)),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'PntT',
-            value: PsEnumeratedValue(typeId: 'FrFl', value: fillType),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Sz  ',
-            value: PsUnitFloatValue(unit: '#Pxl', value: size),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Clr ',
-            value: PsObjectValue(value: _colorDescriptor(color)),
-          ),
-        )
-        ..add(const PsDescriptorItem(key: 'overprint', value: PsBooleanValue(value: false)));
-      if (gradient != null) {
-        items.add(
-          PsDescriptorItem(
-            key: 'Grad',
-            value: PsObjectValue(value: _gradientDescriptor(gradient)),
-          ),
-        );
-      } else if (pattern != null) {
-        items.add(
-          PsDescriptorItem(
-            key: 'Ptrn',
-            value: PsObjectValue(value: _patternDescriptor(pattern)),
-          ),
-        );
-      }
-    case PsdLayerEffectType.satin:
-      items
-        ..add(
-          PsDescriptorItem(
-            key: 'Clr ',
-            value: PsObjectValue(value: _colorDescriptor(color)),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'lagl',
-            value: PsUnitFloatValue(unit: '#Ang', value: angle),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'Dstn',
-            value: PsUnitFloatValue(unit: '#Pxl', value: distance),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'blur',
-            value: PsUnitFloatValue(unit: '#Pxl', value: size),
-          ),
-        )
-        ..add(const PsDescriptorItem(key: 'AntA', value: PsBooleanValue(value: true)))
-        ..add(const PsDescriptorItem(key: 'Invr', value: PsBooleanValue(value: false)))
-        ..add(
-          PsDescriptorItem(
-            key: 'MpgS',
-            value: PsObjectValue(value: _linearContourDescriptor()),
-          ),
-        );
-    case PsdLayerEffectType.bevelEmboss:
-      items
-        ..add(
-          const PsDescriptorItem(
-            key: 'hglM',
-            value: PsEnumeratedValue(typeId: 'BlnM', value: 'Scrn'),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'hglC',
-            value: PsObjectValue(value: _colorDescriptor(color)),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'hglO',
-            value: PsUnitFloatValue(unit: '#Prc', value: opacity),
-          ),
-        )
-        ..add(
-          const PsDescriptorItem(
-            key: 'sdwM',
-            value: PsEnumeratedValue(typeId: 'BlnM', value: 'Mltp'),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'sdwC',
-            value: PsObjectValue(value: _colorDescriptor(PsdEffectColor.black)),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'sdwO',
-            value: PsUnitFloatValue(unit: '#Prc', value: opacity),
-          ),
-        )
-        ..add(
-          const PsDescriptorItem(
-            key: 'bvlT',
-            value: PsEnumeratedValue(typeId: 'bvlT', value: 'SfBL'),
-          ),
-        )
-        ..add(
-          const PsDescriptorItem(
-            key: 'bvlS',
-            value: PsEnumeratedValue(typeId: 'BESl', value: 'InrB'),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'uglg',
-            value: PsBooleanValue(value: useGlobalAngle),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'lagl',
-            value: PsUnitFloatValue(unit: '#Ang', value: angle),
-          ),
-        )
-        ..add(
-          const PsDescriptorItem(
-            key: 'Lald',
-            value: PsUnitFloatValue(unit: '#Ang', value: 30),
-          ),
-        )
-        ..add(
-          const PsDescriptorItem(
-            key: 'srgR',
-            value: PsUnitFloatValue(unit: '#Prc', value: 100),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'blur',
-            value: PsUnitFloatValue(unit: '#Pxl', value: size),
-          ),
-        )
-        ..add(
-          const PsDescriptorItem(
-            key: 'bvlD',
-            value: PsEnumeratedValue(typeId: 'BESs', value: 'In  '),
-          ),
-        )
-        ..add(
-          PsDescriptorItem(
-            key: 'TrnS',
-            value: PsObjectValue(value: _linearContourDescriptor()),
-          ),
-        )
-        ..add(const PsDescriptorItem(key: 'antialiasGloss', value: PsBooleanValue(value: false)))
-        ..add(
-          const PsDescriptorItem(
-            key: 'Sftn',
-            value: PsUnitFloatValue(unit: '#Pxl', value: 0),
-          ),
-        )
-        ..add(const PsDescriptorItem(key: 'useShape', value: PsBooleanValue(value: false)))
-        ..add(const PsDescriptorItem(key: 'useTexture', value: PsBooleanValue(value: false)));
-    case PsdLayerEffectType.unknown:
-      break;
   }
 }
 
@@ -1082,327 +634,3 @@ PsdEffectColor _readLegacyColor(PsBinaryReader reader, {PsdEffectColor fallback 
   }
   return PsdEffectColor(alpha: 255, red: (components[0] / 257).round(), green: (components[1] / 257).round(), blue: (components[2] / 257).round());
 }
-
-/// Reads a Boolean property from [descriptor].
-bool? _boolValue(PsDescriptor descriptor, String key) => descriptor.booleanValue(key);
-
-/// Reads a numeric property from [descriptor].
-double? _numberValue(PsDescriptor descriptor, String key) => descriptor.scalarValue(key);
-
-/// Reads an enumeration identifier from [descriptor].
-String? _enumValue(PsDescriptor descriptor, String key) => descriptor.enumerationIdentifier(key);
-
-/// Reads an RGB descriptor value.
-PsdEffectColor? _colorValue(PsDescriptorValue? value) {
-  if (value is! PsObjectValue) {
-    return null;
-  }
-  final PsDescriptor color = value.value;
-  final double? red = _numberValue(color, 'Rd  ');
-  final double? green = _numberValue(color, 'Grn ');
-  final double? blue = _numberValue(color, 'Bl  ');
-  if (red == null || green == null || blue == null) {
-    return null;
-  }
-  return PsdEffectColor(alpha: 255, red: red.clamp(0, 255).round(), green: green.clamp(0, 255).round(), blue: blue.clamp(0, 255).round());
-}
-
-/// Reads a gradient descriptor value.
-PsdEffectGradient? _gradientValue(PsDescriptorValue? value) {
-  if (value is! PsObjectValue) {
-    return null;
-  }
-  final PsDescriptor gradient = value.value;
-  final List<PsdGradientColorStop> colors = <PsdGradientColorStop>[];
-  final List<PsdGradientOpacityStop> opacities = <PsdGradientOpacityStop>[];
-  if (gradient.value('Clrs') case PsListValue(:final List<PsDescriptorValue> values)) {
-    for (final PsDescriptorValue value in values) {
-      if (value case PsObjectValue(:final PsDescriptor value)) {
-        final PsdEffectColor? color = _colorValue(value.value('Clr '));
-        if (color != null) {
-          colors.add(
-            PsdGradientColorStop(
-              color: color,
-              location: _numberValue(value, 'Lctn')?.round() ?? 0,
-              midpoint: _numberValue(value, 'Mdpn')?.round() ?? 50,
-            ),
-          );
-        }
-      }
-    }
-  }
-  if (gradient.value('Trns') case PsListValue(:final List<PsDescriptorValue> values)) {
-    for (final PsDescriptorValue value in values) {
-      if (value case PsObjectValue(:final PsDescriptor value)) {
-        opacities.add(
-          PsdGradientOpacityStop(
-            opacity: _numberValue(value, 'Opct') ?? 100,
-            location: _numberValue(value, 'Lctn')?.round() ?? 0,
-            midpoint: _numberValue(value, 'Mdpn')?.round() ?? 50,
-          ),
-        );
-      }
-    }
-  }
-  return PsdEffectGradient(name: _stringValue(gradient, 'Nm  ') ?? '', colors: colors, opacities: opacities);
-}
-
-/// Reads a pattern descriptor value.
-PsdEffectPattern? _patternValue(PsDescriptorValue? value) {
-  if (value is! PsObjectValue) {
-    return null;
-  }
-  return PsdEffectPattern(name: _stringValue(value.value, 'Nm  ') ?? '', id: _stringValue(value.value, 'Idnt') ?? '');
-}
-
-/// Reads a Unicode string property and removes terminal NUL characters.
-String? _stringValue(PsDescriptor descriptor, String key) => descriptor.stringValue(key);
-
-/// Creates an RGB action descriptor for [color].
-PsDescriptor _colorDescriptor(PsdEffectColor color) => PsDescriptor(
-  name: '\u0000',
-  classId: 'RGBC',
-  items: <PsDescriptorItem>[
-    PsDescriptorItem(
-      key: 'Rd  ',
-      value: PsDoubleValue(value: color.red.toDouble()),
-    ),
-    PsDescriptorItem(
-      key: 'Grn ',
-      value: PsDoubleValue(value: color.green.toDouble()),
-    ),
-    PsDescriptorItem(
-      key: 'Bl  ',
-      value: PsDoubleValue(value: color.blue.toDouble()),
-    ),
-  ],
-);
-
-/// Creates Photoshop's default two-point linear contour descriptor.
-PsDescriptor _linearContourDescriptor() => PsDescriptor(
-  name: '\u0000',
-  classId: 'ShpC',
-  items: <PsDescriptorItem>[
-    const PsDescriptorItem(
-      key: 'Nm  ',
-      value: PsStringValue(value: 'Linear\u0000'),
-    ),
-    PsDescriptorItem(
-      key: 'Crv ',
-      value: PsListValue(
-        values: <PsDescriptorValue>[
-          PsObjectValue(value: _curvePointDescriptor(0, 0)),
-          PsObjectValue(value: _curvePointDescriptor(255, 255)),
-        ],
-      ),
-    ),
-  ],
-);
-
-/// Creates one point in a Photoshop contour curve.
-PsDescriptor _curvePointDescriptor(double horizontal, double vertical) => PsDescriptor(
-  name: '\u0000',
-  classId: 'CrPt',
-  items: <PsDescriptorItem>[
-    PsDescriptorItem(
-      key: 'Hrzn',
-      value: PsDoubleValue(value: horizontal),
-    ),
-    PsDescriptorItem(
-      key: 'Vrtc',
-      value: PsDoubleValue(value: vertical),
-    ),
-  ],
-);
-
-/// Creates a two-dimensional Photoshop point descriptor.
-PsDescriptor _pointDescriptor(double horizontal, double vertical, {String? unit}) => PsDescriptor(
-  name: '\u0000',
-  classId: 'Pnt ',
-  items: <PsDescriptorItem>[
-    PsDescriptorItem(
-      key: 'Hrzn',
-      value: unit == null ? PsDoubleValue(value: horizontal) : PsUnitFloatValue(unit: unit, value: horizontal),
-    ),
-    PsDescriptorItem(
-      key: 'Vrtc',
-      value: unit == null ? PsDoubleValue(value: vertical) : PsUnitFloatValue(unit: unit, value: vertical),
-    ),
-  ],
-);
-
-/// Creates an action descriptor for [gradient].
-PsDescriptor _gradientDescriptor(PsdEffectGradient gradient) => PsDescriptor(
-  name: '${gradient.name}\u0000',
-  classId: 'Grdn',
-  items: <PsDescriptorItem>[
-    PsDescriptorItem(
-      key: 'Nm  ',
-      value: PsStringValue(value: '${gradient.name}\u0000'),
-    ),
-    const PsDescriptorItem(
-      key: 'GrdF',
-      value: PsEnumeratedValue(typeId: 'GrdF', value: 'CstS'),
-    ),
-    const PsDescriptorItem(key: 'Intr', value: PsDoubleValue(value: 4096)),
-    PsDescriptorItem(
-      key: 'Clrs',
-      value: PsListValue(
-        values: <PsDescriptorValue>[
-          for (final PsdGradientColorStop stop in gradient.colors)
-            PsObjectValue(
-              value: PsDescriptor(
-                name: '\u0000',
-                classId: 'Clrt',
-                items: <PsDescriptorItem>[
-                  PsDescriptorItem(
-                    key: 'Clr ',
-                    value: PsObjectValue(value: _colorDescriptor(stop.color)),
-                  ),
-                  const PsDescriptorItem(
-                    key: 'Type',
-                    value: PsEnumeratedValue(typeId: 'Clry', value: 'UsrS'),
-                  ),
-                  PsDescriptorItem(
-                    key: 'Lctn',
-                    value: PsIntegerValue(value: stop.location),
-                  ),
-                  PsDescriptorItem(
-                    key: 'Mdpn',
-                    value: PsIntegerValue(value: stop.midpoint),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    ),
-    PsDescriptorItem(
-      key: 'Trns',
-      value: PsListValue(
-        values: <PsDescriptorValue>[
-          for (final PsdGradientOpacityStop stop in gradient.opacities)
-            PsObjectValue(
-              value: PsDescriptor(
-                name: '\u0000',
-                classId: 'TrnS',
-                items: <PsDescriptorItem>[
-                  PsDescriptorItem(
-                    key: 'Opct',
-                    value: PsUnitFloatValue(unit: '#Prc', value: stop.opacity),
-                  ),
-                  PsDescriptorItem(
-                    key: 'Lctn',
-                    value: PsIntegerValue(value: stop.location),
-                  ),
-                  PsDescriptorItem(
-                    key: 'Mdpn',
-                    value: PsIntegerValue(value: stop.midpoint),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    ),
-  ],
-);
-
-/// Creates an action descriptor for [pattern].
-PsDescriptor _patternDescriptor(PsdEffectPattern pattern) => PsDescriptor(
-  name: '\u0000',
-  classId: 'Ptrn',
-  items: <PsDescriptorItem>[
-    PsDescriptorItem(
-      key: 'Nm  ',
-      value: PsStringValue(value: '${pattern.name}\u0000'),
-    ),
-    PsDescriptorItem(
-      key: 'Idnt',
-      value: PsStringValue(value: '${pattern.id}\u0000'),
-    ),
-  ],
-);
-
-/// Returns a simple opaque two-stop gradient ending in [color].
-PsdEffectGradient _defaultGradient(PsdEffectColor color) => PsdEffectGradient(
-  colors: <PsdGradientColorStop>[
-    const PsdGradientColorStop(color: PsdEffectColor.black, location: 0),
-    PsdGradientColorStop(color: color, location: 4096),
-  ],
-  opacities: const <PsdGradientOpacityStop>[
-    PsdGradientOpacityStop(opacity: 100, location: 0),
-    PsdGradientOpacityStop(opacity: 100, location: 4096),
-  ],
-);
-
-/// Maps a root descriptor [key] to its effect family.
-PsdLayerEffectType? _effectTypeForRootKey(String key) {
-  for (final PsdLayerEffectType type in PsdLayerEffectType.values) {
-    if (type != PsdLayerEffectType.unknown && (key == _effectRootKey(type) || key == _effectMultiRootKey(type))) {
-      return type;
-    }
-  }
-  return null;
-}
-
-/// Returns the singular root key for [type].
-String _effectRootKey(PsdLayerEffectType type) => switch (type) {
-  PsdLayerEffectType.dropShadow => 'DrSh',
-  PsdLayerEffectType.innerShadow => 'IrSh',
-  PsdLayerEffectType.outerGlow => 'OrGl',
-  PsdLayerEffectType.innerGlow => 'IrGl',
-  PsdLayerEffectType.bevelEmboss => 'ebbl',
-  PsdLayerEffectType.satin => 'ChFX',
-  PsdLayerEffectType.colorOverlay => 'SoFi',
-  PsdLayerEffectType.gradientOverlay => 'GrFl',
-  PsdLayerEffectType.patternOverlay => 'patternFill',
-  PsdLayerEffectType.stroke => 'FrFX',
-  PsdLayerEffectType.unknown => 'unknown',
-};
-
-/// Returns the repeated-effect root key for [type].
-String _effectMultiRootKey(PsdLayerEffectType type) => switch (type) {
-  PsdLayerEffectType.dropShadow => 'dropShadowMulti',
-  PsdLayerEffectType.innerShadow => 'innerShadowMulti',
-  PsdLayerEffectType.outerGlow => 'outerGlowMulti',
-  PsdLayerEffectType.innerGlow => 'innerGlowMulti',
-  PsdLayerEffectType.bevelEmboss => 'bevelEmbossMulti',
-  PsdLayerEffectType.satin => 'satinMulti',
-  PsdLayerEffectType.colorOverlay => 'solidFillMulti',
-  PsdLayerEffectType.gradientOverlay => 'gradientFillMulti',
-  PsdLayerEffectType.patternOverlay => 'patternFillMulti',
-  PsdLayerEffectType.stroke => 'frameFXMulti',
-  PsdLayerEffectType.unknown => 'unknownMulti',
-};
-
-/// Returns the descriptor class identifier for [type].
-String _effectClassId(PsdLayerEffectType type) => switch (type) {
-  PsdLayerEffectType.dropShadow => 'DrSh',
-  PsdLayerEffectType.innerShadow => 'IrSh',
-  PsdLayerEffectType.outerGlow => 'OrGl',
-  PsdLayerEffectType.innerGlow => 'IrGl',
-  PsdLayerEffectType.bevelEmboss => 'ebbl',
-  PsdLayerEffectType.satin => 'ChFX',
-  PsdLayerEffectType.colorOverlay => 'SoFi',
-  PsdLayerEffectType.gradientOverlay => 'GrFl',
-  PsdLayerEffectType.patternOverlay => 'patternFill',
-  PsdLayerEffectType.stroke => 'FrFX',
-  PsdLayerEffectType.unknown => 'null',
-};
-
-/// Returns Photoshop's enumeration identifier for [position].
-String _strokePositionId(PsdStrokePosition position) => switch (position) {
-  PsdStrokePosition.inside => 'InsF',
-  PsdStrokePosition.center => 'CtrF',
-  PsdStrokePosition.outside => 'OutF',
-};
-
-/// Returns Photoshop's enumeration identifier for [style].
-String _gradientStyleId(PsdGradientStyle style) => switch (style) {
-  PsdGradientStyle.linear => 'Lnr ',
-  PsdGradientStyle.radial => 'Rdl ',
-  PsdGradientStyle.angle => 'Angl',
-  PsdGradientStyle.reflected => 'Rflc',
-  PsdGradientStyle.diamond => 'Dmnd',
-};

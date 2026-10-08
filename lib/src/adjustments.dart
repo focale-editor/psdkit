@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:pscore/pscore.dart';
+import 'package:psdkit/src/fill_content.dart';
 
 /// Keys used by Photoshop fill and adjustment layers.
 const Set<String> psdAdjustmentKeys = <String>{
@@ -643,6 +644,12 @@ final class PsdDescriptorAdjustment extends PsdAdjustment {
     required this.descriptor,
     Uint8List? trailingData,
   }) : trailingData = trailingData ?? Uint8List(0);
+
+  /// Typed paint of a solid-color, gradient, or pattern fill layer.
+  PsdFillContent? get fill => switch (PsdFillKind.fromAdjustmentType(type)) {
+    final PsdFillKind kind => PsdFillContent.fromDescriptor(kind, descriptor),
+    null => null,
+  };
 
   /// Returns a copy whose descriptor property [key] is [value].
   PsdDescriptorAdjustment withProperty(String key, PsDescriptorValue value) => PsdDescriptorAdjustment(
