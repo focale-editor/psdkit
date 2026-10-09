@@ -110,6 +110,14 @@ final List<Uint8List> channels = PsdPixels.encodeRgb(image);
 
 The first three returned planes are red, green, and blue. The optional fourth plane is alpha. Use channel ids `0`, `1`, `2`, and `-1` respectively when constructing a `PsdLayer`. For a merged image, channels are positional and alpha follows the color planes.
 
+Raster masks use channel `-2` and, when present, the separate real-mask channel
+`-3`. `PsdLayer.mask` exposes each rectangle independently. Photoshop stores the
+real-mask header before optional density and feather parameters; the presence
+of channel `-3`, rather than the mask block's length, identifies that header.
+The complete original mask payload, including parameters, is retained in
+`PsdLayerMask.data` and reused on output. When constructing or editing mask
+metadata, keep that payload consistent with the typed fields and channel sizes.
+
 ## Editable text
 
 `PsdLayer.typeTool` exposes the modern `TySh` tagged block. Its `content` getter converts Adobe `EngineData` into plain text and editable character and paragraph runs. Supported properties include font metadata, grayscale/RGB/CMYK fill and stroke colors, scaling, kerning, leading, OpenType flags, decorations, indents, spacing, hyphenation, composer settings, baseline grid, antialiasing, and point- or box-text geometry:
@@ -308,6 +316,8 @@ final PsdLayer editedLayer = layer.withAdjustment(
   ),
 );
 ```
+
+Levels, hue/saturation, selective color, and channel mixer adjustments extend `pscore`'s `PsLevels`, `PsHueSaturation`, `PsSelectiveColor`, and `PsChannelMixer`, whose codec is shared with Photoshop's `.alv`, `.ahu`, `.asv`, and `.cha` preset files. Use `fromSettings` to turn preset settings into a layer adjustment, for example `PsdLevelsAdjustment.fromSettings(levels)`.
 
 Unknown legacy hue/saturation and gradient-map variants are returned as `PsdRawAdjustment`; their exact payload remains writable. Descriptor-backed values retain unknown Adobe properties and can be changed with `PsdDescriptorAdjustment.withProperty`. PsdKit stores the editable settings but does not render their visual result, so the host application remains responsible for preview channels and the merged image.
 

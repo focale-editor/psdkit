@@ -135,65 +135,30 @@ final class PsdBrightnessContrastAdjustment extends PsdAdjustment {
   PsdAdjustmentType get type => PsdAdjustmentType.brightnessContrast;
 }
 
-/// One channel record in a levels adjustment.
-final class PsdLevelRecord {
-  /// Input black point.
-  final int inputFloor;
-
-  /// Input white point.
-  final int inputCeiling;
-
-  /// Output black point.
-  final int outputFloor;
-
-  /// Output white point.
-  final int outputCeiling;
-
-  /// Gamma encoded as hundredths, where 100 means 1.0.
-  final int gamma;
-
-  /// Creates one levels record.
-  const PsdLevelRecord({
-    this.inputFloor = 0,
-    this.inputCeiling = 255,
-    this.outputFloor = 0,
-    this.outputCeiling = 255,
-    this.gamma = 100,
-  });
-
-  /// Gamma converted to its user-facing floating-point value.
-  double get gammaValue => gamma / 100;
-}
+/// Backward-compatible name for one shared levels channel record.
+typedef PsdLevelRecord = PsLevelRecord;
 
 /// The fixed and extended channel records stored in a `levl` block.
-final class PsdLevelsAdjustment extends PsdAdjustment {
-  /// Main format version, normally 2.
-  final int version;
-
-  /// The 29 standard channel records.
-  final List<PsdLevelRecord> records;
-
-  /// Optional Photoshop extended channel records.
-  final List<PsdLevelRecord> extendedRecords;
-
-  /// Extended-record format version, normally 3.
-  final int extendedVersion;
-
-  /// Uninterpreted bytes following the decoded records.
-  final Uint8List trailingData;
-
+final class PsdLevelsAdjustment extends PsLevels implements PsdAdjustment {
   /// Creates levels settings.
   PsdLevelsAdjustment({
-    this.version = 2,
-    required this.records,
-    this.extendedRecords = const <PsdLevelRecord>[],
-    this.extendedVersion = 3,
-    Uint8List? trailingData,
-  }) : trailingData = trailingData ?? Uint8List(0);
+    super.version,
+    required super.records,
+    super.extendedRecords,
+    super.extendedVersion,
+    super.trailingData,
+  });
 
   /// Creates the 29 neutral levels records expected by Photoshop.
-  factory PsdLevelsAdjustment.identity() => PsdLevelsAdjustment(
-    records: List<PsdLevelRecord>.unmodifiable(List<PsdLevelRecord>.filled(29, const PsdLevelRecord())),
+  factory PsdLevelsAdjustment.identity() => PsdLevelsAdjustment.fromSettings(PsLevels.identity());
+
+  /// Wraps shared [settings], such as those read from an `.alv` preset, as a layer adjustment.
+  factory PsdLevelsAdjustment.fromSettings(PsLevels settings) => PsdLevelsAdjustment(
+    version: settings.version,
+    records: settings.records,
+    extendedRecords: settings.extendedRecords,
+    extendedVersion: settings.extendedVersion,
+    trailingData: settings.trailingData,
   );
 
   @override
@@ -341,62 +306,33 @@ final class PsdExposureAdjustment extends PsdAdjustment {
   PsdAdjustmentType get type => PsdAdjustmentType.exposure;
 }
 
-/// Three signed hue, saturation, and lightness values.
-final class PsdHueSaturationValues {
-  /// Hue change.
-  final int hue;
+/// Backward-compatible name for a shared hue, saturation, and lightness triplet.
+typedef PsdHueSaturationValues = PsHueSaturationValues;
 
-  /// Saturation change.
-  final int saturation;
-
-  /// Lightness change.
-  final int lightness;
-
-  /// Creates one HSL value triplet.
-  const PsdHueSaturationValues({this.hue = 0, this.saturation = 0, this.lightness = 0});
-}
-
-/// One editable color range in a hue/saturation adjustment.
-final class PsdHueSaturationRange {
-  /// Four range boundary values.
-  final List<int> boundaries;
-
-  /// HSL changes within the range.
-  final PsdHueSaturationValues values;
-
-  /// Creates one hue/saturation range.
-  const PsdHueSaturationRange({required this.boundaries, this.values = const PsdHueSaturationValues()});
-}
+/// Backward-compatible name for one shared hue/saturation color range.
+typedef PsdHueSaturationRange = PsHueSaturationRange;
 
 /// Modern hue/saturation settings stored in a `hue2` block.
-final class PsdHueSaturationAdjustment extends PsdAdjustment {
-  /// Format version, normally 2.
-  final int version;
-
-  /// Whether Photoshop uses the colorization controls.
-  final bool colorize;
-
-  /// Colorization values.
-  final PsdHueSaturationValues colorization;
-
-  /// Master HSL changes.
-  final PsdHueSaturationValues master;
-
-  /// Six red-through-magenta color ranges.
-  final List<PsdHueSaturationRange> ranges;
-
-  /// Uninterpreted bytes following the documented fields.
-  final Uint8List trailingData;
-
+final class PsdHueSaturationAdjustment extends PsHueSaturation implements PsdAdjustment {
   /// Creates modern hue/saturation settings.
   PsdHueSaturationAdjustment({
-    this.version = 2,
-    this.colorize = false,
-    this.colorization = const PsdHueSaturationValues(),
-    this.master = const PsdHueSaturationValues(),
-    required this.ranges,
-    Uint8List? trailingData,
-  }) : trailingData = trailingData ?? Uint8List(0);
+    super.version,
+    super.colorize,
+    super.colorization,
+    super.master,
+    required super.ranges,
+    super.trailingData,
+  });
+
+  /// Wraps shared [settings], such as those read from an `.ahu` preset, as a layer adjustment.
+  factory PsdHueSaturationAdjustment.fromSettings(PsHueSaturation settings) => PsdHueSaturationAdjustment(
+    version: settings.version,
+    colorize: settings.colorize,
+    colorization: settings.colorization,
+    master: settings.master,
+    ranges: settings.ranges,
+    trailingData: settings.trailingData,
+  );
 
   @override
   String get blockKey => 'hue2';
@@ -453,39 +389,26 @@ final class PsdColorBalanceAdjustment extends PsdAdjustment {
   PsdAdjustmentType get type => PsdAdjustmentType.colorBalance;
 }
 
-/// One output channel in a channel-mixer adjustment.
-final class PsdChannelMixerOutput {
-  /// Four source-channel percentages.
-  final List<int> channels;
-
-  /// Constant percentage added to the output.
-  final int constant;
-
-  /// Creates one channel-mixer output row.
-  const PsdChannelMixerOutput({required this.channels, this.constant = 0});
-}
+/// Backward-compatible name for one shared channel-mixer output row.
+typedef PsdChannelMixerOutput = PsChannelMixerOutput;
 
 /// Channel-mixer settings stored in a `mixr` block.
-final class PsdChannelMixerAdjustment extends PsdAdjustment {
-  /// Format version, normally 1.
-  final int version;
-
-  /// Whether the output is monochrome.
-  final bool monochrome;
-
-  /// Four RGB/CMYK output rows.
-  final List<PsdChannelMixerOutput> outputs;
-
-  /// Uninterpreted bytes following the documented fields.
-  final Uint8List trailingData;
-
+final class PsdChannelMixerAdjustment extends PsChannelMixer implements PsdAdjustment {
   /// Creates channel-mixer settings.
   PsdChannelMixerAdjustment({
-    this.version = 1,
-    this.monochrome = false,
-    required this.outputs,
-    Uint8List? trailingData,
-  }) : trailingData = trailingData ?? Uint8List(0);
+    super.version,
+    super.monochrome,
+    required super.outputs,
+    super.trailingData,
+  });
+
+  /// Wraps shared [settings], such as those read from a `.cha` preset, as a layer adjustment.
+  factory PsdChannelMixerAdjustment.fromSettings(PsChannelMixer settings) => PsdChannelMixerAdjustment(
+    version: settings.version,
+    monochrome: settings.monochrome,
+    outputs: settings.outputs,
+    trailingData: settings.trailingData,
+  );
 
   @override
   String get blockKey => 'mixr';
@@ -527,46 +450,26 @@ final class PsdPhotoFilterAdjustment extends PsdAdjustment {
   PsdAdjustmentType get type => PsdAdjustmentType.photoFilter;
 }
 
-/// A cyan, magenta, yellow, and black selective-color correction.
-final class PsdSelectiveColorCorrection {
-  /// Cyan correction.
-  final int cyan;
-
-  /// Magenta correction.
-  final int magenta;
-
-  /// Yellow correction.
-  final int yellow;
-
-  /// Black correction.
-  final int black;
-
-  /// Creates one selective-color correction record.
-  const PsdSelectiveColorCorrection({this.cyan = 0, this.magenta = 0, this.yellow = 0, this.black = 0});
-}
+/// Backward-compatible name for one shared selective-color correction.
+typedef PsdSelectiveColorCorrection = PsSelectiveColorCorrection;
 
 /// Selective-color settings stored in a `selc` block.
-final class PsdSelectiveColorAdjustment extends PsdAdjustment {
-  /// Format version, normally 1.
-  final int version;
-
-  /// Whether corrections are absolute instead of relative.
-  final bool absolute;
-
-  /// Reserved record followed by red, yellow, green, cyan, blue, magenta,
-  /// white, neutral, and black corrections.
-  final List<PsdSelectiveColorCorrection> corrections;
-
-  /// Uninterpreted bytes following the documented fields.
-  final Uint8List trailingData;
-
+final class PsdSelectiveColorAdjustment extends PsSelectiveColor implements PsdAdjustment {
   /// Creates selective-color settings.
   PsdSelectiveColorAdjustment({
-    this.version = 1,
-    this.absolute = false,
-    required this.corrections,
-    Uint8List? trailingData,
-  }) : trailingData = trailingData ?? Uint8List(0);
+    super.version,
+    super.absolute,
+    required super.corrections,
+    super.trailingData,
+  });
+
+  /// Wraps shared [settings], such as those read from an `.asv` preset, as a layer adjustment.
+  factory PsdSelectiveColorAdjustment.fromSettings(PsSelectiveColor settings) => PsdSelectiveColorAdjustment(
+    version: settings.version,
+    absolute: settings.absolute,
+    corrections: settings.corrections,
+    trailingData: settings.trailingData,
+  );
 
   @override
   String get blockKey => 'selc';
@@ -690,16 +593,16 @@ abstract final class PsdAdjustmentCodec {
       final PsBinaryReader reader = PsBinaryReader(bytes: data);
       return switch (key) {
         'brit' => _readBrightnessContrast(reader),
-        'levl' => _readLevels(reader),
+        'levl' => PsdLevelsAdjustment.fromSettings(PsAdjustmentSettingsCodec.readLevels(reader)),
         'curv' => _readCurves(reader),
         'expA' => _readExposure(reader),
-        'hue2' => _readHueSaturation(reader),
+        'hue2' => PsdHueSaturationAdjustment.fromSettings(PsAdjustmentSettingsCodec.readHueSaturation(reader)),
         'blnc' => _readColorBalance(reader),
         'phfl' => _readPhotoFilter(reader),
-        'mixr' => _readChannelMixer(reader),
+        'mixr' => PsdChannelMixerAdjustment.fromSettings(PsAdjustmentSettingsCodec.readChannelMixer(reader)),
         'nvrt' => PsdInvertAdjustment(data: reader.readBytes(reader.remaining)),
         'post' || 'thrs' => _readSingleValue(reader, key),
-        'selc' => _readSelectiveColor(reader),
+        'selc' => PsdSelectiveColorAdjustment.fromSettings(PsAdjustmentSettingsCodec.readSelectiveColor(reader)),
         'SoCo' || 'GdFl' || 'PtFl' || 'vibA' || 'blwh' || 'clrL' => _readDescriptorAdjustment(reader, key),
         _ => PsdRawAdjustment(blockKey: key, type: _typeForKey(key), data: data),
       };
@@ -729,7 +632,7 @@ abstract final class PsdAdjustmentCodec {
           ..writeUint8(adjustment.labColorOnly ? 1 : 0)
           ..writeBytes(adjustment.trailingData);
       case PsdLevelsAdjustment():
-        _writeLevels(writer, adjustment);
+        PsAdjustmentSettingsCodec.writeLevels(writer, adjustment);
       case PsdCurvesAdjustment():
         _writeCurves(writer, adjustment);
       case PsdExposureAdjustment():
@@ -740,15 +643,15 @@ abstract final class PsdAdjustmentCodec {
           ..writeInt32(_fixed(adjustment.gamma))
           ..writeBytes(adjustment.trailingData);
       case PsdHueSaturationAdjustment():
-        _writeHueSaturation(writer, adjustment);
+        PsAdjustmentSettingsCodec.writeHueSaturation(writer, adjustment);
       case PsdColorBalanceAdjustment():
         _writeColorBalance(writer, adjustment);
       case PsdChannelMixerAdjustment():
-        _writeChannelMixer(writer, adjustment);
+        PsAdjustmentSettingsCodec.writeChannelMixer(writer, adjustment);
       case PsdPhotoFilterAdjustment():
         _writePhotoFilter(writer, adjustment);
       case PsdSelectiveColorAdjustment():
-        _writeSelectiveColor(writer, adjustment);
+        PsAdjustmentSettingsCodec.writeSelectiveColor(writer, adjustment);
       case PsdSingleValueAdjustment():
         writer
           ..writeUint16(adjustment.value)
@@ -771,38 +674,6 @@ PsdBrightnessContrastAdjustment _readBrightnessContrast(PsBinaryReader reader) =
   mean: reader.readInt16(),
   labColorOnly: reader.readUint8() != 0,
   trailingData: reader.readBytes(reader.remaining),
-);
-
-/// Reads the standard and optional extended levels records.
-PsdLevelsAdjustment _readLevels(PsBinaryReader reader) {
-  final int version = reader.readUint16();
-  final List<PsdLevelRecord> records = <PsdLevelRecord>[for (int index = 0; index < 29; index++) _readLevelRecord(reader)];
-  final List<PsdLevelRecord> extended = <PsdLevelRecord>[];
-  int extendedVersion = 3;
-  if (reader.remaining >= 8 && _peekString(reader, 4) == 'Lvls') {
-    reader.skip(4);
-    extendedVersion = reader.readUint16();
-    final int count = reader.readUint16();
-    for (int index = 29; index < count; index++) {
-      extended.add(_readLevelRecord(reader));
-    }
-  }
-  return PsdLevelsAdjustment(
-    version: version,
-    records: records,
-    extendedRecords: extended,
-    extendedVersion: extendedVersion,
-    trailingData: reader.readBytes(reader.remaining),
-  );
-}
-
-/// Reads one levels channel record.
-PsdLevelRecord _readLevelRecord(PsBinaryReader reader) => PsdLevelRecord(
-  inputFloor: reader.readUint16(),
-  inputCeiling: reader.readUint16(),
-  outputFloor: reader.readUint16(),
-  outputCeiling: reader.readUint16(),
-  gamma: reader.readUint16(),
 );
 
 /// Reads main bitmap curves and optional version-4 duplicates.
@@ -854,37 +725,6 @@ PsdExposureAdjustment _readExposure(PsBinaryReader reader) => PsdExposureAdjustm
   trailingData: reader.readBytes(reader.remaining),
 );
 
-/// Reads modern hue/saturation settings.
-PsdHueSaturationAdjustment _readHueSaturation(PsBinaryReader reader) {
-  final int version = reader.readUint16();
-  final bool colorize = reader.readUint8() != 0;
-  reader.readUint8();
-  final PsdHueSaturationValues colorization = _readHueValues(reader);
-  final PsdHueSaturationValues master = _readHueValues(reader);
-  final List<PsdHueSaturationRange> ranges = <PsdHueSaturationRange>[
-    for (int index = 0; index < 6; index++)
-      PsdHueSaturationRange(
-        boundaries: <int>[for (int boundary = 0; boundary < 4; boundary++) reader.readInt16()],
-        values: _readHueValues(reader),
-      ),
-  ];
-  return PsdHueSaturationAdjustment(
-    version: version,
-    colorize: colorize,
-    colorization: colorization,
-    master: master,
-    ranges: ranges,
-    trailingData: reader.readBytes(reader.remaining),
-  );
-}
-
-/// Reads one HSL triplet.
-PsdHueSaturationValues _readHueValues(PsBinaryReader reader) => PsdHueSaturationValues(
-  hue: reader.readInt16(),
-  saturation: reader.readInt16(),
-  lightness: reader.readInt16(),
-);
-
 /// Reads the three tonal ranges of a color-balance adjustment.
 PsdColorBalanceAdjustment _readColorBalance(PsBinaryReader reader) => PsdColorBalanceAdjustment(
   shadows: _readColorBalanceValues(reader),
@@ -899,20 +739,6 @@ PsdColorBalanceValues _readColorBalanceValues(PsBinaryReader reader) => PsdColor
   cyanRed: reader.readInt16(),
   magentaGreen: reader.readInt16(),
   yellowBlue: reader.readInt16(),
-);
-
-/// Reads four channel-mixer output rows.
-PsdChannelMixerAdjustment _readChannelMixer(PsBinaryReader reader) => PsdChannelMixerAdjustment(
-  version: reader.readUint16(),
-  monochrome: reader.readUint16() != 0,
-  outputs: <PsdChannelMixerOutput>[
-    for (int output = 0; output < 4; output++)
-      PsdChannelMixerOutput(
-        channels: <int>[for (int channel = 0; channel < 4; channel++) reader.readInt16()],
-        constant: reader.readInt16(),
-      ),
-  ],
-  trailingData: reader.readBytes(reader.remaining),
 );
 
 /// Reads version-dependent photo-filter color data.
@@ -935,22 +761,6 @@ PsdSingleValueAdjustment _readSingleValue(PsBinaryReader reader, String key) => 
   trailingData: reader.readBytes(reader.remaining),
 );
 
-/// Reads all ten selective-color plate records.
-PsdSelectiveColorAdjustment _readSelectiveColor(PsBinaryReader reader) => PsdSelectiveColorAdjustment(
-  version: reader.readUint16(),
-  absolute: reader.readUint16() != 0,
-  corrections: <PsdSelectiveColorCorrection>[
-    for (int index = 0; index < 10; index++)
-      PsdSelectiveColorCorrection(
-        cyan: reader.readInt16(),
-        magenta: reader.readInt16(),
-        yellow: reader.readInt16(),
-        black: reader.readInt16(),
-      ),
-  ],
-  trailingData: reader.readBytes(reader.remaining),
-);
-
 /// Reads a descriptor-backed fill or adjustment.
 PsdDescriptorAdjustment _readDescriptorAdjustment(PsBinaryReader reader, String key) {
   int? version;
@@ -968,37 +778,6 @@ PsdDescriptorAdjustment _readDescriptorAdjustment(PsBinaryReader reader, String 
     descriptor: decoded.descriptor,
     trailingData: Uint8List.fromList(Uint8List.sublistView(payload, decoded.bytesRead)),
   );
-}
-
-/// Writes standard and optional extended levels records.
-void _writeLevels(PsBinaryWriter writer, PsdLevelsAdjustment adjustment) {
-  if (adjustment.records.length != 29) {
-    throw const PsWriteException(message: 'Levels adjustments require exactly 29 standard records');
-  }
-  writer.writeUint16(adjustment.version);
-  for (final PsdLevelRecord record in adjustment.records) {
-    _writeLevelRecord(writer, record);
-  }
-  if (adjustment.extendedRecords.isNotEmpty) {
-    writer
-      ..writeString('Lvls')
-      ..writeUint16(adjustment.extendedVersion)
-      ..writeUint16(29 + adjustment.extendedRecords.length);
-    for (final PsdLevelRecord record in adjustment.extendedRecords) {
-      _writeLevelRecord(writer, record);
-    }
-  }
-  writer.writeBytes(adjustment.trailingData);
-}
-
-/// Writes one levels channel record.
-void _writeLevelRecord(PsBinaryWriter writer, PsdLevelRecord record) {
-  writer
-    ..writeUint16(record.inputFloor)
-    ..writeUint16(record.inputCeiling)
-    ..writeUint16(record.outputFloor)
-    ..writeUint16(record.outputCeiling)
-    ..writeUint16(record.gamma);
 }
 
 /// Writes bitmap curves and optional extended curves.
@@ -1037,35 +816,6 @@ void _writeCurve(PsBinaryWriter writer, PsdCurve curve) {
   PsToneCurveCodec.write(writer, PsToneCurve(points: curve.points));
 }
 
-/// Writes modern hue/saturation settings.
-void _writeHueSaturation(PsBinaryWriter writer, PsdHueSaturationAdjustment adjustment) {
-  if (adjustment.ranges.length != 6) {
-    throw const PsWriteException(message: 'Hue/saturation adjustments require exactly six ranges');
-  }
-  writer
-    ..writeUint16(adjustment.version)
-    ..writeUint8(adjustment.colorize ? 1 : 0)
-    ..writeUint8(0);
-  _writeHueValues(writer, adjustment.colorization);
-  _writeHueValues(writer, adjustment.master);
-  for (final PsdHueSaturationRange range in adjustment.ranges) {
-    if (range.boundaries.length != 4) {
-      throw const PsWriteException(message: 'Each hue/saturation range requires four boundaries');
-    }
-    range.boundaries.forEach(writer.writeInt16);
-    _writeHueValues(writer, range.values);
-  }
-  writer.writeBytes(adjustment.trailingData);
-}
-
-/// Writes one HSL triplet.
-void _writeHueValues(PsBinaryWriter writer, PsdHueSaturationValues values) {
-  writer
-    ..writeInt16(values.hue)
-    ..writeInt16(values.saturation)
-    ..writeInt16(values.lightness);
-}
-
 /// Writes the color-balance tonal ranges.
 void _writeColorBalance(PsBinaryWriter writer, PsdColorBalanceAdjustment adjustment) {
   _writeColorBalanceValues(writer, adjustment.shadows);
@@ -1084,21 +834,6 @@ void _writeColorBalanceValues(PsBinaryWriter writer, PsdColorBalanceValues value
     ..writeInt16(values.yellowBlue);
 }
 
-/// Writes four channel-mixer output rows.
-void _writeChannelMixer(PsBinaryWriter writer, PsdChannelMixerAdjustment adjustment) {
-  if (adjustment.outputs.length != 4 || adjustment.outputs.any((output) => output.channels.length != 4)) {
-    throw const PsWriteException(message: 'Channel mixer adjustments require four output rows of four channels');
-  }
-  writer
-    ..writeUint16(adjustment.version)
-    ..writeUint16(adjustment.monochrome ? 1 : 0);
-  for (final PsdChannelMixerOutput output in adjustment.outputs) {
-    output.channels.forEach(writer.writeInt16);
-    writer.writeInt16(output.constant);
-  }
-  writer.writeBytes(adjustment.trailingData);
-}
-
 /// Writes version-dependent photo-filter data.
 void _writePhotoFilter(PsBinaryWriter writer, PsdPhotoFilterAdjustment adjustment) {
   final int expectedLength = adjustment.version == 3 ? 12 : 10;
@@ -1111,24 +846,6 @@ void _writePhotoFilter(PsBinaryWriter writer, PsdPhotoFilterAdjustment adjustmen
     ..writeUint32(adjustment.density)
     ..writeUint8(adjustment.preserveLuminosity ? 1 : 0)
     ..writeBytes(adjustment.trailingData);
-}
-
-/// Writes ten selective-color correction records.
-void _writeSelectiveColor(PsBinaryWriter writer, PsdSelectiveColorAdjustment adjustment) {
-  if (adjustment.corrections.length != 10) {
-    throw const PsWriteException(message: 'Selective color adjustments require exactly ten correction records');
-  }
-  writer
-    ..writeUint16(adjustment.version)
-    ..writeUint16(adjustment.absolute ? 1 : 0);
-  for (final PsdSelectiveColorCorrection correction in adjustment.corrections) {
-    writer
-      ..writeInt16(correction.cyan)
-      ..writeInt16(correction.magenta)
-      ..writeInt16(correction.yellow)
-      ..writeInt16(correction.black);
-  }
-  writer.writeBytes(adjustment.trailingData);
 }
 
 /// Writes the version header and complete action descriptor.

@@ -1,4 +1,4 @@
-# Filter-effect interoperability fixture
+# Photoshop interoperability fixtures
 
 `filter_effects_1.base64` is the unchanged base64 encoding of
 [`tests/tagged_blocks/filter_effects_1.dat`](https://github.com/psd-tools/psd-tools/blob/main/tests/tagged_blocks/filter_effects_1.dat)
@@ -9,3 +9,17 @@ checked with psd-tools. The fixture is not a complete PSD document.
 
 Source: https://github.com/psd-tools/psd-tools
 License: MIT; see `psd-tools-LICENSE.txt` beside this file.
+
+## Layer masks
+
+`layer_mask_data.base64` is the unchanged base64 encoding of
+[`tests/psd_files/layer_mask_data.psd`](https://github.com/psd-tools/psd-tools/blob/main/tests/psd_files/layer_mask_data.psd)
+from the same MIT-licensed repository, retrieved on 2026-10-09.
+
+- Git blob: `9e1ee6f835aa0f1f016a9eaa1e4ea49b094dfb24`.
+- Source SHA-256: `e30f5d2f51ef2dc5790b45b50ff3911ab7991ffdf63230561364a2574c1392aa`.
+
+This complete PSD contains five layers, raster masks with optional density and
+feather parameters, and a separate real-mask channel. The regression test checks
+its independently sized rectangles, sample counts, and channel preservation
+through a document round trip. It does not assert complete file byte equality.

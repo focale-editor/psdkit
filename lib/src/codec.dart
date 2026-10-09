@@ -454,7 +454,7 @@ _LayerRecord _readLayerRecord(PsBinaryReader reader, PsdVersion version) {
   reader.skip(1);
   final PsBinaryReader extra = reader.readReader(reader.readLength(wide: false, label: 'layer extra data'));
   final int maskLength = extra.readLength(wide: false, label: 'layer mask data');
-  final PsdLayerMask? mask = maskLength == 0 ? null : _readMask(extra.readBytes(maskLength));
+  final PsdLayerMask? mask = maskLength == 0 ? null : _readMask(extra.readBytes(maskLength), hasRealMask: channelDescriptors.any((channel) => channel.id == -3));
   final Uint8List blendingRanges = extra.readBytes(extra.readLength(wide: false, label: 'layer blending ranges'));
   final int nameStart = extra.offset;
   final int nameLength = extra.readUint8();
@@ -482,7 +482,7 @@ _LayerRecord _readLayerRecord(PsBinaryReader reader, PsdVersion version) {
 }
 
 /// Parses stable fields from a layer-mask payload while retaining all bytes.
-PsdLayerMask _readMask(Uint8List data) {
+PsdLayerMask _readMask(Uint8List data, {required bool hasRealMask}) {
   if (data.length < 18) {
     throw const PsFormatException(message: 'Layer mask data is shorter than 18 bytes');
   }
@@ -493,11 +493,13 @@ PsdLayerMask _readMask(Uint8List data) {
   PsdRectangle? realRectangle;
   int? realFlags;
   int? realDefaultColor;
-  if (data.length >= 36) {
-    final PsBinaryReader tail = PsBinaryReader(bytes: Uint8List.sublistView(data, data.length - 18));
-    realFlags = tail.readUint8();
-    realDefaultColor = tail.readUint8();
-    realRectangle = _readRectangle(tail);
+  if (hasRealMask) {
+    // Photoshop stores the real-mask header before the optional parameters.
+    // Parameters alone can also make a block exceed 36 bytes, so its length
+    // does not establish the presence of this header; channel -3 does.
+    realFlags = reader.readUint8();
+    realDefaultColor = reader.readUint8();
+    realRectangle = _readRectangle(reader);
   }
   return PsdLayerMask(
     rectangle: rectangle,
