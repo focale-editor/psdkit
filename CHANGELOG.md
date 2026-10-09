@@ -1,5 +1,11 @@
 # 📰 PsdKit changelog
 
+## v0.4.5
+Released on October 9, 2026.
+
+* **FEAT**: Added layer blending options, locks, labels, artboards, fill and shape strokes, and document patterns. ([#3be0373](https://github.com/focale-editor/psdkit/commit/3be0373))
+* **FIX**: Identified real layer-mask headers via channel -3 and shared adjustment codecs with pscore. ([#d90a4d8](https://github.com/focale-editor/psdkit/commit/d90a4d8))
+
 ## v0.4.4
 Released on October 5, 2026.
 
