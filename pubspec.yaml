@@ -19,8 +19,8 @@ environment:
   sdk: '>=3.13.0 <4.0.0'
 
 dependencies:
-  aslkit: '>=0.2.0 <0.3.0'
-  pscore: '>=0.1.6 <0.2.0'
+  aslkit: ^0.3.0
+  pscore: ^0.2.0
   zcodec: '>=0.2.0 <0.3.0'
 
 dev_dependencies:
