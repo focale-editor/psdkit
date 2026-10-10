@@ -1,5 +1,11 @@
 # 📰 PsdKit changelog
 
+## v0.5.0
+Released on October 10, 2026.
+
+* **FEAT**: Added editable gradient maps and source-preserving PSD round trips. ([#db18957](https://github.com/focale-editor/psdkit/commit/db18957))
+* **BREAKING CHORE**: Updated pscore to 0.2.0 and aslkit to 0.3.0. ([#6227644](https://github.com/focale-editor/psdkit/commit/6227644))
+
 ## v0.4.5
 Released on October 9, 2026.
 
