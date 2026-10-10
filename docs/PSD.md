@@ -110,6 +110,8 @@ final List<Uint8List> channels = PsdPixels.encodeRgb(image);
 
 The first three returned planes are red, green, and blue. The optional fourth plane is alpha. Use channel ids `0`, `1`, `2`, and `-1` respectively when constructing a `PsdLayer`. For a merged image, channels are positional and alpha follows the color planes.
 
+PackBits and ZIP streams written by other applications, such as ImageReady, are split differently from Photoshop's. To keep such files unchanged, opt into `PsdReadOptions(preserveSourceEncoding: true)`. Each decoded buffer then remembers its compressed source. Writing it again reuses that source only when width, height, bit depth, merged/layer stream kind, compression and PSD/PSB row-length format also match. Source retention defaults to false to avoid copying compressed payloads and hashing samples in editors that do not re-encode the source model. A checksum taken at decoding detects samples modified in place, and a new buffer is always compressed again. Likewise, the zero padding ending the layer information, which some writers align to four bytes, and the absence of a `luni` Unicode-name block on a layer are both preserved: `PsdLayer.writesUnicodeName` is false for a layer read without that block, and an existing block is rewritten in place only when the layer is renamed.
+
 Raster masks use channel `-2` and, when present, the separate real-mask channel
 `-3`. `PsdLayer.mask` exposes each rectangle independently. Photoshop stores the
 real-mask header before optional density and feather parameters; the presence
@@ -221,6 +223,8 @@ final PsdLayer editedLayer = layer.withEffects(
 );
 ```
 
+`PsdLayerEffect.color` and `PsdEffectGradient.fromGradient` return sRGB colors: RGB values are kept, and grayscale, CMYK, HSB, and Lab colors, which Photoshop writes for colors picked in those spaces, are converted with `PsColor.toRgb`. Book colors have no conversion; the complete descriptor remains available through `PsdLayerEffect.view`.
+
 Unchanged modern and legacy blocks round-trip byte for byte. Editing a legacy `lrFX` record upgrades it to modern `lfx2`, avoiding the limitations of the historical fixed structures. PsdKit stores effect definitions but does not rasterize them; the application remains responsible for matching layer preview channels and the merged image.
 
 ## Blending options, locks, labels, and artboards
@@ -295,7 +299,7 @@ Use `PsdDocument.withNamedPaths` for saved document paths. Clipboard, fill-rule,
 
 ## Fill and adjustment layers
 
-`PsdLayer.adjustment` recognizes Photoshop fill and adjustment keys. Brightness/contrast, levels, curves, exposure, hue/saturation, color balance, photo filter, channel mixer, invert, posterize, threshold, and selective color have typed models. Solid color, gradient, pattern, vibrance, black and white, and color lookup expose their complete action descriptor:
+`PsdLayer.adjustment` recognizes Photoshop fill and adjustment keys. Brightness/contrast, levels, curves, exposure, hue/saturation, color balance, photo filter, channel mixer, invert, posterize, threshold, gradient map, and selective color have typed models. Solid color, gradient, pattern, vibrance, black and white, and color lookup expose their complete action descriptor:
 
 ```dart
 final PsdAdjustment? adjustment = layer.adjustment;
@@ -318,6 +322,8 @@ final PsdLayer editedLayer = layer.withAdjustment(
 ```
 
 Levels, hue/saturation, selective color, and channel mixer adjustments extend `pscore`'s `PsLevels`, `PsHueSaturation`, `PsSelectiveColor`, and `PsChannelMixer`, whose codec is shared with Photoshop's `.alv`, `.ahu`, `.asv`, and `.cha` preset files. Use `fromSettings` to turn preset settings into a layer adjustment, for example `PsdLevelsAdjustment.fromSettings(levels)`.
+
+Modern Photoshop keeps the `brit` block for older readers and stores the current brightness/contrast settings, with `useLegacy` and `Auto`, in a `CgEd` descriptor. `PsdLayer.adjustment` reads them from there, and `PsdLayer.withAdjustment` writes both blocks; it drops `CgEd` for other adjustments, where it only names the preset the replaced values came from. Exposure, offset, and gamma are 32-bit floats. A gradient map (`grdm`) stores its colour and opacity stops in the record layout of legacy `.grd` files, followed by noise parameters that are present even for a solid gradient.
 
 Unknown legacy hue/saturation and gradient-map variants are returned as `PsdRawAdjustment`; their exact payload remains writable. Descriptor-backed values retain unknown Adobe properties and can be changed with `PsdDescriptorAdjustment.withProperty`. PsdKit stores the editable settings but does not render their visual result, so the host application remains responsible for preview channels and the merged image.
 

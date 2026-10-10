@@ -76,15 +76,17 @@ final class PsdEffectColor {
   /// The color packed as an ARGB integer.
   int get argb => alpha << 24 | red << 16 | green << 8 | blue;
 
-  /// Returns an opaque color from an RGB [color], or `null` for other spaces.
+  /// Returns an opaque sRGB color approximating [color].
+  ///
+  /// RGB colors are kept as they are; grayscale, CMYK, HSB and Lab colors are
+  /// converted with [PsColor.toRgb]. Returns `null` for book colors and for
+  /// descriptors missing a component.
   static PsdEffectColor? fromColor(PsColor color) {
-    final double? red = color.red;
-    final double? green = color.green;
-    final double? blue = color.blue;
-    if (red == null || green == null || blue == null) {
+    final ({double red, double green, double blue})? rgb = color.toRgb();
+    if (rgb == null || !rgb.red.isFinite || !rgb.green.isFinite || !rgb.blue.isFinite) {
       return null;
     }
-    return PsdEffectColor(alpha: 255, red: red.clamp(0, 255).round(), green: green.clamp(0, 255).round(), blue: blue.clamp(0, 255).round());
+    return PsdEffectColor(alpha: 255, red: rgb.red.clamp(0, 255).round(), green: rgb.green.clamp(0, 255).round(), blue: rgb.blue.clamp(0, 255).round());
   }
 
   /// Converts this color to a Photoshop RGB color descriptor view.
@@ -135,7 +137,7 @@ final class PsdEffectGradient {
   /// Creates a custom effect gradient.
   const PsdEffectGradient({this.name = 'Custom', required this.colors, this.opacities = const <PsdGradientOpacityStop>[]});
 
-  /// Returns the RGB custom stops of [gradient], skipping non-RGB colors.
+  /// Returns the custom stops of [gradient] in sRGB, skipping book colors.
   factory PsdEffectGradient.fromGradient(PsGradient gradient) => PsdEffectGradient(
     name: gradient.name ?? '',
     colors: [
@@ -284,7 +286,7 @@ final class PsdLayerEffect {
   /// Effect opacity percentage.
   double get opacity => descriptor.scalarValue('Opct') ?? descriptor.scalarValue('hglO') ?? 100;
 
-  /// Primary effect color, when the effect uses an RGB one.
+  /// Primary effect color in sRGB, when the effect has a convertible one.
   PsdEffectColor? get color => _rgb(view.color) ?? _rgb(view.highlightColor);
 
   /// Blur or stroke size in pixels, when applicable.
@@ -296,7 +298,10 @@ final class PsdLayerEffect {
   /// Shadow distance in pixels, when applicable.
   double? get distance => descriptor.scalarValue('Dstn');
 
-  /// Shadow spread or glow choke in pixels.
+  /// Shadow spread or glow choke, as a percentage of the effect size.
+  ///
+  /// Photoshop tags the value with a pixel unit, but its dialog and renderer
+  /// treat it as a percentage.
   double? get spread => descriptor.scalarValue('Ckmt');
 
   /// Noise percentage, when applicable.

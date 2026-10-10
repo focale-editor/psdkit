@@ -118,6 +118,51 @@ void main() {
       expect(PsdAdjustmentCodec.encode(balance), orderedEquals(bytes));
     });
 
+    test('writes exposure as 32-bit floats, as Photoshop does', () {
+      final Uint8List bytes = PsdAdjustmentCodec.encode(PsdExposureAdjustment(exposure: -2));
+
+      expect(bytes, orderedEquals(<int>[0, 1, 0xc0, 0, 0, 0, 0, 0, 0, 0, 0x3f, 0x80, 0, 0, 0, 0]));
+    });
+
+    test('keeps the CgEd block in step with brightness/contrast', () {
+      final PsdLayer layer = PsdLayer(
+        rectangle: const PsdRectangle.fromSize(width: 1, height: 1),
+        name: 'Adjustment',
+        channels: <PsdChannel>[for (int id = -1; id < 3; id++) PsdChannel(id: id, data: Uint8List(1))],
+      );
+
+      final PsdLayer modern = layer.withAdjustment(PsdBrightnessContrastAdjustment(brightness: 30, contrast: -12));
+      final PsdLayer legacy = modern.withAdjustment(PsdBrightnessContrastAdjustment(brightness: 5, useLegacy: true));
+      final PsdLayer replaced = modern.withAdjustment(PsdExposureAdjustment(exposure: 1));
+
+      expect((modern.adjustment! as PsdBrightnessContrastAdjustment).contrast, -12);
+      expect((modern.adjustment! as PsdBrightnessContrastAdjustment).useLegacy, isFalse);
+      expect(legacy.taggedBlock('CgEd'), isNull);
+      expect((legacy.adjustment! as PsdBrightnessContrastAdjustment).useLegacy, isTrue);
+      expect(replaced.taggedBlock('CgEd'), isNull);
+    });
+
+    test('round-trips a gradient map and falls back to raw bytes for unknown layouts', () {
+      final PsdGradientMapAdjustment map = PsdGradientMapAdjustment(
+        reverse: true,
+        name: 'Duo',
+        colorStops: <PsdGradientMapColorStop>[
+          PsdGradientMapColorStop.rgb(location: 0, red: 0, green: 0, blue: 0),
+          PsdGradientMapColorStop.rgb(location: 4096, red: 255, green: 128, blue: 0, midpoint: 40),
+        ],
+      );
+
+      final Uint8List bytes = PsdAdjustmentCodec.encode(map);
+      final PsdGradientMapAdjustment decoded = PsdAdjustmentCodec.decode(bytes, key: 'grdm') as PsdGradientMapAdjustment;
+
+      expect(decoded.reverse, isTrue);
+      expect(decoded.name, 'Duo');
+      expect(decoded.colorStops.last.components, <int>[65535, 32896, 0, 0]);
+      expect(decoded.colorStops.last.midpoint, 40);
+      expect(PsdAdjustmentCodec.encode(decoded), orderedEquals(bytes));
+      expect(PsdAdjustmentCodec.decode(Uint8List.fromList(<int>[0, 2, 0, 0]), key: 'grdm'), isA<PsdRawAdjustment>());
+    });
+
     test('round-trips levels, exposure, hue, mixer, filter, and selective color', () {
       final List<PsdAdjustment> adjustments = <PsdAdjustment>[
         PsdLevelsAdjustment.identity(),

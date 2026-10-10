@@ -23,3 +23,18 @@ This complete PSD contains five layers, raster masks with optional density and
 feather parameters, and a separate real-mask channel. The regression test checks
 its independently sized rectangles, sample counts, and channel preservation
 through a document round trip. It does not assert complete file byte equality.
+
+## Adjustment layers
+
+`adjustment_layers.base64` is the unchanged base64 encoding of
+[`test/read/adjustment-layers/src.psd`](https://github.com/Agamnentzar/ag-psd/blob/master/test/read/adjustment-layers/src.psd)
+from ag-psd, retrieved on 2026-10-10.
+
+- Source SHA-256: `60a8e5f4226345bc5adc8ea6a1ce2f65c36ff03000fdb94be98c8931a71c7bc2`.
+
+Photoshop saved this document with one layer per adjustment type. The test
+checks values against ag-psd's expected `data.json`: brightness/contrast read
+from the `CgEd` descriptor, floating-point exposure, and the gradient map.
+
+Source: https://github.com/Agamnentzar/ag-psd
+License: MIT; see `ag-psd-LICENSE.txt` beside this file.

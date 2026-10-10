@@ -260,6 +260,13 @@ final class PsdLayer {
   /// Tagged data such as text, effects, vector paths, and adjustment settings.
   final List<PsdTaggedBlock> additionalInfo;
 
+  /// Whether encoding adds a `luni` Unicode-name block when [additionalInfo] has none.
+  ///
+  /// Photoshop writes one for every layer, so new layers get one. Layers read
+  /// from a file without one, such as ImageReady's, keep the file's layout,
+  /// unless their name cannot be stored in the one-byte Pascal name.
+  final bool writesUnicodeName;
+
   /// Creates a layer.
   PsdLayer({
     required this.rectangle,
@@ -272,19 +279,38 @@ final class PsdLayer {
     this.mask,
     Uint8List? blendingRanges,
     this.additionalInfo = const [],
+    this.writesUnicodeName = true,
   }) : blendingRanges = blendingRanges ?? Uint8List(0);
 
   /// Whether the layer is visible.
   bool get visible => flags & 0x02 == 0;
 
   /// Decoded fill or adjustment settings, when the layer contains them.
+  ///
+  /// Brightness/contrast settings come from the `CgEd` descriptor modern
+  /// Photoshop writes, falling back to the legacy `brit` values without it.
   PsdAdjustment? get adjustment {
     for (final PsdTaggedBlock block in additionalInfo.reversed) {
       if (psdAdjustmentKeys.contains(block.key)) {
-        return PsdAdjustmentCodec.tryDecode(block.data, key: block.key);
+        final PsdAdjustment? decoded = PsdAdjustmentCodec.tryDecode(block.data, key: block.key);
+        return decoded is PsdBrightnessContrastAdjustment ? _modernBrightnessContrast(decoded) ?? decoded : decoded;
       }
     }
     return null;
+  }
+
+  /// Reads the `CgEd` settings overriding [legacy], when the layer has them.
+  PsdBrightnessContrastAdjustment? _modernBrightnessContrast(PsdBrightnessContrastAdjustment legacy) {
+    final PsdTaggedBlock? block = taggedBlock('CgEd');
+    if (block == null) {
+      return null;
+    }
+    try {
+      final PsDescriptor descriptor = PsVersionedDescriptorCodec.decodePrefix(block.data).value.descriptor;
+      return PsdBrightnessContrastAdjustment.fromContentGeneratorDescriptor(descriptor, trailingData: legacy.trailingData);
+    } on FormatException {
+      return null;
+    }
   }
 
   /// Decoded Photoshop type-tool data, when this is a supported text layer.
@@ -456,6 +482,7 @@ final class PsdLayer {
       mask: mask,
       blendingRanges: blendingRanges,
       additionalInfo: blocks,
+      writesUnicodeName: writesUnicodeName,
     );
   }
 
@@ -499,6 +526,7 @@ final class PsdLayer {
       mask: mask,
       blendingRanges: blendingRanges,
       additionalInfo: blocks,
+      writesUnicodeName: writesUnicodeName,
     );
   }
 
@@ -523,18 +551,27 @@ final class PsdLayer {
       mask: mask,
       blendingRanges: blendingRanges,
       additionalInfo: blocks,
+      writesUnicodeName: writesUnicodeName,
     );
   }
 
   /// Returns a copy whose fill or adjustment block contains [adjustment].
   ///
   /// Existing adjustment blocks are removed to prevent Photoshop from choosing
-  /// a stale conflicting representation.
+  /// a stale conflicting representation. The `CgEd` block, which records the
+  /// modern brightness/contrast settings or the name of the preset an
+  /// adjustment came from, is rewritten for modern brightness/contrast and
+  /// otherwise dropped, since it would describe the replaced values.
   PsdLayer withAdjustment(PsdAdjustment adjustment) {
     final List<PsdTaggedBlock> blocks = <PsdTaggedBlock>[
       for (final PsdTaggedBlock block in additionalInfo)
-        if (!psdAdjustmentKeys.contains(block.key)) block,
+        if (!psdAdjustmentKeys.contains(block.key) && block.key != 'CgEd') block,
       PsdTaggedBlock(key: adjustment.blockKey, data: PsdAdjustmentCodec.encode(adjustment)),
+      if (adjustment case PsdBrightnessContrastAdjustment(useLegacy: false))
+        PsdTaggedBlock(
+          key: 'CgEd',
+          data: PsVersionedDescriptorCodec.encode(PsVersionedDescriptor(descriptor: adjustment.toContentGeneratorDescriptor())),
+        ),
     ];
     return PsdLayer(
       rectangle: rectangle,
@@ -547,6 +584,7 @@ final class PsdLayer {
       mask: mask,
       blendingRanges: blendingRanges,
       additionalInfo: blocks,
+      writesUnicodeName: writesUnicodeName,
     );
   }
 
@@ -568,6 +606,7 @@ final class PsdLayer {
       mask: this.mask,
       blendingRanges: blendingRanges,
       additionalInfo: blocks,
+      writesUnicodeName: writesUnicodeName,
     );
   }
 
@@ -592,6 +631,7 @@ final class PsdLayer {
       mask: mask,
       blendingRanges: blendingRanges,
       additionalInfo: blocks,
+      writesUnicodeName: writesUnicodeName,
     );
   }
 
@@ -649,6 +689,7 @@ final class PsdLayer {
         if (!keys.contains(block.key)) block,
       ...replacements,
     ],
+    writesUnicodeName: writesUnicodeName,
   );
 }
 
@@ -1014,8 +1055,15 @@ final class PsdReadOptions {
   /// Maximum size of any single decoded channel or merged image.
   final int maxDecodedBytes;
 
+  /// Retains compressed payloads for byte-preserving writes of unchanged pixels.
+  ///
+  /// This copies compressed data and hashes decoded samples. Editors that build
+  /// their own document model should leave it disabled.
+  final bool preserveSourceEncoding;
+
   /// Creates defensive parser limits.
   const PsdReadOptions({
+    this.preserveSourceEncoding = false,
     this.maxPixels = 500000000,
     this.maxLayers = 100000,
     this.maxDecodedBytes = 2147483648,

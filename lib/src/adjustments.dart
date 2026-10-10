@@ -116,17 +116,81 @@ final class PsdBrightnessContrastAdjustment extends PsdAdjustment {
   /// Whether the adjustment applies only to Lab color.
   final bool labColorOnly;
 
+  /// Whether Photoshop's pre-CS3 algorithm applies.
+  ///
+  /// Modern Photoshop keeps `brit` for older readers and stores its current
+  /// settings in a `CgEd` descriptor; [PsdLayer.adjustment] reads them from
+  /// there, and [PsdLayer.withAdjustment] writes both. A `brit` payload decoded
+  /// on its own is legacy.
+  final bool useLegacy;
+
+  /// Whether the values came from Photoshop's Auto button.
+  final bool automatic;
+
   /// Uninterpreted bytes following the documented fields.
   final Uint8List trailingData;
 
-  /// Creates brightness/contrast settings.
+  /// Creates brightness/contrast settings, using the modern algorithm by default.
   PsdBrightnessContrastAdjustment({
     this.brightness = 0,
     this.contrast = 0,
     this.mean = 127,
     this.labColorOnly = false,
+    this.useLegacy = false,
+    this.automatic = false,
     Uint8List? trailingData,
-  }) : trailingData = trailingData ?? Uint8List(0);
+  }) : trailingData = trailingData ?? Uint8List(1);
+
+  /// Reads the modern settings Photoshop stores in a `CgEd` [descriptor], or returns `null` when it describes another adjustment.
+  static PsdBrightnessContrastAdjustment? fromContentGeneratorDescriptor(PsDescriptor descriptor, {Uint8List? trailingData}) {
+    final int? brightness = descriptor.integerValue('Brgh', mode: .compatible);
+    final int? contrast = descriptor.integerValue('Cntr', mode: .compatible);
+    if (brightness == null || contrast == null) {
+      return null;
+    }
+    return PsdBrightnessContrastAdjustment(
+      brightness: brightness,
+      contrast: contrast,
+      mean: descriptor.integerValue('means', mode: .compatible) ?? 127,
+      labColorOnly: descriptor.booleanValue('Lab ', mode: .compatible) ?? false,
+      useLegacy: descriptor.booleanValue('useLegacy', mode: .compatible) ?? false,
+      automatic: descriptor.booleanValue('Auto', mode: .compatible) ?? false,
+      trailingData: trailingData,
+    );
+  }
+
+  /// The `CgEd` descriptor Photoshop writes for these settings.
+  PsDescriptor toContentGeneratorDescriptor() => PsDescriptor(
+    name: '',
+    classId: 'null',
+    items: [
+      const PsDescriptorItem(key: 'Vrsn', value: PsIntegerValue(value: 1)),
+      PsDescriptorItem(
+        key: 'Brgh',
+        value: PsIntegerValue(value: brightness),
+      ),
+      PsDescriptorItem(
+        key: 'Cntr',
+        value: PsIntegerValue(value: contrast),
+      ),
+      PsDescriptorItem(
+        key: 'means',
+        value: PsIntegerValue(value: mean),
+      ),
+      PsDescriptorItem(
+        key: 'Lab ',
+        value: PsBooleanValue(value: labColorOnly),
+      ),
+      PsDescriptorItem(
+        key: 'useLegacy',
+        value: PsBooleanValue(value: useLegacy),
+      ),
+      PsDescriptorItem(
+        key: 'Auto',
+        value: PsBooleanValue(value: automatic),
+      ),
+    ],
+  );
 
   @override
   String get blockKey => 'brit';
@@ -273,7 +337,7 @@ final class PsdCurvesAdjustment extends PsdAdjustment {
   PsdAdjustmentType get type => PsdAdjustmentType.curves;
 }
 
-/// Exposure values stored as signed 16.16 fixed-point numbers.
+/// Exposure values stored as 32-bit floating-point numbers.
 final class PsdExposureAdjustment extends PsdAdjustment {
   /// Format version, normally 1.
   final int version;
@@ -297,7 +361,7 @@ final class PsdExposureAdjustment extends PsdAdjustment {
     this.offset = 0,
     this.gamma = 1,
     Uint8List? trailingData,
-  }) : trailingData = trailingData ?? Uint8List(0);
+  }) : trailingData = trailingData ?? Uint8List(2);
 
   @override
   String get blockKey => 'expA';
@@ -478,6 +542,140 @@ final class PsdSelectiveColorAdjustment extends PsSelectiveColor implements PsdA
   PsdAdjustmentType get type => PsdAdjustmentType.selectiveColor;
 }
 
+/// One colour stop of a gradient map, in Photoshop's legacy colour layout.
+final class PsdGradientMapColorStop {
+  /// Position along the gradient, from 0 to the map's [PsdGradientMapAdjustment.smoothness] scale, normally 4096.
+  final int location;
+
+  /// Transition midpoint in percent.
+  final int midpoint;
+
+  /// Colour-space identifier of [components], as in Photoshop colour structures: 0 is RGB.
+  final int colorSpace;
+
+  /// Four 16-bit colour components.
+  final List<int> components;
+
+  /// Stop kind: 0 for a user colour, 1 for the foreground, 2 for the background colour.
+  final int kind;
+
+  /// Creates a colour stop.
+  PsdGradientMapColorStop({
+    required this.location,
+    this.midpoint = 50,
+    this.colorSpace = 0,
+    required List<int> components,
+    this.kind = 0,
+  }) : components = List<int>.unmodifiable(components);
+
+  /// Creates a user stop from 8-bit RGB components.
+  factory PsdGradientMapColorStop.rgb({required int location, required int red, required int green, required int blue, int midpoint = 50}) =>
+      PsdGradientMapColorStop(location: location, midpoint: midpoint, components: [red * 257, green * 257, blue * 257, 0]);
+}
+
+/// One opacity stop of a gradient map.
+final class PsdGradientMapOpacityStop {
+  /// Position along the gradient, on the same scale as colour stops.
+  final int location;
+
+  /// Transition midpoint in percent.
+  final int midpoint;
+
+  /// Opacity from 0 to 255.
+  final int opacity;
+
+  /// Creates an opacity stop.
+  const PsdGradientMapOpacityStop({required this.location, this.midpoint = 50, this.opacity = 255});
+}
+
+/// Gradient-map settings stored in a `grdm` block.
+///
+/// The colour and opacity stops use the record layout of legacy `.grd`
+/// libraries. Noise parameters are always present, even for a solid gradient.
+final class PsdGradientMapAdjustment extends PsdAdjustment {
+  /// Format version: 1, or 3 when [method] is stored.
+  final int version;
+
+  /// Whether the gradient is reversed.
+  final bool reverse;
+
+  /// Whether the result is dithered.
+  final bool dither;
+
+  /// Interpolation method signature, such as `Gcsp`, stored by version 3.
+  final String? method;
+
+  /// Gradient name.
+  final String name;
+
+  /// Colour stops in source order.
+  final List<PsdGradientMapColorStop> colorStops;
+
+  /// Opacity stops in source order.
+  final List<PsdGradientMapOpacityStop> opacityStops;
+
+  /// Smoothness, and the scale of stop locations, normally 4096.
+  final int smoothness;
+
+  /// Whether the gradient is generated from noise instead of its stops.
+  final bool noise;
+
+  /// Noise random seed.
+  final int randomSeed;
+
+  /// Whether noise adds transparency.
+  final bool showsTransparency;
+
+  /// Whether noise restricts colours to printable values.
+  final bool restrictsColors;
+
+  /// Noise roughness from 0 to 4096.
+  final int roughness;
+
+  /// Noise colour model: 0 RGB, 1 HSB, or 2 Lab, as Photoshop numbers them.
+  final int colorModel;
+
+  /// Four noise minimum channel values.
+  final List<int> minimumValues;
+
+  /// Four noise maximum channel values.
+  final List<int> maximumValues;
+
+  /// Uninterpreted bytes following the documented fields.
+  final Uint8List trailingData;
+
+  /// Creates gradient-map settings.
+  PsdGradientMapAdjustment({
+    this.version = 1,
+    this.reverse = false,
+    this.dither = false,
+    this.method,
+    this.name = '',
+    required List<PsdGradientMapColorStop> colorStops,
+    List<PsdGradientMapOpacityStop> opacityStops = const [PsdGradientMapOpacityStop(location: 0), PsdGradientMapOpacityStop(location: 4096)],
+    this.smoothness = 4096,
+    this.noise = false,
+    this.randomSeed = 0,
+    this.showsTransparency = false,
+    this.restrictsColors = false,
+    this.roughness = 2048,
+    this.colorModel = 3,
+    List<int> minimumValues = const [0, 0, 0, 0],
+    List<int> maximumValues = const [0x8000, 0x8000, 0x8000, 0x8000],
+    Uint8List? trailingData,
+  }) : colorStops = List<PsdGradientMapColorStop>.unmodifiable(colorStops),
+       opacityStops = List<PsdGradientMapOpacityStop>.unmodifiable(opacityStops),
+       minimumValues = List<int>.unmodifiable(minimumValues),
+       maximumValues = List<int>.unmodifiable(maximumValues),
+       trailingData = trailingData ?? Uint8List(2);
+
+  @override
+  String get blockKey => 'grdm';
+
+  @override
+  PsdAdjustmentType get type => PsdAdjustmentType.gradientMap;
+}
+
 /// A single unsigned 16-bit adjustment value.
 final class PsdSingleValueAdjustment extends PsdAdjustment {
   /// Semantic family, either posterize or threshold.
@@ -602,6 +800,7 @@ abstract final class PsdAdjustmentCodec {
         'mixr' => PsdChannelMixerAdjustment.fromSettings(PsAdjustmentSettingsCodec.readChannelMixer(reader)),
         'nvrt' => PsdInvertAdjustment(data: reader.readBytes(reader.remaining)),
         'post' || 'thrs' => _readSingleValue(reader, key),
+        'grdm' => _readGradientMap(reader),
         'selc' => PsdSelectiveColorAdjustment.fromSettings(PsAdjustmentSettingsCodec.readSelectiveColor(reader)),
         'SoCo' || 'GdFl' || 'PtFl' || 'vibA' || 'blwh' || 'clrL' => _readDescriptorAdjustment(reader, key),
         _ => PsdRawAdjustment(blockKey: key, type: _typeForKey(key), data: data),
@@ -638,9 +837,9 @@ abstract final class PsdAdjustmentCodec {
       case PsdExposureAdjustment():
         writer
           ..writeUint16(adjustment.version)
-          ..writeInt32(_fixed(adjustment.exposure))
-          ..writeInt32(_fixed(adjustment.offset))
-          ..writeInt32(_fixed(adjustment.gamma))
+          ..writeFloat32(adjustment.exposure)
+          ..writeFloat32(adjustment.offset)
+          ..writeFloat32(adjustment.gamma)
           ..writeBytes(adjustment.trailingData);
       case PsdHueSaturationAdjustment():
         PsAdjustmentSettingsCodec.writeHueSaturation(writer, adjustment);
@@ -650,6 +849,8 @@ abstract final class PsdAdjustmentCodec {
         PsAdjustmentSettingsCodec.writeChannelMixer(writer, adjustment);
       case PsdPhotoFilterAdjustment():
         _writePhotoFilter(writer, adjustment);
+      case PsdGradientMapAdjustment():
+        _writeGradientMap(writer, adjustment);
       case PsdSelectiveColorAdjustment():
         PsAdjustmentSettingsCodec.writeSelectiveColor(writer, adjustment);
       case PsdSingleValueAdjustment():
@@ -667,12 +868,13 @@ abstract final class PsdAdjustmentCodec {
   }
 }
 
-/// Reads a brightness/contrast payload.
+/// Reads a brightness/contrast payload, which on its own describes the legacy algorithm.
 PsdBrightnessContrastAdjustment _readBrightnessContrast(PsBinaryReader reader) => PsdBrightnessContrastAdjustment(
   brightness: reader.readInt16(),
   contrast: reader.readInt16(),
   mean: reader.readInt16(),
   labColorOnly: reader.readUint8() != 0,
+  useLegacy: true,
   trailingData: reader.readBytes(reader.remaining),
 );
 
@@ -716,12 +918,12 @@ PsdCurve _readCurve(PsBinaryReader reader, int channel) {
   );
 }
 
-/// Reads exposure fixed-point values.
+/// Reads exposure floating-point values.
 PsdExposureAdjustment _readExposure(PsBinaryReader reader) => PsdExposureAdjustment(
   version: reader.readUint16(),
-  exposure: reader.readInt32() / 65536,
-  offset: reader.readInt32() / 65536,
-  gamma: reader.readInt32() / 65536,
+  exposure: reader.readFloat32(),
+  offset: reader.readFloat32(),
+  gamma: reader.readFloat32(),
   trailingData: reader.readBytes(reader.remaining),
 );
 
@@ -760,6 +962,113 @@ PsdSingleValueAdjustment _readSingleValue(PsBinaryReader reader, String key) => 
   value: reader.readUint16(),
   trailingData: reader.readBytes(reader.remaining),
 );
+
+/// Reads gradient-map settings, rejecting layouts other than the documented one.
+PsdGradientMapAdjustment _readGradientMap(PsBinaryReader reader) {
+  final int version = reader.readUint16();
+  if (version != 1 && version != 3) {
+    throw PsFormatException(message: 'Unsupported gradient map version $version', source: reader.bytes, offset: 0);
+  }
+  final bool reverse = reader.readUint8() != 0;
+  final bool dither = reader.readUint8() != 0;
+  final String? method = version == 3 ? reader.readString(4) : null;
+  final int nameLength = reader.readUint32();
+  if (nameLength > reader.remaining ~/ 2) {
+    throw PsFormatException(message: 'Gradient map name length $nameLength exceeds the block', source: reader.bytes, offset: reader.offset - 4);
+  }
+  final List<int> name = [for (int index = 0; index < nameLength; index++) reader.readUint16()];
+  if (name.isNotEmpty && name.last == 0) {
+    name.removeLast();
+  }
+  final List<PsdGradientMapColorStop> colorStops = [
+    for (int index = reader.readUint16(); index > 0; index--)
+      PsdGradientMapColorStop(
+        location: reader.readUint32(),
+        midpoint: reader.readUint32(),
+        colorSpace: reader.readUint16(),
+        components: [for (int component = 0; component < 4; component++) reader.readUint16()],
+        kind: reader.readUint16(),
+      ),
+  ];
+  final List<PsdGradientMapOpacityStop> opacityStops = [
+    for (int index = reader.readUint16(); index > 0; index--) PsdGradientMapOpacityStop(location: reader.readUint32(), midpoint: reader.readUint32(), opacity: reader.readUint16()),
+  ];
+  final int expansionCount = reader.readUint16();
+  final int smoothness = reader.readUint16();
+  final int expansionLength = reader.readUint16();
+  if (expansionCount != 2 || expansionLength != 32) {
+    throw PsFormatException(message: 'Unsupported gradient map expansion $expansionCount/$expansionLength', source: reader.bytes, offset: reader.offset);
+  }
+  return PsdGradientMapAdjustment(
+    version: version,
+    reverse: reverse,
+    dither: dither,
+    method: method,
+    name: String.fromCharCodes(name),
+    colorStops: colorStops,
+    opacityStops: opacityStops,
+    smoothness: smoothness,
+    noise: reader.readUint16() != 0,
+    randomSeed: reader.readUint32(),
+    showsTransparency: reader.readUint16() != 0,
+    restrictsColors: reader.readUint16() != 0,
+    roughness: reader.readUint32(),
+    colorModel: reader.readUint16(),
+    minimumValues: [for (int index = 0; index < 4; index++) reader.readUint16()],
+    maximumValues: [for (int index = 0; index < 4; index++) reader.readUint16()],
+    trailingData: reader.readBytes(reader.remaining),
+  );
+}
+
+/// Writes gradient-map settings.
+void _writeGradientMap(PsBinaryWriter writer, PsdGradientMapAdjustment adjustment) {
+  final String? method = adjustment.method;
+  if ((adjustment.version == 3) != (method != null) || method != null && method.length != 4) {
+    throw const PsWriteException(message: 'A version 3 gradient map needs a four-character method, and only version 3 stores one');
+  }
+  if (adjustment.colorStops.any((stop) => stop.components.length != 4) || adjustment.minimumValues.length != 4 || adjustment.maximumValues.length != 4) {
+    throw const PsWriteException(message: 'Gradient map colours and noise ranges need four components');
+  }
+  writer
+    ..writeUint16(adjustment.version)
+    ..writeUint8(adjustment.reverse ? 1 : 0)
+    ..writeUint8(adjustment.dither ? 1 : 0);
+  if (method != null) {
+    writer.writeString(method);
+  }
+  writer
+    ..writeUint32(adjustment.name.length + 1)
+    ..writeUint16List([...adjustment.name.codeUnits, 0])
+    ..writeUint16(adjustment.colorStops.length);
+  for (final PsdGradientMapColorStop stop in adjustment.colorStops) {
+    writer
+      ..writeUint32(stop.location)
+      ..writeUint32(stop.midpoint)
+      ..writeUint16(stop.colorSpace)
+      ..writeUint16List(stop.components)
+      ..writeUint16(stop.kind);
+  }
+  writer.writeUint16(adjustment.opacityStops.length);
+  for (final PsdGradientMapOpacityStop stop in adjustment.opacityStops) {
+    writer
+      ..writeUint32(stop.location)
+      ..writeUint32(stop.midpoint)
+      ..writeUint16(stop.opacity);
+  }
+  writer
+    ..writeUint16(2)
+    ..writeUint16(adjustment.smoothness)
+    ..writeUint16(32)
+    ..writeUint16(adjustment.noise ? 1 : 0)
+    ..writeUint32(adjustment.randomSeed)
+    ..writeUint16(adjustment.showsTransparency ? 1 : 0)
+    ..writeUint16(adjustment.restrictsColors ? 1 : 0)
+    ..writeUint32(adjustment.roughness)
+    ..writeUint16(adjustment.colorModel)
+    ..writeUint16List(adjustment.minimumValues)
+    ..writeUint16List(adjustment.maximumValues)
+    ..writeBytes(adjustment.trailingData);
+}
 
 /// Reads a descriptor-backed fill or adjustment.
 PsdDescriptorAdjustment _readDescriptorAdjustment(PsBinaryReader reader, String key) {
@@ -863,9 +1172,6 @@ void _writeDescriptorAdjustment(PsBinaryWriter writer, PsdDescriptorAdjustment a
 String _peekString(PsBinaryReader reader, int length) => String.fromCharCodes(
   Uint8List.sublistView(reader.bytes, reader.offset, reader.offset + length),
 );
-
-/// Converts a floating-point value to signed 16.16 fixed point.
-int _fixed(double value) => (value * 65536).round();
 
 /// Maps a tagged-block [key] to its semantic adjustment family.
 PsdAdjustmentType _typeForKey(String key) => switch (key) {

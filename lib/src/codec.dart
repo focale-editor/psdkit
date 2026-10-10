@@ -60,9 +60,10 @@ abstract final class PsdCodec {
       throw PsFormatException(message: 'Missing merged image data', source: bytes, offset: reader.offset);
     }
     final PsdCompression mergedCompression = _enumByCode(PsdCompression.values, reader.readUint16(), 'merged image compression', reader);
+    final Uint8List mergedPayload = reader.readView(reader.remaining);
     final List<Uint8List> mergedImage = decodePsdMergedImage(
       compression: mergedCompression,
-      payload: reader.readView(reader.remaining),
+      payload: mergedPayload,
       channels: channelCount,
       width: width,
       height: height,
@@ -70,6 +71,9 @@ abstract final class PsdCodec {
       wideRowLengths: version == PsdVersion.psb,
       maxDecodedBytes: options.maxDecodedBytes,
     );
+    if (options.preserveSourceEncoding) {
+      _SourceEncoding.remember(mergedImage, geometry: (width, height, depth, true), compression: mergedCompression, payload: mergedPayload, wideRowLengths: version == PsdVersion.psb);
+    }
     return PsdDocument(
       version: version,
       width: width,
@@ -125,14 +129,16 @@ abstract final class PsdCodec {
       ..writeBytes(layerAndMask);
 
     final PsdCompression mergedCompression = options.compression ?? document.mergedImageCompression;
-    final Uint8List imageData = encodePsdMergedImage(
-      compression: mergedCompression,
-      channels: document.mergedImage,
-      width: document.width,
-      height: document.height,
-      depth: document.depth,
-      wideRowLengths: version == PsdVersion.psb,
-    );
+    final Uint8List imageData =
+        _SourceEncoding.reuse(document.mergedImage, geometry: (document.width, document.height, document.depth, true), compression: mergedCompression, wideRowLengths: version == PsdVersion.psb) ??
+        encodePsdMergedImage(
+          compression: mergedCompression,
+          channels: document.mergedImage,
+          width: document.width,
+          height: document.height,
+          depth: document.depth,
+          wideRowLengths: version == PsdVersion.psb,
+        );
     writer
       ..writeUint16(mergedCompression.code)
       ..writeBytes(imageData);
@@ -394,15 +400,19 @@ _DecodedLayerInfo _readLayerInfo(PsBinaryReader layerInfo, {required PsdVersion 
         final PsBinaryReader encoded = layerInfo.readReader(encodedLength);
         final PsdCompression compression = _enumByCode(PsdCompression.values, encoded.readUint16(), 'layer channel compression', encoded);
         final PsdRectangle rectangle = _channelRectangle(record.layer, descriptor.id);
+        final Uint8List payload = encoded.readView(encoded.remaining);
         final Uint8List decoded = decodePsdChannel(
           compression: compression,
-          payload: encoded.readView(encoded.remaining),
+          payload: payload,
           width: rectangle.width,
           height: rectangle.height,
           depth: depth,
           wideRowLengths: version == PsdVersion.psb,
           maxDecodedBytes: options.maxDecodedBytes,
         );
+        if (options.preserveSourceEncoding) {
+          _SourceEncoding.remember([decoded], geometry: (rectangle.width, rectangle.height, depth, false), compression: compression, payload: payload, wideRowLengths: version == PsdVersion.psb);
+        }
         channels.add(PsdChannel(id: descriptor.id, data: decoded, compression: compression));
       }
       layers.add(_copyLayer(record.layer, channels));
@@ -414,6 +424,8 @@ _DecodedLayerInfo _readLayerInfo(PsBinaryReader layerInfo, {required PsdVersion 
         final String prefix = trailing.take(16).map((value) => value.toRadixString(16).padLeft(2, '0')).join(' ');
         throw PsFormatException(message: 'Unexpected ${trailing.length} bytes at the end of layer info: $prefix', source: layerInfo.bytes, offset: layerInfo.baseOffset + trailingOffset);
       }
+      // Some writers align layer info to four bytes rather than two.
+      _layerInfoPadding[layers] = trailing.length;
     }
   }
   return _DecodedLayerInfo(layers: layers, mergedTransparency: mergedTransparency);
@@ -476,6 +488,7 @@ _LayerRecord _readLayerRecord(PsBinaryReader reader, PsdVersion version) {
       mask: mask,
       blendingRanges: blendingRanges,
       additionalInfo: additionalInfo,
+      writesUnicodeName: additionalInfo.any((block) => block.key == 'luni'),
     ),
     channelLengths: channelLengths,
   );
@@ -656,14 +669,16 @@ Uint8List _writeLayerInfo(PsdDocument document, {required PsdVersion version, re
       channels.add(
         _EncodedChannel(
           compression: compression,
-          payload: encodePsdChannel(
-            compression: compression,
-            data: channel.data,
-            width: rectangle.width,
-            height: rectangle.height,
-            depth: document.depth,
-            wideRowLengths: version == PsdVersion.psb,
-          ),
+          payload:
+              _SourceEncoding.reuse([channel.data], geometry: (rectangle.width, rectangle.height, document.depth, false), compression: compression, wideRowLengths: version == PsdVersion.psb) ??
+              encodePsdChannel(
+                compression: compression,
+                data: channel.data,
+                width: rectangle.width,
+                height: rectangle.height,
+                depth: document.depth,
+                wideRowLengths: version == PsdVersion.psb,
+              ),
         ),
       );
     }
@@ -702,11 +717,17 @@ Uint8List _writeLayerInfo(PsdDocument document, {required PsdVersion version, re
       channel.writeTo(writer);
     }
   }
-  if (writer.length.isOdd) {
+  final int? sourcePadding = _layerInfoPadding[document.layers];
+  if (sourcePadding != null && (writer.length + sourcePadding).isEven) {
+    writer.writeZeros(sourcePadding);
+  } else if (writer.length.isOdd) {
     writer.writeUint8(0);
   }
   return writer.takeBytes();
 }
+
+/// Zero bytes that ended the layer info a list of layers was decoded from.
+final Expando<int> _layerInfoPadding = Expando<int>('PSD layer info padding');
 
 /// Serializes mask, blending ranges, names, and tagged data for [layer].
 Uint8List _writeLayerExtra(PsdLayer layer, PsdVersion version) {
@@ -723,13 +744,37 @@ Uint8List _writeLayerExtra(PsdLayer layer, PsdVersion version) {
     ..writeUint8(name.length)
     ..writeBytes(name);
   writer.writeZeros((4 - (writer.length - nameStart) % 4) % 4);
-  final List<PsdTaggedBlock> blocks = <PsdTaggedBlock>[
-    for (final PsdTaggedBlock block in layer.additionalInfo)
-      if (block.key != 'luni') block,
-    PsdTaggedBlock(key: 'luni', data: _writeUnicodeString(layer.name)),
-  ];
-  writer.writeBytes(_writeTaggedBlocks(blocks, version));
+  writer.writeBytes(_writeTaggedBlocks(_layerBlocksWithName(layer), version));
   return writer.takeBytes();
+}
+
+/// Returns [layer]'s tagged blocks with a `luni` block naming it, when it needs one.
+///
+/// A stored block that already holds the name is kept byte for byte and in
+/// place, as is the absence of one in a layer read without it.
+List<PsdTaggedBlock> _layerBlocksWithName(PsdLayer layer) {
+  final bool hasUnicodeName = layer.additionalInfo.any((block) => block.key == 'luni');
+  if (hasUnicodeName) {
+    String? stored;
+    try {
+      stored = _unicodeLayerName(layer.additionalInfo);
+    } on FormatException {
+      stored = null;
+    }
+    if (stored == layer.name) {
+      return layer.additionalInfo;
+    }
+    final PsdTaggedBlock renamed = PsdTaggedBlock(key: 'luni', data: _writeUnicodeString(layer.name));
+    return <PsdTaggedBlock>[
+      for (final PsdTaggedBlock block in layer.additionalInfo)
+        if (block.key == 'luni') renamed else block,
+    ];
+  }
+  final bool asciiName = layer.name.length <= 255 && layer.name.codeUnits.every((unit) => unit < 0x80);
+  if (!layer.writesUnicodeName && asciiName) {
+    return layer.additionalInfo;
+  }
+  return <PsdTaggedBlock>[...layer.additionalInfo, PsdTaggedBlock(key: 'luni', data: _writeUnicodeString(layer.name))];
 }
 
 /// Serializes [blocks] with version-specific lengths and even-byte padding.
@@ -818,6 +863,7 @@ PsdLayer _copyLayer(PsdLayer layer, List<PsdChannel> channels) => PsdLayer(
   mask: layer.mask,
   blendingRanges: layer.blendingRanges,
   additionalInfo: layer.additionalInfo,
+  writesUnicodeName: layer.writesUnicodeName,
 );
 
 /// Resolves a supported PSD enum value or reports its byte location.
@@ -866,5 +912,82 @@ void _validateHeader({
 void _requireFourCharacters(String value, String label) {
   if (value.length != 4 || value.codeUnits.any((unit) => unit > 0xff)) {
     throw PsWriteException(message: '$label must contain exactly four one-byte characters');
+  }
+}
+
+/// The compressed bytes samples were decoded from, kept to write them back unchanged.
+///
+/// Encoders differ in how they split PackBits runs and deflate streams, so
+/// re-encoding pixels another application wrote, such as ImageReady, changes
+/// the file even when no sample changed. Decoded sample buffers remember their
+/// source bytes by identity, and a checksum taken at decoding detects samples
+/// modified in place since.
+final class _SourceEncoding {
+  /// Source encoding of each decoded buffer, keyed by its first channel.
+  static final Expando<_SourceEncoding> _encodings = Expando<_SourceEncoding>('PSD source encoding');
+
+  /// The decoded buffers, in order.
+  final List<Uint8List> channels;
+
+  /// Checksums of [channels] when they were decoded.
+  final List<int> checksums;
+
+  /// Width, height, bit depth and whether this is a merged stream.
+  final (int, int, int, bool) geometry;
+
+  /// Compression of [payload].
+  final PsdCompression compression;
+
+  /// Whether RLE row lengths in [payload] are PSB-wide.
+  final bool wideRowLengths;
+
+  /// Compressed bytes, without the compression marker.
+  final Uint8List payload;
+
+  /// Creates a remembered encoding.
+  _SourceEncoding({required this.geometry, required this.channels, required this.checksums, required this.compression, required this.wideRowLengths, required this.payload});
+
+  /// Remembers that [channels] were decoded from [payload].
+  ///
+  /// Raw samples gain nothing, since writing them again gives the same bytes.
+  static void remember(List<Uint8List> channels, {required (int, int, int, bool) geometry, required PsdCompression compression, required Uint8List payload, bool wideRowLengths = false}) {
+    if (channels.isEmpty || compression == PsdCompression.raw) {
+      return;
+    }
+    _encodings[channels.first] = _SourceEncoding(
+      geometry: geometry,
+      channels: List<Uint8List>.of(channels),
+      checksums: [for (final Uint8List channel in channels) _checksum(channel)],
+      compression: compression,
+      wideRowLengths: wideRowLengths,
+      // A copy, so the rest of the source file can be released.
+      payload: Uint8List.fromList(payload),
+    );
+  }
+
+  /// Returns the source bytes of [channels] when they are unchanged and written the same way.
+  static Uint8List? reuse(List<Uint8List> channels, {required (int, int, int, bool) geometry, required PsdCompression compression, required bool wideRowLengths}) {
+    if (channels.isEmpty) {
+      return null;
+    }
+    final _SourceEncoding? source = _encodings[channels.first];
+    if (source == null || source.geometry != geometry || source.compression != compression || source.wideRowLengths != wideRowLengths || source.channels.length != channels.length) {
+      return null;
+    }
+    for (int index = 0; index < channels.length; index++) {
+      if (!identical(source.channels[index], channels[index]) || source.checksums[index] != _checksum(channels[index])) {
+        return null;
+      }
+    }
+    return source.payload;
+  }
+
+  /// FNV-1a checksum of [bytes], combined with their length.
+  static int _checksum(Uint8List bytes) {
+    int hash = 0x811c9dc5 ^ bytes.length;
+    for (final int value in bytes) {
+      hash = ((hash ^ value) * 0x01000193) & 0xffffffff;
+    }
+    return hash;
   }
 }

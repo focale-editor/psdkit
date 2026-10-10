@@ -148,11 +148,15 @@ Uint8List encodePsdMergedImage({
 }
 
 /// Decodes [height] PackBits rows after their shared length table.
+///
+/// Bytes after a complete row are ignored: some non-Adobe writers leave them,
+/// and other readers, such as ag-psd, accept such files.
 Uint8List _decodeRle(Uint8List input, int rowBytes, int height, bool wide) => PsPackBitsCodec.decodeRows(
   input,
   rowBytes: rowBytes,
   rowCount: height,
   wideRowLengths: wide,
+  allowTrailingInput: true,
 );
 
 /// Encodes [height] rows and prefixes their 16-bit or 32-bit lengths.

@@ -709,6 +709,7 @@ PsdLayer _copyLayerWithBlock(
       if (block.key != key) block,
     ?replacement,
   ],
+  writesUnicodeName: source.writesUnicodeName,
 );
 
 /// Builds a Photoshop point descriptor.
