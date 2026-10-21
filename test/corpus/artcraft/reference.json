@@ -1,0 +1,2892 @@
+{
+  "generator": "psd-tools==1.26.0",
+  "files": {
+    "psd-tools/colormodes/100x20_1bit_bitmap_rle.psd": {
+      "layers": [],
+      "mergedSha256": [
+        "48c4507cc0cb8c81d2b4c10349ad7bf5e5b191069477f9fc4869bdf3ad91615c"
+      ]
+    },
+    "psd-tools/colormodes/20x5_1bit_bitmap.psd": {
+      "layers": [],
+      "mergedSha256": [
+        "d4cb0ffcedb479e4bd7808702557ed6572d6bd6a26bfc408cafcccc561ba9f92"
+      ]
+    },
+    "psd-tools/colormodes/4x4_16bit_cmyk.psd": {
+      "layers": [
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 3,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Gradient Fill 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 3,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": -2
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "e6393f09a9689bb9e3d1370df4ef34cde09f90727429bf0d38f7d44c06ea9d4e",
+        "2c2710500c9a9075f14e8f0f003ff5699bdfd94fcdc4ea2c076ce8b91692ba95",
+        "c649711671a071dcbd5ba93e309e4f9747dbf38f73a55b3a703051b0c1c28d72",
+        "af9613760f72635fbdb44a5a0a63c39f12af30f950a6ee5c971be188e89c4051"
+      ]
+    },
+    "psd-tools/colormodes/4x4_16bit_grayscale.psd": {
+      "layers": [
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Gradient Fill 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": -2
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "da618c12bb909b4e6d97a1f1c9c131d05151f70fef671dfad5a93f36bab7d79a"
+      ]
+    },
+    "psd-tools/colormodes/4x4_16bit_lab.psd": {
+      "layers": [
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Gradient Fill 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": -2
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "9a27ffd0ea0768f43cfc27d2981b79b7f2ec17843f1c9892bfa81eb386f055e9",
+        "e7eafcb17fd1d7ea26457c29b77f988a4204d4f7477ce35a0372207f459fc303",
+        "61b0a80b9c41f7983e145d60504b6e2e07c61c5821095ef146b2ef78ffa61d24"
+      ]
+    },
+    "psd-tools/colormodes/4x4_16bit_multichannel.psd": {
+      "layers": [],
+      "mergedSha256": [
+        "bc5ca53c4b02fd816caf39561d47bd5024c966b1de9a054dd4b19b1f87efb6a1",
+        "66c61610eebd4a7b913774c63989dd00d0bd72192fa2774829e8de1c16d6ec5b",
+        "621e81f749892b07e40f0c527fb6c1f4fb61b38bc21fe11fac4324e50c32c70f"
+      ]
+    },
+    "psd-tools/colormodes/4x4_16bit_rgb.psd": {
+      "layers": [
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Gradient Fill 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": -2
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "337cde796a8833bbae11d92b3922d3b07b90bf4835a6a5af9ac0c4e55fde3450",
+        "1eeea680695bf364c7b91b355b0a92eca9e8f776b2b3099191ffc612a1759b72",
+        "746bafdc25b7237c87044b6139df60d6693d9b0bb640129e1de0c35d3183e6ce"
+      ]
+    },
+    "psd-tools/colormodes/4x4_1bit_bitmap.psd": {
+      "layers": [],
+      "mergedSha256": [
+        "c2f33b07535b71fb2f1702f99c23cbab29ebd53d72e4a3507e5395a0d7cdedf2"
+      ]
+    },
+    "psd-tools/colormodes/4x4_32bit_grayscale.psd": {
+      "layers": [
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Gradient Fill 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": -2
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "d42565420bb7cd4a2749c2a458a5d492d08aa2beefa75e9368998bdc015f503e"
+      ]
+    },
+    "psd-tools/colormodes/4x4_32bit_rgb.psd": {
+      "layers": [
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Gradient Fill 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": -2
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "21629d0e046bd4e35c5748fa2482f07240716e7b9d000f405d0582786d354163",
+        "e334ca9aaebcb75ef609139142ccb30fc55f1add75b2b4e089d203d1a45f1b79",
+        "84518e3a5e58a9c267f89791575ea0aa960c45ccb58562462fdb6ac5f2c70cfe"
+      ]
+    },
+    "psd-tools/colormodes/4x4_8bit_cmyk.psd": {
+      "layers": [
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 3,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Gradient Fill 1",
+          "rectangle": [
+            0,
+            0,
+            4,
+            4
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b"
+            },
+            {
+              "id": 0,
+              "sha256": "64b3dc17cb155133ed49c31288911af064489f4a5bca9fb718e231032fa56d1b"
+            },
+            {
+              "id": 1,
+              "sha256": "2319b61cb2382d352711600efe2cd64c18ebc68ed5fe3c0fbbff711d3e5887b8"
+            },
+            {
+              "id": 2,
+              "sha256": "97ab7ef81ec979e6c564f043ba6dac52e5ffa06aa0ec3207a4846047b22f3ef4"
+            },
+            {
+              "id": 3,
+              "sha256": "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b"
+            },
+            {
+              "id": -2
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "64b3dc17cb155133ed49c31288911af064489f4a5bca9fb718e231032fa56d1b",
+        "e1963455fa31a239d85ed58b16e7c2297c6c150bf9706e48a0bc9b5f87b07eb4",
+        "f23ce13c642d749008ba1cf757323eb15ccb5dc2e2e2c90726285fb984af8f9d",
+        "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b"
+      ]
+    },
+    "psd-tools/colormodes/4x4_8bit_duotone.psd": {
+      "layers": [
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Gradient Fill 1",
+          "rectangle": [
+            0,
+            0,
+            4,
+            4
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b"
+            },
+            {
+              "id": 0,
+              "sha256": "d4e4155ee313a76d68e381e90a9dcdf28f56fc69e2af51dbb12736e49dd77e5e"
+            },
+            {
+              "id": -2
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "6d10ef57cd29d41e26d781b4217f8551d8948957142cb256812c09081d7bab11"
+      ]
+    },
+    "psd-tools/colormodes/4x4_8bit_grayscale.psd": {
+      "layers": [
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Gradient Fill 1",
+          "rectangle": [
+            0,
+            0,
+            4,
+            4
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b"
+            },
+            {
+              "id": 0,
+              "sha256": "3300099c61fe93c13cb695357e29b5419947696e3852177c42b88fae67bc0fe8"
+            },
+            {
+              "id": -2
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "94b9d37b7328b8765243eb85c5618bdc1d5d1128b0195d3539e40bf26a05672f"
+      ]
+    },
+    "psd-tools/colormodes/4x4_8bit_index_color.psd": {
+      "layers": [],
+      "mergedSha256": [
+        "263d83c29d7afc4333c20df63b26045d1d9551f3c08cb3fe03f7cdced4a47933"
+      ]
+    },
+    "psd-tools/colormodes/4x4_8bit_lab.psd": {
+      "layers": [
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Gradient Fill 1",
+          "rectangle": [
+            0,
+            0,
+            4,
+            4
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b"
+            },
+            {
+              "id": 0,
+              "sha256": "9f2c723728ed24aa5a1c5612341d5c391e657823e98bd6fa69fbee42a6db32ca"
+            },
+            {
+              "id": 1,
+              "sha256": "5260f5f16d5a40f60ddd745220ba8c417dd3f611bf9473886340c77d72ee4d11"
+            },
+            {
+              "id": 2,
+              "sha256": "3045e7981514f366f7cfbd76d4f0750f0d87fbbb93d25b396f9076dd8ebf293d"
+            },
+            {
+              "id": -2
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "9f2c723728ed24aa5a1c5612341d5c391e657823e98bd6fa69fbee42a6db32ca",
+        "5260f5f16d5a40f60ddd745220ba8c417dd3f611bf9473886340c77d72ee4d11",
+        "3045e7981514f366f7cfbd76d4f0750f0d87fbbb93d25b396f9076dd8ebf293d"
+      ]
+    },
+    "psd-tools/colormodes/4x4_8bit_rgb.psd": {
+      "layers": [
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Gradient Fill 1",
+          "rectangle": [
+            0,
+            0,
+            4,
+            4
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b"
+            },
+            {
+              "id": 0,
+              "sha256": "de8b353678e51ac00670a1ce84bb50d2a82d129dfc9297353eb1ed9c9e82d2f2"
+            },
+            {
+              "id": 1,
+              "sha256": "cc5eadf0160cbf43739fb9097541498a6bd729810b6a622c9729fcca6cf5a34e"
+            },
+            {
+              "id": 2,
+              "sha256": "9652a0c6fc1d35b8f5742d6f59546ef9fa9e7afc7f8041fbff226863e8480cf4"
+            },
+            {
+              "id": -2
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "de8b353678e51ac00670a1ce84bb50d2a82d129dfc9297353eb1ed9c9e82d2f2",
+        "cc5eadf0160cbf43739fb9097541498a6bd729810b6a622c9729fcca6cf5a34e",
+        "9652a0c6fc1d35b8f5742d6f59546ef9fa9e7afc7f8041fbff226863e8480cf4"
+      ]
+    },
+    "psd-tools/colormodes/4x4_8bit_rgba.psd": {
+      "layers": [
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Gradient Fill 1",
+          "rectangle": [
+            0,
+            0,
+            4,
+            4
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b"
+            },
+            {
+              "id": 0,
+              "sha256": "047587e7eb2ad747278e9b2aae7550a47aafab55e4a596c4a5868d53ad8118c9"
+            },
+            {
+              "id": 1,
+              "sha256": "cc5eadf0160cbf43739fb9097541498a6bd729810b6a622c9729fcca6cf5a34e"
+            },
+            {
+              "id": 2,
+              "sha256": "9652a0c6fc1d35b8f5742d6f59546ef9fa9e7afc7f8041fbff226863e8480cf4"
+            },
+            {
+              "id": -2
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "9432c8fb23cd5537e52235f4499b2dff5f6e8312bca89332d36f5ac8dba89abb",
+        "cc5eadf0160cbf43739fb9097541498a6bd729810b6a622c9729fcca6cf5a34e",
+        "9652a0c6fc1d35b8f5742d6f59546ef9fa9e7afc7f8041fbff226863e8480cf4",
+        "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+      ]
+    },
+    "psd-tools/0layers.psb": {
+      "layers": [],
+      "mergedSha256": [
+        "0e5a05f543f4de480cf3a00cef9cab3ed539601351f3e95ad125acc4859a9a74",
+        "0e5a05f543f4de480cf3a00cef9cab3ed539601351f3e95ad125acc4859a9a74",
+        "0e5a05f543f4de480cf3a00cef9cab3ed539601351f3e95ad125acc4859a9a74"
+      ]
+    },
+    "psd-tools/16bit5x5.psb": {
+      "layers": [
+        {
+          "name": "Background",
+          "rectangle": [
+            0,
+            0,
+            5,
+            5
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 9,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": 0,
+              "sha256": "3e22870fa106c4f9f3ead1f773cd030013499996b373f86da7af28e13aa4b3af"
+            },
+            {
+              "id": 1,
+              "sha256": "e0f5f1d2844508fe3a39267a89ea21015ce556f24d6a25919c28723d0d2b368c"
+            },
+            {
+              "id": 2,
+              "sha256": "80b4c3831dd4fb74dc727a1106ae75faf60a168aecc931b8121605eb2855c4ef"
+            }
+          ]
+        },
+        {
+          "name": "Background copy",
+          "rectangle": [
+            0,
+            0,
+            5,
+            5
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "c4612d488c8b730aecd874b92924f9b8f4ecb8f3e78689adfbd94e2f9452c7fc"
+            },
+            {
+              "id": 0,
+              "sha256": "49f81854afaf8f33ada47b6739e1ce9488033737ffa60e61f847ef821dc21aa7"
+            },
+            {
+              "id": 1,
+              "sha256": "2d049af68d3868f426d8693526ab4f79023549f51893edceaa8c9fc20166d6d6"
+            },
+            {
+              "id": 2,
+              "sha256": "d6b97e6dc5802dcf41c135930d5599e99518e89bfe1637b9a1c39167b42421c1"
+            }
+          ]
+        },
+        {
+          "name": "Background copy 2",
+          "rectangle": [
+            1,
+            4,
+            4,
+            5
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "ce8bee525d6736e9825261b19a9b51719f9dc4bb728e95cf7067a2142b03b362"
+            },
+            {
+              "id": 0,
+              "sha256": "8b733fc79111de9d3cd2332adfa16aac5148238abfe53c9c73fa954632a384d2"
+            },
+            {
+              "id": 1,
+              "sha256": "7ad00623060f79071bd1306df9add52466f5efac381a4c8a96a65568ab5ee916"
+            },
+            {
+              "id": 2,
+              "sha256": "b0b94cbfa5acb01438bc4e4e8f1f2ed55554173dcbad9944998748897de2d99e"
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "73f772f826718605e712377be53550a6e8c6e2846d85dc57d0119e607f32ae6a",
+        "1deddf992f88b41a16a01d72cdae5ab99a529ad3e64bef70487f3d18c3c052a2",
+        "84f13cf06d86c9a3b2b020e11e5eb2080add12b0cb7e9b910db03c46a4081d05"
+      ]
+    },
+    "psd-tools/32bit5x5.psb": {
+      "layers": [
+        {
+          "name": "Background",
+          "rectangle": [
+            0,
+            0,
+            5,
+            5
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 9,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": 0,
+              "sha256": "a22ac4a207273e1a478c39a73914315e687718d8bf848da021cdf255fdf27a1e"
+            },
+            {
+              "id": 1,
+              "sha256": "70df38ad3298921b6e8fb5cea6a21a393821d16ba9587e94fd2722eb653f6a89"
+            },
+            {
+              "id": 2,
+              "sha256": "a049d126a136e0555436c72bf126291d7b54ce54580348b4a6152fb70384c09a"
+            }
+          ]
+        },
+        {
+          "name": "Background copy",
+          "rectangle": [
+            0,
+            0,
+            5,
+            5
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "239d9b60f09e0b396d6e94a8cbcbd79693d040362a47a4964b5103c23e5e1b3d"
+            },
+            {
+              "id": 0,
+              "sha256": "9f693521873652135863c83cc30c988fecd9fb9974f2fb2a4c0b097ee39aa0bb"
+            },
+            {
+              "id": 1,
+              "sha256": "ed049c924d6fd54a6bc42f08c6a93c377ccb3eaa3b897bd5f98d03d2f1392ca1"
+            },
+            {
+              "id": 2,
+              "sha256": "feb6de5545c9a2cbd6e119eacc00e4050a277070f98c81ebbcee0e30efe18974"
+            }
+          ]
+        },
+        {
+          "name": "Background copy 2",
+          "rectangle": [
+            1,
+            4,
+            4,
+            5
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e852d0ceaa6a4d8ae6859337b6e3d25a56b1bef05a492d34283afabbdfe4db36"
+            },
+            {
+              "id": 0,
+              "sha256": "ec54c91c057a66f15a9f2ac20e033913c6c85a74d07cd9744f0d33fb2725dd4d"
+            },
+            {
+              "id": 1,
+              "sha256": "d5c8fe9ee709c6fc8a88cf8e2f19ee0949ea74c7d9fdd1330a111a938c1fe6c9"
+            },
+            {
+              "id": 2,
+              "sha256": "a13158bbfe8957b144cc603747a5fec54811f4b2ca26ed75ccf8f47c9d0a765b"
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "f00e018e6f30c10e31250ad8773bdcf97827cf184164e3ff1afc042a0e69ebad",
+        "b652e9313e10c0d21396677cf249e8a46546106b5f25ca6600763df412c5a607",
+        "06219d02f5f08c915acf8af7f087e8a736b5830c6ee08f24ead1015ac47d4565"
+      ]
+    },
+    "psd-tools/clipping-mask.psb": {
+      "layers": [
+        {
+          "name": "Background",
+          "rectangle": [
+            0,
+            0,
+            200,
+            360
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 9,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": 0,
+              "sha256": "8d0bbf3201784368bb090a95122d9ffe946e8d0e3b734065ec10ddedc74aee58"
+            },
+            {
+              "id": 1,
+              "sha256": "7fda39714b132c23f7d6b7fd87e997743cb19f93c3bd9a96475b2ec56fffafac"
+            },
+            {
+              "id": 2,
+              "sha256": "9987abc78a7166ca67e85599251f8935d811ddd270a753a2e089dc0630addc81"
+            }
+          ]
+        },
+        {
+          "name": "</Layer group>",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "</Layer group>",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Shape 3",
+          "rectangle": [
+            74,
+            103,
+            146,
+            288
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "aacb1b9966f0bd7a80abef38e181f57dbfdaf35948796a9315000e271eba4b77"
+            },
+            {
+              "id": 0,
+              "sha256": "d6ae8d4409f520ca77c080f7b25c6f716b7c79d6c81100c186612aaa4deba327"
+            },
+            {
+              "id": 1,
+              "sha256": "14191a80903e9df8ae9551fc55e33389a47a2e558d203aabbca4baabdd0687df"
+            },
+            {
+              "id": 2,
+              "sha256": "7fd6d09aea005ae27a8779ae517812308803ed79aa822d302e24dfd2a69e88ca"
+            }
+          ]
+        },
+        {
+          "name": "Shape 4",
+          "rectangle": [
+            -73,
+            106,
+            87,
+            263
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "0c5a43720e9d4cea1276e789e86627fa7d5fbdedc9c518567acec594e7e4888f"
+            },
+            {
+              "id": 0,
+              "sha256": "08e02517bd4a7b764ea90624415c9624223b46701922bf327246ba28beae481f"
+            },
+            {
+              "id": 1,
+              "sha256": "08e02517bd4a7b764ea90624415c9624223b46701922bf327246ba28beae481f"
+            },
+            {
+              "id": 2,
+              "sha256": "08e02517bd4a7b764ea90624415c9624223b46701922bf327246ba28beae481f"
+            },
+            {
+              "id": -2
+            }
+          ]
+        },
+        {
+          "name": "Group 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Shape 1",
+          "rectangle": [
+            43,
+            49,
+            113,
+            174
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "370f4c1982fe9ff90dc8a885341cf957be3ead1d7211348c2d8880e2ce303823"
+            },
+            {
+              "id": 0,
+              "sha256": "9137c6b518cc41c9476c4c94652885505715f78966112adc92487ea5f94670b5"
+            },
+            {
+              "id": 1,
+              "sha256": "261323c9e409027f93ddfbaa71c306fde935e622f28cd368cd18cf37d33a7cb0"
+            },
+            {
+              "id": 2,
+              "sha256": "261323c9e409027f93ddfbaa71c306fde935e622f28cd368cd18cf37d33a7cb0"
+            },
+            {
+              "id": -2
+            }
+          ]
+        },
+        {
+          "name": "Shape 2",
+          "rectangle": [
+            16,
+            140,
+            92,
+            210
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 1,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "593cdbb76308745a2685f3331e3fc76e844223df8a67a6d9b81f94b6c123ff3b"
+            },
+            {
+              "id": 0,
+              "sha256": "43f75546361c5f450a3d223a46cf40462b025175939927819444c7998733fd00"
+            },
+            {
+              "id": 1,
+              "sha256": "43f75546361c5f450a3d223a46cf40462b025175939927819444c7998733fd00"
+            },
+            {
+              "id": 2,
+              "sha256": "43f75546361c5f450a3d223a46cf40462b025175939927819444c7998733fd00"
+            },
+            {
+              "id": -2
+            }
+          ]
+        },
+        {
+          "name": "Group 2",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "402df684875bf0433220c64ed202727328a0fdfb3516b8800c31058d420e92e9",
+        "efe5a551c9ab3b894ad9306c5ee977638b0a98322dae329ee04c14a63fea4c4f",
+        "e185c0e3936c755ac3b891f154baefcffaa11c3c1ec36633464ea36c41d918c5"
+      ]
+    },
+    "psd-tools/group.psb": {
+      "layers": [
+        {
+          "name": "Background",
+          "rectangle": [
+            0,
+            0,
+            200,
+            100
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 9,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": 0,
+              "sha256": "435f6e92bf8e5479aecd8a9ba3563e033338b03cd6d88f75adb8f4bc0b7a5abd"
+            },
+            {
+              "id": 1,
+              "sha256": "435f6e92bf8e5479aecd8a9ba3563e033338b03cd6d88f75adb8f4bc0b7a5abd"
+            },
+            {
+              "id": 2,
+              "sha256": "435f6e92bf8e5479aecd8a9ba3563e033338b03cd6d88f75adb8f4bc0b7a5abd"
+            }
+          ]
+        },
+        {
+          "name": "</Layer group>",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Shape 1",
+          "rectangle": [
+            24,
+            24,
+            98,
+            66
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "06a5e5c1735371a68a02c5f8d16ed92a3009ecd7f75c761727bd22188418b990"
+            },
+            {
+              "id": 0,
+              "sha256": "477fe78c84fe865607dc24007157da6de9d46dec940210c61ecc235ebe75846f"
+            },
+            {
+              "id": 1,
+              "sha256": "477fe78c84fe865607dc24007157da6de9d46dec940210c61ecc235ebe75846f"
+            },
+            {
+              "id": 2,
+              "sha256": "477fe78c84fe865607dc24007157da6de9d46dec940210c61ecc235ebe75846f"
+            },
+            {
+              "id": -2
+            }
+          ]
+        },
+        {
+          "name": "Group 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "869c6ac11615db5e1f97d18ffd473519b7a7912d11f81f062e692310b7ef2422",
+        "869c6ac11615db5e1f97d18ffd473519b7a7912d11f81f062e692310b7ef2422",
+        "869c6ac11615db5e1f97d18ffd473519b7a7912d11f81f062e692310b7ef2422"
+      ]
+    },
+    "psd-tools/layer_mask_data.psb": {
+      "layers": [
+        {
+          "name": "0",
+          "rectangle": [
+            0,
+            0,
+            200,
+            200
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e2ce7238a89a97ffcf46b9a0b4af34fb4e189f0fb18bd15e2cfa527833f776bf"
+            },
+            {
+              "id": 0,
+              "sha256": "e2ce7238a89a97ffcf46b9a0b4af34fb4e189f0fb18bd15e2cfa527833f776bf"
+            },
+            {
+              "id": 1,
+              "sha256": "e2ce7238a89a97ffcf46b9a0b4af34fb4e189f0fb18bd15e2cfa527833f776bf"
+            },
+            {
+              "id": 2,
+              "sha256": "e2ce7238a89a97ffcf46b9a0b4af34fb4e189f0fb18bd15e2cfa527833f776bf"
+            }
+          ]
+        },
+        {
+          "name": "1",
+          "rectangle": [
+            17,
+            12,
+            179,
+            68
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "dd1c6f6b97e9a0b19e5344b31a5beb0bdc3a4cbfa755d347a59e9083580b14d9"
+            },
+            {
+              "id": 0,
+              "sha256": "1d96e65c3f0578186efbb55c41dc4498fce41ee736425fe7d92143ac737f78c3"
+            },
+            {
+              "id": 1,
+              "sha256": "8f23754a0b5b965d1b0e2e5a9b043586911a3f8283a36412c739dad14c500838"
+            },
+            {
+              "id": 2,
+              "sha256": "81d95f41665ee988b7fadd0fd3f6b826d943b3205349235d9dbf64dfcba223ba"
+            },
+            {
+              "id": -2
+            }
+          ]
+        },
+        {
+          "name": "2",
+          "rectangle": [
+            0,
+            0,
+            200,
+            200
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "a440078fe0500bec074518d6a4eb3ec6753a94996508f63bbdb612c0915c70bb"
+            },
+            {
+              "id": 0,
+              "sha256": "e7e2dcff542de95352682dc186432e98f0188084896773f1973276b0577d5305"
+            },
+            {
+              "id": 1,
+              "sha256": "e2ce7238a89a97ffcf46b9a0b4af34fb4e189f0fb18bd15e2cfa527833f776bf"
+            },
+            {
+              "id": 2,
+              "sha256": "3afa52851c388a580ae34b533d721654268e1a5d014db18897988e078bb58e33"
+            },
+            {
+              "id": -2
+            },
+            {
+              "id": -3
+            }
+          ]
+        },
+        {
+          "name": "3",
+          "rectangle": [
+            21,
+            137,
+            178,
+            192
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "3e19354798eba0cf1931335447a61102ee2da141191d156356f0e597d7db790e"
+            },
+            {
+              "id": 0,
+              "sha256": "f2b41e62700d8745d809c75c57500893424a1cb37c2bef2d095d77ccbbdfda64"
+            },
+            {
+              "id": 1,
+              "sha256": "e6b722e65fead59271a3ca5b6bf416d27340ad675a69cab1a7d063c21818aa40"
+            },
+            {
+              "id": 2,
+              "sha256": "abbd3887b015af97a113bc84142975d3df9e0a759944f7fb73fbcef30c0b21a8"
+            },
+            {
+              "id": -2
+            },
+            {
+              "id": -3
+            }
+          ]
+        },
+        {
+          "name": "4",
+          "rectangle": [
+            141,
+            12,
+            191,
+            188
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "886b10569cb7ca318b17e1bc157865975f0daa30a8282596ff680aca7c6a510e"
+            },
+            {
+              "id": 0,
+              "sha256": "aa5e9e5396fa55f740ffc9a38a71999a2bc7b95af28ca1399ead38d4f07a88a1"
+            },
+            {
+              "id": 1,
+              "sha256": "2c6c15f0261c532b44f8825e6e5917be507fd3dcdd2387d4ca759eea5dbd1071"
+            },
+            {
+              "id": 2,
+              "sha256": "0e687b1eb2f7d5467ec1315c1b961f4db8860db151cf3627a76287272104dd3d"
+            },
+            {
+              "id": -2
+            },
+            {
+              "id": -3
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "705b8921ecf28c1d625aec0029a78c64285c134baeb80f9c1b504da1b1472a7e",
+        "94b594739d10d74feda9c61506ea5c6fe27f44a387e3fa431e3679b0b313307a",
+        "b96182eba1a766dbad41cc6cb35db254285628c56a46a102c8802360babb96d3"
+      ]
+    },
+    "psd-tools/metadata.psb": {
+      "layers": [
+        {
+          "name": "test",
+          "rectangle": [
+            63,
+            28,
+            64,
+            72
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "463d5921a6bfd5c98f6047f561495800372e627c07ce458c23b7ac164a22be51"
+            },
+            {
+              "id": 0,
+              "sha256": "85759b3811ff7dc47b03792ac85317be51431a3f9e01dcafce317ed736a391b0"
+            },
+            {
+              "id": 1,
+              "sha256": "463d5921a6bfd5c98f6047f561495800372e627c07ce458c23b7ac164a22be51"
+            },
+            {
+              "id": 2,
+              "sha256": "85759b3811ff7dc47b03792ac85317be51431a3f9e01dcafce317ed736a391b0"
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "fed1011892300e8f3019c3aa27e55c4b140e1d34dfebad427f2eb0e64e4efb3b",
+        "2bf7158cb3d8f419f1e19ee71df61927cc17017f37ea8820f3bd719d2b4f88f8",
+        "fed1011892300e8f3019c3aa27e55c4b140e1d34dfebad427f2eb0e64e4efb3b",
+        "4433bac26df94e9271b8bc3da8038cb300cef89b85402eed2ecd648dddecb958"
+      ]
+    },
+    "psd-tools/vector-mask.psb": {
+      "layers": [
+        {
+          "name": "Background",
+          "rectangle": [
+            0,
+            0,
+            150,
+            100
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 9,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": 0,
+              "sha256": "f60373b601fb2d2799f989546087c25330b8346865b087d785eba987a9b49994"
+            },
+            {
+              "id": 1,
+              "sha256": "f60373b601fb2d2799f989546087c25330b8346865b087d785eba987a9b49994"
+            },
+            {
+              "id": 2,
+              "sha256": "f60373b601fb2d2799f989546087c25330b8346865b087d785eba987a9b49994"
+            }
+          ]
+        },
+        {
+          "name": "Shape 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Shape 2",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        },
+        {
+          "name": "Background copy",
+          "rectangle": [
+            0,
+            0,
+            150,
+            100
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "f60373b601fb2d2799f989546087c25330b8346865b087d785eba987a9b49994"
+            },
+            {
+              "id": 0,
+              "sha256": "b844a7d3e5205a1dcac125487854f50592aa619450adffe4fe163d19325420af"
+            },
+            {
+              "id": 1,
+              "sha256": "ec6b72dae5e0ef77915dc4787b0bac94ca6ccf8ba48513e6c65aa6a94d2300d5"
+            },
+            {
+              "id": 2,
+              "sha256": "4a399262fc4367add4e24bfab206d28677a3d0a9f892000ff391f0e94a641da8"
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "b844a7d3e5205a1dcac125487854f50592aa619450adffe4fe163d19325420af",
+        "1c97ef889490d3fd929e9ffce20b8501ca84ae9d582fcb326d5a933f41e15a8f",
+        "4d0725401645345abb8f0aff2342bb3fb8ffaec7c020f528ad5146faea10507c"
+      ]
+    },
+    "psd-tools/transparentbg-gimp.psb": {
+      "layers": [
+        {
+          "name": "Фон",
+          "rectangle": [
+            0,
+            0,
+            40,
+            40
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "8c4b64c1dbfc986d2754206a5786ddb15449b5cc018764a4b6ed54fab9ed6774"
+            },
+            {
+              "id": 0,
+              "sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5"
+            },
+            {
+              "id": 1,
+              "sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5"
+            },
+            {
+              "id": 2,
+              "sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5"
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+        "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+        "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+        "8c4b64c1dbfc986d2754206a5786ddb15449b5cc018764a4b6ed54fab9ed6774"
+      ]
+    },
+    "psd-tools/mask-parameters-no-real-channel.psd": {
+      "layers": [
+        {
+          "name": "background",
+          "rectangle": [
+            0,
+            0,
+            256,
+            256
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "71189f7fb6aed638640078fba3a35fda6c39c8962e74dcc75935aac948da9063"
+            },
+            {
+              "id": 0,
+              "sha256": "babd0f949433538f41fcf2469f3ec8329d4569a308f80fbff7e59d41d5020bd2"
+            },
+            {
+              "id": 1,
+              "sha256": "babd0f949433538f41fcf2469f3ec8329d4569a308f80fbff7e59d41d5020bd2"
+            },
+            {
+              "id": 2,
+              "sha256": "babd0f949433538f41fcf2469f3ec8329d4569a308f80fbff7e59d41d5020bd2"
+            }
+          ]
+        },
+        {
+          "name": "heart",
+          "rectangle": [
+            47,
+            54,
+            198,
+            208
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "fcf176bea6e6af6f4261bc45d14d9007c93e133983c6c356df02afda1438a6e6"
+            },
+            {
+              "id": 0,
+              "sha256": "21e42a137110e17fab16395774b341dc6a90113f313500a371f9a84715ff6a00"
+            },
+            {
+              "id": 1,
+              "sha256": "fe95bd4e894d5cdeeb434fb0bddc08a8efc50567b6d13fd852a27d316e98c43a"
+            },
+            {
+              "id": 2,
+              "sha256": "846970dd525c82e55939accc9db27d21e5ea2ba6c7038b8c3003e685fa409abe"
+            },
+            {
+              "id": -2
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "babd0f949433538f41fcf2469f3ec8329d4569a308f80fbff7e59d41d5020bd2",
+        "7a12e7e75930a77bc67e6b3830cf6a162f7e356e903aec4ba3180b3a4e80a652",
+        "1d2783ef677d171b591595052bc50303e1b1f977a2bb7278307bc07c3fc36e0a"
+      ]
+    },
+    "psd-tools/mask-density-layervectormask.psd": {
+      "layers": [
+        {
+          "name": "Background",
+          "rectangle": [
+            0,
+            0,
+            32,
+            32
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 9,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": 0,
+              "sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2"
+            },
+            {
+              "id": 1,
+              "sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2"
+            },
+            {
+              "id": 2,
+              "sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2"
+            }
+          ]
+        },
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            0,
+            0,
+            8,
+            32
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "cdc47932dd92a16f5512fa1812832153031f02569d36380c94e4519ed3203ef0"
+            },
+            {
+              "id": 0,
+              "sha256": "3d6876a0146de8576eb2395a858de1213d1b92c65b779df3a331cfd5a4584546"
+            },
+            {
+              "id": 1,
+              "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1"
+            },
+            {
+              "id": 2,
+              "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1"
+            },
+            {
+              "id": -2
+            },
+            {
+              "id": -3
+            }
+          ]
+        },
+        {
+          "name": "Layer 1 copy",
+          "rectangle": [
+            8,
+            0,
+            16,
+            32
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "cdc47932dd92a16f5512fa1812832153031f02569d36380c94e4519ed3203ef0"
+            },
+            {
+              "id": 0,
+              "sha256": "3d6876a0146de8576eb2395a858de1213d1b92c65b779df3a331cfd5a4584546"
+            },
+            {
+              "id": 1,
+              "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1"
+            },
+            {
+              "id": 2,
+              "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1"
+            },
+            {
+              "id": -2
+            },
+            {
+              "id": -3
+            }
+          ]
+        },
+        {
+          "name": "Layer 1 copy 2",
+          "rectangle": [
+            16,
+            0,
+            24,
+            32
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "cdc47932dd92a16f5512fa1812832153031f02569d36380c94e4519ed3203ef0"
+            },
+            {
+              "id": 0,
+              "sha256": "3d6876a0146de8576eb2395a858de1213d1b92c65b779df3a331cfd5a4584546"
+            },
+            {
+              "id": 1,
+              "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1"
+            },
+            {
+              "id": 2,
+              "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1"
+            },
+            {
+              "id": -2
+            },
+            {
+              "id": -3
+            }
+          ]
+        },
+        {
+          "name": "Layer 1 copy 3",
+          "rectangle": [
+            24,
+            0,
+            32,
+            32
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "cdc47932dd92a16f5512fa1812832153031f02569d36380c94e4519ed3203ef0"
+            },
+            {
+              "id": 0,
+              "sha256": "3d6876a0146de8576eb2395a858de1213d1b92c65b779df3a331cfd5a4584546"
+            },
+            {
+              "id": 1,
+              "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1"
+            },
+            {
+              "id": 2,
+              "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1"
+            },
+            {
+              "id": -2
+            },
+            {
+              "id": -3
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2",
+        "7fe3cf0ab9deddd3586598a48caa7860c8d629dc16cf251ad8123bc54b8c5a58",
+        "7fe3cf0ab9deddd3586598a48caa7860c8d629dc16cf251ad8123bc54b8c5a58"
+      ]
+    },
+    "psd-tools/cmyk-alpha-spot.psd": {
+      "layers": [],
+      "mergedSha256": [
+        "495581428eaee1984b34db787a39a269fb4e6cfbe0ae305db0c03a00d1691898",
+        "82bae9f19ab8cfd4f9fb4200972007bf467c6bee5e7c454d870dab58cc34b950",
+        "fcc4528ac5c2f06c8676dcb731f21e868bc79c985890a51359646df01ff81ece",
+        "29132b758176db0e9894153a532cdaf76c96c975cbf9d7c900de00c3e138f63c",
+        "285e143c39fe117095aeb9d86030a8a71484a6b42700e021abdc8f0b9926c0b4",
+        "111088c097174dd19fadeaafd6675c72f225787e2dadba6f74160d1621a4ad6a"
+      ]
+    },
+    "psd-tools/multichannel-pattern-fill.psd": {
+      "layers": [
+        {
+          "name": "Pattern Fill 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": -2
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2",
+        "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2",
+        "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2"
+      ]
+    },
+    "psd-tools/layer-name-emoji.psd": {
+      "layers": [
+        {
+          "name": "👽",
+          "rectangle": [
+            0,
+            0,
+            4,
+            4
+          ],
+          "opacity": 128,
+          "blendMode": "lddg",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b"
+            },
+            {
+              "id": 0,
+              "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+            },
+            {
+              "id": 1,
+              "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+            },
+            {
+              "id": 2,
+              "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b",
+        "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b",
+        "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b"
+      ]
+    },
+    "ag-psd/read-write/psb2/src.psb": {
+      "layers": [
+        {
+          "name": "Rectangle 1",
+          "rectangle": [
+            -1,
+            -1,
+            414,
+            414
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "8ced584aa23675e36853319f79d6681660a1349e0f17f2999a3f8bca74cb144e"
+            },
+            {
+              "id": 0,
+              "sha256": "92caa1ab7863e47594b48da2c66105a37450048bc35a8cd850b72eab38a4c7e2"
+            },
+            {
+              "id": 1,
+              "sha256": "685b97c3b4af51f51c3b3a65b670d7a462ac68250bfcf996b276dbda1f034df3"
+            },
+            {
+              "id": 2,
+              "sha256": "0be2207986a245cfde7f5932b859197d2d688673fbe655f03423764dab51f77e"
+            }
+          ]
+        },
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            0,
+            -1,
+            413,
+            413
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "b6b46f77b7e569c751e36cb39b93cacefd9bb73f7136d464be0f3cee9ff52002"
+            },
+            {
+              "id": 0,
+              "sha256": "eb94f444a89194d780d0f76e38cbdca39e496151ae9dbeb9e9c3da4d1efa896c"
+            },
+            {
+              "id": 1,
+              "sha256": "eb94f444a89194d780d0f76e38cbdca39e496151ae9dbeb9e9c3da4d1efa896c"
+            },
+            {
+              "id": 2,
+              "sha256": "eb94f444a89194d780d0f76e38cbdca39e496151ae9dbeb9e9c3da4d1efa896c"
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "f5f99ae7abf00ae58fbb1b7ecb28e0d09b52df6593fe817b84f473861efe5841",
+        "fcf0c3bd9e9fd02d0c487b999e52a262912fdebd045d4130ee495f923a5c5391",
+        "b4f274c7b62e3200ba8f903425a070edf7632cb0999ec8c830136b878f3c1584"
+      ]
+    },
+    "ag-psd/read-write/animation-frame/src.psd": {
+      "layers": [
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            0,
+            0,
+            336,
+            500
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "5b638b71751d833dc37dafd7969bd6ac11d8534a19060abf707a9084d731dd9b"
+            },
+            {
+              "id": 0,
+              "sha256": "1145222fc79df4253fb6e22ea496c75a1b2f0403565c967c92feb8fe1c78aefa"
+            },
+            {
+              "id": 1,
+              "sha256": "a2b28ce68bc5ceb33add9cec630a07ba828c9aae4bcf5cfb6d2b37b825e76033"
+            },
+            {
+              "id": 2,
+              "sha256": "a09e93dfc3600e02ff8ab66097fb5e1ff65bc68d6ed61e5b31e71283bce46bc6"
+            },
+            {
+              "id": 3,
+              "sha256": "5b638b71751d833dc37dafd7969bd6ac11d8534a19060abf707a9084d731dd9b"
+            }
+          ]
+        },
+        {
+          "name": "Layer 2",
+          "rectangle": [
+            0,
+            0,
+            336,
+            500
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 10,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "5b638b71751d833dc37dafd7969bd6ac11d8534a19060abf707a9084d731dd9b"
+            },
+            {
+              "id": 0,
+              "sha256": "fe457344e3e302622e5ef678e78b2a1fb15671061899d9336643a955236e23a1"
+            },
+            {
+              "id": 1,
+              "sha256": "80c99a1bbf16933a7b3b4d9e5aa00b3986159e207c8c47b1759010d280e7625a"
+            },
+            {
+              "id": 2,
+              "sha256": "200b7950fa8fc4fefa621d47e77dc6ff557883fee63ffe2fbec9fdb06ef9b9ed"
+            },
+            {
+              "id": 3,
+              "sha256": "5b638b71751d833dc37dafd7969bd6ac11d8534a19060abf707a9084d731dd9b"
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "5b638b71751d833dc37dafd7969bd6ac11d8534a19060abf707a9084d731dd9b",
+        "5b638b71751d833dc37dafd7969bd6ac11d8534a19060abf707a9084d731dd9b",
+        "5b638b71751d833dc37dafd7969bd6ac11d8534a19060abf707a9084d731dd9b"
+      ]
+    },
+    "ag-psd/read-write/annotations/src.psd": {
+      "layers": [
+        {
+          "name": "Background",
+          "rectangle": [
+            0,
+            0,
+            200,
+            200
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 9,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": 0,
+              "sha256": "e2ce7238a89a97ffcf46b9a0b4af34fb4e189f0fb18bd15e2cfa527833f776bf"
+            },
+            {
+              "id": 1,
+              "sha256": "e2ce7238a89a97ffcf46b9a0b4af34fb4e189f0fb18bd15e2cfa527833f776bf"
+            },
+            {
+              "id": 2,
+              "sha256": "e2ce7238a89a97ffcf46b9a0b4af34fb4e189f0fb18bd15e2cfa527833f776bf"
+            }
+          ]
+        },
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            29,
+            25,
+            177,
+            164
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "528487c42a9053cf99b8e36645280d87ce228aadfd1ed93e9bdb38683e7897af"
+            },
+            {
+              "id": 0,
+              "sha256": "9dffbfd68028922d5814d444bbd73541c20f14bb0a629729f4d5e56126e89aa7"
+            },
+            {
+              "id": 1,
+              "sha256": "b77b6640f32f0530a952bc7aa540bf83c3dac22e4be8960f0f699cd359073a8e"
+            },
+            {
+              "id": 2,
+              "sha256": "5fb488ac056ebb701aac75de6734077eafdd4d8faa8dbaaf1fe10d1b45988d59"
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "e2ce7238a89a97ffcf46b9a0b4af34fb4e189f0fb18bd15e2cfa527833f776bf",
+        "99d2d2f8d007633ab4d4a964642adc4ff64e2152fc19bf0468bf0479d3eb8d92",
+        "bea042e51e621237fbc8bdd6aa9b6580debd87005fbdb488102dbe64d32c4383"
+      ]
+    },
+    "ag-psd/read-write/float-color/src.psd": {
+      "layers": [
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            0,
+            0,
+            568,
+            400
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "ba9a78a9dc0d14a749d982d04167c8861604a4e8952da6372c687ae5c93426f3"
+            },
+            {
+              "id": 0,
+              "sha256": "f4f980f62c588afd41015b5dd4f5e45838c56fd4ba893b1345c167a6ebf79b79"
+            },
+            {
+              "id": 1,
+              "sha256": "f4f980f62c588afd41015b5dd4f5e45838c56fd4ba893b1345c167a6ebf79b79"
+            },
+            {
+              "id": 2,
+              "sha256": "f4f980f62c588afd41015b5dd4f5e45838c56fd4ba893b1345c167a6ebf79b79"
+            }
+          ]
+        },
+        {
+          "name": "outer glow",
+          "rectangle": [
+            350,
+            161,
+            366,
+            247
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 40,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "1c6c7846ad0e77287fcb8968b65b602c1267a2ccd191976c00404fcad6dac44d"
+            },
+            {
+              "id": 0,
+              "sha256": "6a9446dd4472063efb616fcf015ca7c594fe3f219a60452b6be250363a212674"
+            },
+            {
+              "id": 1,
+              "sha256": "49a28074f77667d03ee25c87c88bbe7ccba834fb8b9c0b09db7b70035c8a703e"
+            },
+            {
+              "id": 2,
+              "sha256": "49a28074f77667d03ee25c87c88bbe7ccba834fb8b9c0b09db7b70035c8a703e"
+            }
+          ]
+        },
+        {
+          "name": "Layer 2",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "9589d5df08f609fa03a91087d7a0a6eab0d0f23a7b8609a9b425e97e010812f0",
+        "2b464367aaff3060955fdf98f47d0c25de714ce8b02349b2a651b13bf24a0f82",
+        "2b464367aaff3060955fdf98f47d0c25de714ce8b02349b2a651b13bf24a0f82",
+        "ba9a78a9dc0d14a749d982d04167c8861604a4e8952da6372c687ae5c93426f3"
+      ]
+    },
+    "ag-psd/read-write/layer-comps/src.psd": {
+      "layers": [
+        {
+          "name": "Background",
+          "rectangle": [
+            0,
+            0,
+            100,
+            100
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 9,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": 0,
+              "sha256": "2bf7158cb3d8f419f1e19ee71df61927cc17017f37ea8820f3bd719d2b4f88f8"
+            },
+            {
+              "id": 1,
+              "sha256": "2bf7158cb3d8f419f1e19ee71df61927cc17017f37ea8820f3bd719d2b4f88f8"
+            },
+            {
+              "id": 2,
+              "sha256": "2bf7158cb3d8f419f1e19ee71df61927cc17017f37ea8820f3bd719d2b4f88f8"
+            }
+          ]
+        },
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            14,
+            16,
+            83,
+            58
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 10,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "05a29b6c37c1ce0a5d37b4b3560e92b26f9ea5d37c030dc263bfbd1cb5430506"
+            },
+            {
+              "id": 0,
+              "sha256": "05f97d315629fdbbf87c669790517b730701f470e3c7d4c0ad8aa2c0e3858050"
+            },
+            {
+              "id": 1,
+              "sha256": "3e40abe965f34b8d4695c4c83c715095b1e6d4fc2c0d21313b76aefc924180db"
+            },
+            {
+              "id": 2,
+              "sha256": "f0561a85ccf107883c11bda370e0936dcda3b544871cae61f74af2a5b7e717d8"
+            }
+          ]
+        },
+        {
+          "name": "Layer 2",
+          "rectangle": [
+            29,
+            34,
+            91,
+            81
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 10,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "5e15e835b95faf85a50dc6554b284b5d011ee5ba11cd8bca82643f54edb27cfd"
+            },
+            {
+              "id": 0,
+              "sha256": "63f75ac7377e1e78dfa739d34fbfdf0b94cfccdc8d97f1014f0e22f50fbe5bb7"
+            },
+            {
+              "id": 1,
+              "sha256": "28b5125ae2648109fe68871119385ecff59dd17bae4e4d2c71f1fc9387b1c61e"
+            },
+            {
+              "id": 2,
+              "sha256": "b08d2a53a429497b7696c206f047f2ffbcbd8184e2889fb40fe58bff7a23ac36"
+            }
+          ]
+        },
+        {
+          "name": "Layer 3",
+          "rectangle": [
+            39,
+            55,
+            91,
+            88
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "0003cfa71daffd2df074de777176792e1af47af59b8827892820252bebba21e3"
+            },
+            {
+              "id": 0,
+              "sha256": "74edb39e35d02b88fd7721ebaf4f832f13f2ca69b3015c5a7ca388b89c1c2ab6"
+            },
+            {
+              "id": 1,
+              "sha256": "c81a9c44e145d9399a3312b0f1cd9aba9e55dc8a57761e3587e8152686719440"
+            },
+            {
+              "id": 2,
+              "sha256": "b2e2b35c3549caa50c3b3224aad1636f5ab58d42813f9b4071bfb2fbec54cad8"
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "2bf7158cb3d8f419f1e19ee71df61927cc17017f37ea8820f3bd719d2b4f88f8",
+        "2bf7158cb3d8f419f1e19ee71df61927cc17017f37ea8820f3bd719d2b4f88f8",
+        "2bf7158cb3d8f419f1e19ee71df61927cc17017f37ea8820f3bd719d2b4f88f8"
+      ]
+    },
+    "ag-psd/read-write/masks/src.psd": {
+      "layers": [
+        {
+          "name": "Layer 4",
+          "rectangle": [
+            68,
+            64,
+            125,
+            129
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "0708cda3cd80e4dff14bb4f53df64f8b1cdce16b91e2cdcbdf3f0bfc75d1f0ce"
+            },
+            {
+              "id": 0,
+              "sha256": "27b561680a5962c142c95b29694da41ee8662c505b16ef554b789a1e35b42741"
+            },
+            {
+              "id": 1,
+              "sha256": "fd42a66293348a1459477a3c1d0c4345845c757cc6df67c5958d806ad68e1099"
+            },
+            {
+              "id": 2,
+              "sha256": "fd42a66293348a1459477a3c1d0c4345845c757cc6df67c5958d806ad68e1099"
+            }
+          ]
+        },
+        {
+          "name": "Brightness/Contrast 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": -2
+            }
+          ]
+        },
+        {
+          "name": "Exposure 1",
+          "rectangle": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 1,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": 2,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": -2
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "60ea37435565f75d7595e25bc80e32feaaa19668500bdae8c2cbd89941beb0bb",
+        "8d3f07ab89b43fa05bffbf41e32e9f6f9172c2614b71ba99cb4f3393151f7b21",
+        "8d3f07ab89b43fa05bffbf41e32e9f6f9172c2614b71ba99cb4f3393151f7b21",
+        "3a3bd3a419bcacec15417885f157a954be91963363f74bab9eab33fda0a16360"
+      ]
+    },
+    "ag-psd/read-write/text-box/src.psd": {
+      "layers": [
+        {
+          "name": "TEST",
+          "rectangle": [
+            86,
+            71,
+            107,
+            131
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 8,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "b809c4ccf1d6c7b4f7975d92bb3b9060c166dacc5e872f4a0701a5fc11e57950"
+            },
+            {
+              "id": 0,
+              "sha256": "b35488cb567f73bd93897ac4296faffeb1f2feb5d9e8665beb53603668077a0f"
+            },
+            {
+              "id": 1,
+              "sha256": "d27136d6dbd704a3599e1d2b55538c337f67b4452fbb2d93a1be8a80d2539111"
+            },
+            {
+              "id": 2,
+              "sha256": "dcc691a2b184bbae44826f3114cd51dc3fad0592147cf10a17cee82e8d824cea"
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "3862f37500af3a41ebff3082e97585ad749901b802bcfd88894248f2239a0c06",
+        "e2ce7238a89a97ffcf46b9a0b4af34fb4e189f0fb18bd15e2cfa527833f776bf",
+        "2413150caa4206191eab46d4cbdf915e8b0f175c71f846f50bb4ae481237a5e3",
+        "6b6dd2e2f165f48a9a5070a9d4830440b2b756d006b0c9d58dfa5d0deffba191"
+      ]
+    },
+    "ag-psd/read-write/vector-and-mask/src.psd": {
+      "layers": [
+        {
+          "name": "Layer 1",
+          "rectangle": [
+            -1,
+            -1,
+            76,
+            75
+          ],
+          "opacity": 255,
+          "blendMode": "norm",
+          "flags": 24,
+          "clipping": 0,
+          "channels": [
+            {
+              "id": -1,
+              "sha256": "12b813a9390b7ce7356b7eb527013006e7a3761432c01f88962bf5544e364608"
+            },
+            {
+              "id": 0,
+              "sha256": "d6d68bba2963882627e3dca12743960a0db202b652eb62e29a14be635dba0dc5"
+            },
+            {
+              "id": 1,
+              "sha256": "517204577a89047bf32f4ab1fc59c9b58c7a83013fb0cf9cf86522b2fcb674f5"
+            },
+            {
+              "id": 2,
+              "sha256": "517204577a89047bf32f4ab1fc59c9b58c7a83013fb0cf9cf86522b2fcb674f5"
+            },
+            {
+              "id": -2
+            }
+          ]
+        }
+      ],
+      "mergedSha256": [
+        "3dbdc7938155897c78d93cc35bb35939c5b62bb6350de0ca4ff752d88bc7b971",
+        "9f53883a0b8a6ed6ce821e4fa6c401646e3dec182cf6b9f6a8effdf84d7b0470",
+        "9f53883a0b8a6ed6ce821e4fa6c401646e3dec182cf6b9f6a8effdf84d7b0470",
+        "3958c5f233840d5ccfd87c9205d2a4bfdecbc77a44d9c004eb11e8be84fed331"
+      ]
+    }
+  }
+}

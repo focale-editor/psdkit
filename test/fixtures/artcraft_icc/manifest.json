@@ -1,0 +1,95 @@
+{
+  "files": [
+    {
+      "repository": "https://github.com/storytold/craft-libs",
+      "commit": "ce8962552186aa9ff59849e518fff33659957c3a",
+      "sourcePath": "crates/cms/profiles/craft-coated-fogra39.icc",
+      "size": 712888,
+      "sha256": "be2d6bdad6e0508f3a486659893748eebc7063933e53dbb917da8cfa8028f20e",
+      "path": "craft-coated-fogra39.icc",
+      "gitBlob": "13590238ea3e65e77d69869bc0343e91a337b7e1",
+      "license": "CC0-1.0",
+      "majorVersion": 4,
+      "colorSpace": "CMYK",
+      "connectionSpace": "Lab"
+    },
+    {
+      "repository": "https://github.com/storytold/craft-libs",
+      "commit": "ce8962552186aa9ff59849e518fff33659957c3a",
+      "sourcePath": "crates/cms/profiles/photocraft-coated-cmyk.icc",
+      "size": 236844,
+      "sha256": "f7ba932085778fac4f8fed66e0a048351b44bb827eb07c1360b570bd3bfa54cc",
+      "path": "photocraft-coated-cmyk.icc",
+      "gitBlob": "0d2d1da16da0eb612c735a6f8d589a1907e7a16c",
+      "license": "CC0-1.0",
+      "majorVersion": 4,
+      "colorSpace": "CMYK",
+      "connectionSpace": "Lab"
+    },
+    {
+      "repository": "https://github.com/storytold/craft-libs",
+      "commit": "ce8962552186aa9ff59849e518fff33659957c3a",
+      "sourcePath": "vendor/hayro-interpret/assets/CGATS001Compat-v2-micro.icc",
+      "size": 8464,
+      "sha256": "73e1ba37d2bad5bab2a964f40a9eed96209666efc067c3322626214bbef234a0",
+      "path": "CGATS001Compat-v2-micro.icc",
+      "gitBlob": "b5a73495bfc7509837b300800d8197d94e83fab7",
+      "license": "CC0-1.0",
+      "majorVersion": 2,
+      "colorSpace": "CMYK",
+      "connectionSpace": "Lab"
+    },
+    {
+      "repository": "https://github.com/storytold/craft-libs",
+      "commit": "ce8962552186aa9ff59849e518fff33659957c3a",
+      "sourcePath": "vendor/krilla/icc/sGrey-v2-magic.icc",
+      "size": 616,
+      "sha256": "4110169287e5f1b5149ca9f1da1814d32943905bba8030e849d1a3b729a19481",
+      "path": "sGrey-v2-magic.icc",
+      "gitBlob": "1ea54310ec58bfcf955e1a5f9fb701c49500979a",
+      "license": "CC0-1.0",
+      "majorVersion": 2,
+      "colorSpace": "GRAY",
+      "connectionSpace": "XYZ"
+    },
+    {
+      "repository": "https://github.com/storytold/craft-libs",
+      "commit": "ce8962552186aa9ff59849e518fff33659957c3a",
+      "sourcePath": "vendor/krilla/icc/sGrey-v4.icc",
+      "size": 360,
+      "sha256": "00c0f94e09127520a17dc0e1d9264b5702081d96dbdb1549ee88e3631ce42a9d",
+      "path": "sGrey-v4.icc",
+      "gitBlob": "2187b6786aa7c6a6744aad62599eb70b46118352",
+      "license": "CC0-1.0",
+      "majorVersion": 4,
+      "colorSpace": "GRAY",
+      "connectionSpace": "XYZ"
+    },
+    {
+      "repository": "https://github.com/storytold/craft-libs",
+      "commit": "ce8962552186aa9ff59849e518fff33659957c3a",
+      "sourcePath": "vendor/krilla/icc/sRGB-v2-magic.icc",
+      "size": 736,
+      "sha256": "af4efe28f6d311799865f325ba39184a2e978b113ca74124d60af7de22b105f4",
+      "path": "sRGB-v2-magic.icc",
+      "gitBlob": "b29f729dbff1d6eae55aa62418f79b42b1fce9e8",
+      "license": "CC0-1.0",
+      "majorVersion": 2,
+      "colorSpace": "RGB",
+      "connectionSpace": "XYZ"
+    },
+    {
+      "repository": "https://github.com/storytold/craft-libs",
+      "commit": "ce8962552186aa9ff59849e518fff33659957c3a",
+      "sourcePath": "vendor/krilla/icc/sRGB-v4.icc",
+      "size": 480,
+      "sha256": "c56e1685d888f5edb92fe07f2750f387f8fe8e91b32ff8fb0b56bfbbb9458353",
+      "path": "sRGB-v4.icc",
+      "gitBlob": "d9f3c055bd4d7573124090569e1b9533932214eb",
+      "license": "CC0-1.0",
+      "majorVersion": 4,
+      "colorSpace": "RGB",
+      "connectionSpace": "XYZ"
+    }
+  ]
+}

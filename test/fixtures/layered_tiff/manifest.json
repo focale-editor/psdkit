@@ -1,0 +1,51 @@
+{
+  "generator": {
+    "repository": "https://github.com/storytold/photocraft",
+    "commit": "43b14883253af3ddf5f7f35038aec0adb0959959",
+    "sourcePath": "scripts/layered_tiff_fixtures.py",
+    "sha256": "d41daa46175874830f1b1c5ec35117d1cf31fe8298a89d7969283dd505d8d671",
+    "modification": "Only the output directory was changed in generate.py."
+  },
+  "files": [
+    {
+      "path": "layered-be-16bit.tif",
+      "size": 960,
+      "sha256": "94be54ec77cabe838dca0ec90072d0b4e7dbb83bd0abe9cc00783f05dbf67a3d",
+      "imageSourceDataSha256": "547bb0549a3eb1bf845d8ddf5d4f8fe30f2a754e6e7e88a5c5246ea0abb2e09d",
+      "width": 6,
+      "height": 4,
+      "depth": 16,
+      "byteOrder": "big"
+    },
+    {
+      "path": "layered-be-8bit.tif",
+      "size": 832,
+      "sha256": "459d03e760cb02c657258e0d8fdf67a98d91f595afae98e7d8dd8d0fe606ae67",
+      "imageSourceDataSha256": "c03b04d0c7dc0e486a160f68a754e82e9cc7b8c68f2e3bb432ec469dc115f93a",
+      "width": 6,
+      "height": 4,
+      "depth": 8,
+      "byteOrder": "big"
+    },
+    {
+      "path": "layered-le-16bit.tif",
+      "size": 960,
+      "sha256": "ad40910f7a5140468d843884d007d25de71234c1fe00b996a2a300b54dbfe4ec",
+      "imageSourceDataSha256": "dfa0e4bb5b2f626d6df51eb8b0dcfb8401045b57be22c198fecaf7983a480c1c",
+      "width": 6,
+      "height": 4,
+      "depth": 16,
+      "byteOrder": "little"
+    },
+    {
+      "path": "layered-le-8bit.tif",
+      "size": 832,
+      "sha256": "7eaf55a6437299fd0192583b12c5b8240c884cdc7a42fa52a94d27ed437891bd",
+      "imageSourceDataSha256": "5ab1de569c4fa84e41837d882d904d5ee29d997fcd6f8595550dc081345065a0",
+      "width": 6,
+      "height": 4,
+      "depth": 8,
+      "byteOrder": "little"
+    }
+  ]
+}

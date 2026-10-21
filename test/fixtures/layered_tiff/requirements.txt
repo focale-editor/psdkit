@@ -1,0 +1,4 @@
+imagecodecs==2026.10.10
+numpy==2.5.4
+psdtags==2026.1.29
+tifffile==2026.10.15

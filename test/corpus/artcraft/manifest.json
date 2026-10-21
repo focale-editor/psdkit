@@ -1,0 +1,675 @@
+{
+  "selectionSource": {
+    "repository": "https://github.com/storytold/photocraft",
+    "commit": "43b14883253af3ddf5f7f35038aec0adb0959959",
+    "manifests": [
+      "xtask/psd-corpus.sha256",
+      "xtask/psd-tools-corpus.sha256"
+    ]
+  },
+  "files": [
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/100x20_1bit_bitmap_rle.psd",
+      "size": 19008,
+      "sha256": "579787b33f69062b1cec82c3ddeeff1da33303f3379c96f516fdd07eab834fc6",
+      "path": "psd-tools/colormodes/100x20_1bit_bitmap_rle.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 1,
+        "height": 20,
+        "width": 100,
+        "depth": 1,
+        "colorMode": 0
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/20x5_1bit_bitmap.psd",
+      "size": 18555,
+      "sha256": "edaf3b8cd5f621b4f35436778e91be2d487f76dc381caa1cc8bd17d325041f14",
+      "path": "psd-tools/colormodes/20x5_1bit_bitmap.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 1,
+        "height": 5,
+        "width": 20,
+        "depth": 1,
+        "colorMode": 0
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/4x4_16bit_cmyk.psd",
+      "size": 577422,
+      "sha256": "4b25f12981dd2d435ba2669e3e771198c76765d3934a6cf57c069e0ad009cf6e",
+      "path": "psd-tools/colormodes/4x4_16bit_cmyk.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 4,
+        "height": 4,
+        "width": 4,
+        "depth": 16,
+        "colorMode": 4
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/4x4_16bit_grayscale.psd",
+      "size": 20734,
+      "sha256": "5ee15880f77c1a0e2566864d8770a26efe3aa261245e360267973ebdd542a49c",
+      "path": "psd-tools/colormodes/4x4_16bit_grayscale.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 1,
+        "height": 4,
+        "width": 4,
+        "depth": 16,
+        "colorMode": 1
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/4x4_16bit_lab.psd",
+      "size": 19170,
+      "sha256": "35f1727b45b73eb6191a726937f336c8ef6515992bd4913c80e67f46dbc5f12b",
+      "path": "psd-tools/colormodes/4x4_16bit_lab.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 3,
+        "height": 4,
+        "width": 4,
+        "depth": 16,
+        "colorMode": 9
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/4x4_16bit_multichannel.psd",
+      "size": 18190,
+      "sha256": "36730fdab702fbbde8f8b96451d1099186a4443d02180119542ed50aab34c88d",
+      "path": "psd-tools/colormodes/4x4_16bit_multichannel.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 3,
+        "height": 4,
+        "width": 4,
+        "depth": 16,
+        "colorMode": 7
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/4x4_16bit_rgb.psd",
+      "size": 23310,
+      "sha256": "5ac6e33ce952a5a6daf86144bedf849d60fd0008513f94c57fc1973960249a9a",
+      "path": "psd-tools/colormodes/4x4_16bit_rgb.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 3,
+        "height": 4,
+        "width": 4,
+        "depth": 16,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/4x4_1bit_bitmap.psd",
+      "size": 17900,
+      "sha256": "56ec3967706373af835a319aa2ef6698351e07b8b495e5296ba4fe8848c2dd5f",
+      "path": "psd-tools/colormodes/4x4_1bit_bitmap.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 1,
+        "height": 4,
+        "width": 4,
+        "depth": 1,
+        "colorMode": 0
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/4x4_32bit_grayscale.psd",
+      "size": 20346,
+      "sha256": "f46c66327138fd85986ad514b9002c2cf0f4d654223e2ef6652a907b110ab8cd",
+      "path": "psd-tools/colormodes/4x4_32bit_grayscale.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 1,
+        "height": 4,
+        "width": 4,
+        "depth": 32,
+        "colorMode": 1
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/4x4_32bit_rgb.psd",
+      "size": 20902,
+      "sha256": "7104010764a3223399c3c1c797d64502be4391d266645edf0e600b75ea77e1f5",
+      "path": "psd-tools/colormodes/4x4_32bit_rgb.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 3,
+        "height": 4,
+        "width": 4,
+        "depth": 32,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/4x4_8bit_cmyk.psd",
+      "size": 577446,
+      "sha256": "1b662e547d5edc6e10e9a84a03434988c6133795f8b416a03004afa9dd0334fa",
+      "path": "psd-tools/colormodes/4x4_8bit_cmyk.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 4,
+        "height": 4,
+        "width": 4,
+        "depth": 8,
+        "colorMode": 4
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/4x4_8bit_duotone.psd",
+      "size": 21250,
+      "sha256": "4169c367a7e4698f55955901849c38b8bd284dd61f8ddcbef8bafa70e54bb19b",
+      "path": "psd-tools/colormodes/4x4_8bit_duotone.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 1,
+        "height": 4,
+        "width": 4,
+        "depth": 8,
+        "colorMode": 8
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/4x4_8bit_grayscale.psd",
+      "size": 20688,
+      "sha256": "2811614db8536c363ffd4b9c97baf8965b58fda5c894ffeffe1067d1287edacf",
+      "path": "psd-tools/colormodes/4x4_8bit_grayscale.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 1,
+        "height": 4,
+        "width": 4,
+        "depth": 8,
+        "colorMode": 1
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/4x4_8bit_index_color.psd",
+      "size": 22084,
+      "sha256": "1da88234b4c1d33ef2fed6a3a496f68e3c28c0bce420400917736e9b72f194cc",
+      "path": "psd-tools/colormodes/4x4_8bit_index_color.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 1,
+        "height": 4,
+        "width": 4,
+        "depth": 8,
+        "colorMode": 2
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/4x4_8bit_lab.psd",
+      "size": 20100,
+      "sha256": "48e52730a29cf715f9df9be12d6730af9e8125d27c5293910fedd7d621cf03e9",
+      "path": "psd-tools/colormodes/4x4_8bit_lab.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 3,
+        "height": 4,
+        "width": 4,
+        "depth": 8,
+        "colorMode": 9
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/4x4_8bit_rgb.psd",
+      "size": 23308,
+      "sha256": "b656bd96b10350fc6911afaabbc2fa6a48cf5c1ae59c1a8e2f952539bd4f1930",
+      "path": "psd-tools/colormodes/4x4_8bit_rgb.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 3,
+        "height": 4,
+        "width": 4,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/colormodes/4x4_8bit_rgba.psd",
+      "size": 23780,
+      "sha256": "1f87ed0f6bace7587c0ab3fb48ffe22a7796a42e11743b6a10c42a4d2bd56d0f",
+      "path": "psd-tools/colormodes/4x4_8bit_rgba.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 4,
+        "height": 4,
+        "width": 4,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/0layers.psb",
+      "size": 139682,
+      "sha256": "3ae85219dadb3028dab6f4f8f72e6e1a6ca4b5d40aeede8abf87ec24020150fa",
+      "path": "psd-tools/0layers.psb",
+      "license": "MIT",
+      "header": {
+        "version": 2,
+        "channels": 3,
+        "height": 1200,
+        "width": 1600,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/16bit5x5.psb",
+      "size": 23482,
+      "sha256": "e0c9b37ffb5981aaedbeec2b2dfa3ad561b57e86e5e04758ed859ca819cd427c",
+      "path": "psd-tools/16bit5x5.psb",
+      "license": "MIT",
+      "header": {
+        "version": 2,
+        "channels": 3,
+        "height": 5,
+        "width": 5,
+        "depth": 16,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/32bit5x5.psb",
+      "size": 20954,
+      "sha256": "cd506872a4b1dc48bf7f64e10d321b99ea950c557cd3a83e303288e8ef6bf481",
+      "path": "psd-tools/32bit5x5.psb",
+      "license": "MIT",
+      "header": {
+        "version": 2,
+        "channels": 3,
+        "height": 5,
+        "width": 5,
+        "depth": 32,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/clipping-mask.psb",
+      "size": 107613,
+      "sha256": "92b54b07d584d65924cb2944bc44b0dac7ede671c3e667202fcf6d067837eccb",
+      "path": "psd-tools/clipping-mask.psb",
+      "license": "MIT",
+      "header": {
+        "version": 2,
+        "channels": 3,
+        "height": 200,
+        "width": 360,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/group.psb",
+      "size": 36590,
+      "sha256": "e5322646c91d54e068293e96580faebc3eae5d82d75ab3b38bd0e5c7cfb14ad2",
+      "path": "psd-tools/group.psb",
+      "license": "MIT",
+      "header": {
+        "version": 2,
+        "channels": 3,
+        "height": 200,
+        "width": 100,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/layer_mask_data.psb",
+      "size": 132639,
+      "sha256": "807a1362da4d756f9096a75d9b0fb0ec46c3c5feeafe3ce96ccc66db7ba5a014",
+      "path": "psd-tools/layer_mask_data.psb",
+      "license": "MIT",
+      "header": {
+        "version": 2,
+        "channels": 3,
+        "height": 200,
+        "width": 200,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/metadata.psb",
+      "size": 24242,
+      "sha256": "ed428417c175d15d135666b5896c3e280259f6d243515acc71d4f6c276729897",
+      "path": "psd-tools/metadata.psb",
+      "license": "MIT",
+      "header": {
+        "version": 2,
+        "channels": 4,
+        "height": 100,
+        "width": 100,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/vector-mask.psb",
+      "size": 222014,
+      "sha256": "0596ec478f78842bdb471cffe0ceadae132904d5062efa3425721b0413122be9",
+      "path": "psd-tools/vector-mask.psb",
+      "license": "MIT",
+      "header": {
+        "version": 2,
+        "channels": 3,
+        "height": 150,
+        "width": 100,
+        "depth": 32,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/transparentbg-gimp.psb",
+      "size": 21428,
+      "sha256": "6710f99e5b32843cebc7a1a5d252b8d4156735cfe10f971bd76e860541bd7ede",
+      "path": "psd-tools/transparentbg-gimp.psb",
+      "license": "MIT",
+      "header": {
+        "version": 2,
+        "channels": 4,
+        "height": 40,
+        "width": 40,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/mask-parameters-no-real-channel.psd",
+      "size": 117792,
+      "sha256": "71bff054dbb4e1749192ba7d99034c689c0337c46c9fdcac86d63dbce9ca299b",
+      "path": "psd-tools/mask-parameters-no-real-channel.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 3,
+        "height": 256,
+        "width": 256,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/mask-density-layervectormask.psd",
+      "size": 30792,
+      "sha256": "185ccf0a483da25af5c3a25942158d849f8bda24ab8be615088fab4f08d01730",
+      "path": "psd-tools/mask-density-layervectormask.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 3,
+        "height": 32,
+        "width": 32,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/cmyk-alpha-spot.psd",
+      "size": 2286497,
+      "sha256": "3f868555748e87a357890f2f20afa150f5820a460d73d3d0c1d2c52b14ebea0b",
+      "path": "psd-tools/cmyk-alpha-spot.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 6,
+        "height": 5100,
+        "width": 3300,
+        "depth": 8,
+        "colorMode": 4
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/multichannel-pattern-fill.psd",
+      "size": 23426,
+      "sha256": "801b1c14522974ec39099eec445aafab47fc89700b96f1f788466698a09e6bcc",
+      "path": "psd-tools/multichannel-pattern-fill.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 3,
+        "height": 32,
+        "width": 32,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/psd-tools/psd-tools",
+      "commit": "96eb134c17b2c65edf4c4151c0f00b802ada86c2",
+      "sourcePath": "tests/psd_files/layer-name-emoji.psd",
+      "size": 20824,
+      "sha256": "2ed49149deeffbccb89aebbf8c5a19dee12a864b17641c7bc03a89e957f3eaa8",
+      "path": "psd-tools/layer-name-emoji.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 3,
+        "height": 4,
+        "width": 4,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/Agamnentzar/ag-psd",
+      "commit": "387049670cb89b88fb8fe1b7c01aeacf98dd2e3b",
+      "sourcePath": "test/read-write/psb2/src.psb",
+      "size": 135246,
+      "sha256": "3aae71e57e7e6044c3df63ee9292151007eec7e63c44587e79c607d0eda34449",
+      "path": "ag-psd/read-write/psb2/src.psb",
+      "license": "MIT",
+      "header": {
+        "version": 2,
+        "channels": 3,
+        "height": 413,
+        "width": 413,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/Agamnentzar/ag-psd",
+      "commit": "387049670cb89b88fb8fe1b7c01aeacf98dd2e3b",
+      "sourcePath": "test/read-write/animation-frame/src.psd",
+      "size": 124880,
+      "sha256": "86e93b139ef112152aeeb39477f0f7ae7f436674ae4ba7195919d3403a18d28e",
+      "path": "ag-psd/read-write/animation-frame/src.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 3,
+        "height": 336,
+        "width": 500,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/Agamnentzar/ag-psd",
+      "commit": "387049670cb89b88fb8fe1b7c01aeacf98dd2e3b",
+      "sourcePath": "test/read-write/annotations/src.psd",
+      "size": 78652,
+      "sha256": "17f9d5be6fafb980495848667e77a62fc33c73ae7fd9faea6dc16749c56a1582",
+      "path": "ag-psd/read-write/annotations/src.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 3,
+        "height": 200,
+        "width": 200,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/Agamnentzar/ag-psd",
+      "commit": "387049670cb89b88fb8fe1b7c01aeacf98dd2e3b",
+      "sourcePath": "test/read-write/float-color/src.psd",
+      "size": 149387,
+      "sha256": "021a92686011e5a23d51991ebb8e6c226a3d071783375d6478d933b041e92f2d",
+      "path": "ag-psd/read-write/float-color/src.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 4,
+        "height": 568,
+        "width": 400,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/Agamnentzar/ag-psd",
+      "commit": "387049670cb89b88fb8fe1b7c01aeacf98dd2e3b",
+      "sourcePath": "test/read-write/layer-comps/src.psd",
+      "size": 36014,
+      "sha256": "d6b4daeed5856d1fcfd6f4ae72cf10c9ac91a415d6e9db26da483027b6ded366",
+      "path": "ag-psd/read-write/layer-comps/src.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 3,
+        "height": 100,
+        "width": 100,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/Agamnentzar/ag-psd",
+      "commit": "387049670cb89b88fb8fe1b7c01aeacf98dd2e3b",
+      "sourcePath": "test/read-write/masks/src.psd",
+      "size": 58736,
+      "sha256": "bdb6c9d5b5c659086f9659f4cb5a35d5357b52fdf9ff12e7c3c872277f4f0204",
+      "path": "ag-psd/read-write/masks/src.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 4,
+        "height": 200,
+        "width": 200,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/Agamnentzar/ag-psd",
+      "commit": "387049670cb89b88fb8fe1b7c01aeacf98dd2e3b",
+      "sourcePath": "test/read-write/text-box/src.psd",
+      "size": 53160,
+      "sha256": "5e93866dddc6407b8f985471b00932327c11d400dab3519f70d89570ec511681",
+      "path": "ag-psd/read-write/text-box/src.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 4,
+        "height": 200,
+        "width": 200,
+        "depth": 8,
+        "colorMode": 3
+      }
+    },
+    {
+      "repository": "https://github.com/Agamnentzar/ag-psd",
+      "commit": "387049670cb89b88fb8fe1b7c01aeacf98dd2e3b",
+      "sourcePath": "test/read-write/vector-and-mask/src.psd",
+      "size": 27604,
+      "sha256": "a654955ae0680252123eba20e541b74b4324caa4e6c84c896467a1f399335b99",
+      "path": "ag-psd/read-write/vector-and-mask/src.psd",
+      "license": "MIT",
+      "header": {
+        "version": 1,
+        "channels": 4,
+        "height": 98,
+        "width": 101,
+        "depth": 8,
+        "colorMode": 3
+      }
+    }
+  ]
+}
