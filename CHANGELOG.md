@@ -1,5 +1,13 @@
 # 📰 PsdKit changelog
 
+## v0.6.0
+Released on October 22, 2026.
+
+* **BREAKING FEAT**: Added Photoshop-compatible HDR, text editing and layered TIFF. ([#924fc66](https://github.com/focale-editor/psdkit/commit/924fc66))
+* **FEAT**: Added full-precision text colors with `PsdTextColor.values` and `PsdTextColor.fromValues`. ([#04e3f2c](https://github.com/focale-editor/psdkit/commit/04e3f2c))
+* **REFACTOR**: Centralized PSD metadata serialization and model copies. ([#4c49e06](https://github.com/focale-editor/psdkit/commit/4c49e06))
+* **REFACTOR**: Modularized PSD internals. ([#f9c1f50](https://github.com/focale-editor/psdkit/commit/f9c1f50))
+
 ## v0.5.0
 Released on October 10, 2026.
 
