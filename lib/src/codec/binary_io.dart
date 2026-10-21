@@ -26,21 +26,6 @@ PsdRectangle _channelRectangle(PsdLayer layer, int channelId) {
   return layer.rectangle;
 }
 
-/// Replaces placeholder channels while retaining every metadata field.
-PsdLayer _copyLayer(PsdLayer layer, List<PsdChannel> channels) => PsdLayer(
-  rectangle: layer.rectangle,
-  name: layer.name,
-  channels: channels,
-  blendMode: layer.blendMode,
-  opacity: layer.opacity,
-  clipping: layer.clipping,
-  flags: layer.flags,
-  mask: layer.mask,
-  blendingRanges: layer.blendingRanges,
-  additionalInfo: layer.additionalInfo,
-  writesUnicodeName: layer.writesUnicodeName,
-);
-
 /// Resolves a supported PSD enum value or reports its byte location.
 T _enumByCode<T>(List<T> values, int code, String label, PsBinaryReader reader) {
   for (final T value in values) {

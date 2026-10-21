@@ -130,15 +130,8 @@ final class _PsdStreamingWriter {
     PsdDocument document,
     PsdVersion version,
   ) async {
-    final PsBinaryWriter writer = PsBinaryWriter()
-      ..writeString('8BPS')
-      ..writeUint16(version.code)
-      ..writeZeros(6)
-      ..writeUint16(document.channels)
-      ..writeUint32(document.height)
-      ..writeUint32(document.width)
-      ..writeUint16(document.depth)
-      ..writeUint16(document.colorMode.code);
+    final PsBinaryWriter writer = PsBinaryWriter();
+    _writeDocumentHeader(writer, document, version);
     await output.write(writer.takeBytes());
   }
 
@@ -153,25 +146,8 @@ final class _PsdStreamingWriter {
     final _PsdLengthPatch section = await _reserveLength(wide: false);
     final int start = output.position;
     for (final PsdImageResource resource in resources) {
-      _requireFourCharacters(
-        resource.signature,
-        'image-resource signature',
-      );
-      if (resource.id < 0 || resource.id > 0xffff) {
-        throw PsWriteException(
-          message: 'Image resource id ${resource.id} is outside 0...65535',
-        );
-      }
-      final Uint8List name = _legacyName(resource.name);
-      final PsBinaryWriter header = PsBinaryWriter()
-        ..writeString(resource.signature)
-        ..writeUint16(resource.id)
-        ..writeUint8(name.length)
-        ..writeBytes(name);
-      if ((name.length + 1).isOdd) {
-        header.writeUint8(0);
-      }
-      header.writeUint32(resource.data.lengthInBytes);
+      final PsBinaryWriter header = PsBinaryWriter();
+      _writeImageResourceHeader(header, resource);
       await output.write(header.takeBytes());
       await output.write(resource.data);
       if (resource.data.lengthInBytes.isOdd) {
@@ -195,39 +171,24 @@ final class _PsdStreamingWriter {
       wide: version == PsdVersion.psb,
     );
     final int start = output.position;
-    final PsdTaggedBlock? existingAlternative = _alternativeLayerInfo(
-      document.additionalLayerInfo,
-      document.depth,
+    final _PsdLayerInfoLayout layout = _layerInfoLayout(
+      depth: document.depth,
+      hasLayers: source.layers.isNotEmpty,
+      blocks: document.additionalLayerInfo,
     );
-    final bool alternativeLayers = source.layers.isNotEmpty && (document.depth == 16 || document.depth == 32 || existingAlternative != null);
-    if (alternativeLayers) {
+    if (layout.alternativeKey != null) {
       await _writeLength(0, wide: version == PsdVersion.psb);
     } else {
       await _writeLayerInfoSection(source, version);
     }
     await _writeUint32(document.globalLayerMaskData.lengthInBytes);
     await output.write(document.globalLayerMaskData);
-
-    if (alternativeLayers) {
-      final String key = switch (document.depth) {
-        16 => 'Lr16',
-        32 => 'Lr32',
-        _ => 'Layr',
-      };
-      await _writeBlocksWithLayerInfo(
-        source,
-        document.additionalLayerInfo,
-        version,
-        key,
-      );
-    } else {
-      final List<PsdTaggedBlock> blocks = existingAlternative != null && source.layers.isEmpty
-          ? _removeAlternativeLayerInfo(
-              document.additionalLayerInfo,
-              existingAlternative.key,
-            )
-          : document.additionalLayerInfo;
-      await _writeTaggedBlocksDirect(blocks, version);
+    for (final PsdTaggedBlock block in layout.blocks) {
+      if (block.key == layout.alternativeKey) {
+        await _writeLayerInfoBlock(source, version, signature: block.signature, key: block.key);
+      } else {
+        await _writeTaggedBlockDirect(block, version);
+      }
     }
     await _patchLength(section, output.position - start);
   }
@@ -243,39 +204,6 @@ final class _PsdStreamingWriter {
     final int start = output.position;
     await _writeLayerInfo(source, version);
     await _patchLength(length, output.position - start);
-  }
-
-  /// Replaces an existing alternate layer block or appends one.
-  Future<void> _writeBlocksWithLayerInfo(
-    PsdStreamDocument source,
-    List<PsdTaggedBlock> blocks,
-    PsdVersion version,
-    String key,
-  ) async {
-    bool inserted = false;
-    for (final PsdTaggedBlock block in blocks) {
-      if (block.key == 'Layr' || block.key == 'Lr16' || block.key == 'Lr32') {
-        if (!inserted) {
-          await _writeLayerInfoBlock(
-            source,
-            version,
-            signature: block.signature,
-            key: key,
-          );
-          inserted = true;
-        }
-      } else {
-        await _writeTaggedBlockDirect(block, version);
-      }
-    }
-    if (!inserted) {
-      await _writeLayerInfoBlock(
-        source,
-        version,
-        signature: '8BIM',
-        key: key,
-      );
-    }
   }
 
   /// Writes one alternate layer-info tagged block progressively.
@@ -337,22 +265,8 @@ final class _PsdStreamingWriter {
           ),
         );
       }
-      _requireFourCharacters(layer.blendMode, 'blend mode');
-      if (layer.opacity < 0 || layer.opacity > 255 || layer.clipping < 0 || layer.clipping > 255 || layer.flags < 0 || layer.flags > 255) {
-        throw const PsWriteException(
-          message: 'Layer opacity, clipping, and flags must fit in one byte',
-        );
-      }
-      final Uint8List extra = _writeLayerExtra(layer, version);
-      final PsBinaryWriter trailing = PsBinaryWriter()
-        ..writeString('8BIM')
-        ..writeString(layer.blendMode)
-        ..writeUint8(layer.opacity)
-        ..writeUint8(layer.clipping)
-        ..writeUint8(layer.flags)
-        ..writeUint8(0)
-        ..writeUint32(extra.lengthInBytes)
-        ..writeBytes(extra);
+      final PsBinaryWriter trailing = PsBinaryWriter();
+      _writeLayerRecordMetadata(trailing, layer, version);
       await output.write(trailing.takeBytes());
     }
     for (final _PsdChannelPatch pending in channels) {
@@ -398,16 +312,6 @@ final class _PsdStreamingWriter {
   void _reportRows(int count) {
     _completedRows += count;
     onProgress?.call(_completedRows, _totalRows);
-  }
-
-  /// Writes ordinary tagged blocks without joining their payloads.
-  Future<void> _writeTaggedBlocksDirect(
-    List<PsdTaggedBlock> blocks,
-    PsdVersion version,
-  ) async {
-    for (final PsdTaggedBlock block in blocks) {
-      await _writeTaggedBlockDirect(block, version);
-    }
   }
 
   /// Writes one ordinary tagged block and its even-byte padding.

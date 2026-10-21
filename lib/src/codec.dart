@@ -4,10 +4,13 @@ import 'dart:typed_data';
 import 'package:pscore/pscore.dart';
 import 'package:psdkit/src/compression.dart';
 import 'package:psdkit/src/model.dart';
+import 'package:psdkit/src/model/copy.dart';
 
 part 'codec/binary_io.dart';
 part 'codec/decoder.dart';
 part 'codec/encoder.dart';
+part 'codec/layer_info_layout.dart';
+part 'codec/metadata_writer.dart';
 part 'codec/plane_writer.dart';
 part 'codec/source_encoding.dart';
 part 'codec/streaming_encoder.dart';
@@ -94,15 +97,9 @@ abstract final class PsdCodec {
     if (document.mergedImage.length != document.channels) {
       throw PsWriteException(message: 'Document declares ${document.channels} channels but provides ${document.mergedImage.length} merged channels');
     }
-    final PsBinaryWriter writer = PsBinaryWriter()
-      ..writeString('8BPS')
-      ..writeUint16(version.code)
-      ..writeZeros(6)
-      ..writeUint16(document.channels)
-      ..writeUint32(document.height)
-      ..writeUint32(document.width)
-      ..writeUint16(document.depth)
-      ..writeUint16(document.colorMode.code)
+    final PsBinaryWriter writer = PsBinaryWriter();
+    _writeDocumentHeader(writer, document, version);
+    writer
       ..writeUint32(document.colorModeData.length)
       ..writeBytes(document.colorModeData);
 

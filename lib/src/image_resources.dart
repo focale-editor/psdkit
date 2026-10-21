@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:pscore/pscore.dart';
 import 'package:psdkit/src/model.dart';
+import 'package:psdkit/src/model/copy.dart';
 import 'package:psdkit/src/paths.dart';
 
 part 'image_resources/binary_io.dart';
@@ -88,33 +89,15 @@ extension PsdDocumentImageResources on PsdDocument {
     if (!replaced) {
       resources.add(PsdImageResource(id: value.resourceId, name: name, signature: signature, data: PsdImageResourceCodec.encode(value)));
     }
-    return _copyDocumentWithImageResources(this, resources);
+    return copyPsdDocument(this, imageResources: resources);
   }
 
   /// Returns a document without resources matching [id].
-  PsdDocument withoutImageResource(int id) => _copyDocumentWithImageResources(
+  PsdDocument withoutImageResource(int id) => copyPsdDocument(
     this,
-    <PsdImageResource>[
+    imageResources: [
       for (final PsdImageResource resource in imageResources)
         if (resource.id != id) resource,
     ],
   );
 }
-
-/// Copies [document] while replacing only its image-resource list.
-PsdDocument _copyDocumentWithImageResources(PsdDocument document, List<PsdImageResource> resources) => PsdDocument(
-  version: document.version,
-  width: document.width,
-  height: document.height,
-  channels: document.channels,
-  depth: document.depth,
-  colorMode: document.colorMode,
-  colorModeData: document.colorModeData,
-  imageResources: resources,
-  layers: document.layers,
-  mergedImage: document.mergedImage,
-  mergedImageCompression: document.mergedImageCompression,
-  mergedTransparency: document.mergedTransparency,
-  globalLayerMaskData: document.globalLayerMaskData,
-  additionalLayerInfo: document.additionalLayerInfo,
-);

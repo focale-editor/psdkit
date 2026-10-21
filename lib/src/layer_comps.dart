@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 
 import 'package:pscore/pscore.dart';
+import 'package:psdkit/src/core/versioned_descriptor.dart';
 import 'package:psdkit/src/effects.dart';
 import 'package:psdkit/src/model.dart';
+import 'package:psdkit/src/model/copy.dart';
 
 part 'layer_comps/blending.dart';
 part 'layer_comps/layer_state.dart';
@@ -34,7 +36,7 @@ abstract final class PsdLayerCompsCodec {
         if (entry.key != 'cmls') {
           continue;
         }
-        final PsDescriptor descriptor = _decodeVersionedDescriptor(
+        final PsDescriptor descriptor = decodePsdVersionedDescriptor(
           entry.data,
         );
         final PsdLayerCompLayerData result = PsdLayerCompLayerData(
@@ -78,7 +80,7 @@ abstract final class PsdLayerCompsCodec {
           signature: '8BIM',
           key: 'cmls',
           copyOnSheetDuplication: false,
-          data: _encodeVersionedDescriptor(data.descriptor),
+          data: encodePsdVersionedDescriptor(data.descriptor),
         ),
     ];
     return _copyLayerWithBlock(

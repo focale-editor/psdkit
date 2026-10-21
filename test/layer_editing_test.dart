@@ -5,6 +5,56 @@ import 'package:test/test.dart';
 
 /// Verifies that semantic edits retain the rest of a layer's metadata.
 void main() {
+  final Map<String, PsdLayer Function(PsdLayer)> textEdits = {
+    'TySh': (layer) => layer.withTypeTool(
+      PsdTypeTool.fromText(
+        content: const PsdTextContent(text: 'New text', orientation: .horizontal),
+      ),
+    ),
+    'tySh': (layer) => layer.withLegacyTypeTool(_legacyText()),
+  };
+  for (final MapEntry<String, PsdLayer Function(PsdLayer)> entry in textEdits.entries) {
+    for (final bool exists in [false, true]) {
+      test('${entry.key} ${exists ? 'replaces in place' : 'appends'} and removes conflicting text', () {
+        final String obsolete = entry.key == 'TySh' ? 'tySh' : 'TySh';
+        final PsdTaggedBlock first = PsdTaggedBlock(key: 'head', data: Uint8List.fromList([1]));
+        final PsdTaggedBlock last = PsdTaggedBlock(key: 'tail', data: Uint8List.fromList([2]));
+        final PsdLayer source = PsdLayer(
+          rectangle: const .fromSize(width: 2, height: 3),
+          name: 'Text',
+          channels: [PsdChannel(id: 0, data: Uint8List(6))],
+          opacity: 73,
+          flags: 3,
+          writesUnicodeName: false,
+          additionalInfo: [
+            first,
+            PsdTaggedBlock(key: obsolete, data: Uint8List(0)),
+            if (exists) PsdTaggedBlock(key: entry.key, data: Uint8List(0)),
+            last,
+            if (exists) PsdTaggedBlock(key: entry.key, data: Uint8List(0)),
+          ],
+        );
+
+        final PsdLayer edited = entry.value(source);
+
+        expect(edited.additionalInfo.map((block) => block.key), exists ? ['head', entry.key, 'tail'] : ['head', 'tail', entry.key]);
+        expect(edited.additionalInfo.first, same(first));
+        expect(edited.taggedBlock('tail'), same(last));
+        expect(edited.rectangle, same(source.rectangle));
+        expect(edited.channels, same(source.channels));
+        expect(edited.opacity, 73);
+        expect(edited.flags, 3);
+        expect(edited.writesUnicodeName, isFalse);
+        expect(source.taggedBlock(obsolete), isNotNull);
+        if (entry.key == 'TySh') {
+          expect(edited.typeTool?.text, 'New text');
+        } else {
+          expect(edited.legacyTypeTool?.characterCount, 0);
+        }
+      });
+    }
+  }
+
   final List<_LayerEditCase> cases = [
     (
       name: 'effects',
@@ -82,3 +132,19 @@ void main() {
 
 /// An edit and the competing tagged blocks it replaces.
 typedef _LayerEditCase = ({String name, List<String> keys, String replacementKey, PsdLayer Function(PsdLayer) edit});
+
+/// Creates a complete legacy record with no character or font entries.
+PsdLegacyTypeTool _legacyText() => PsdLegacyTypeTool(
+  faces: [],
+  styles: [],
+  type: 0,
+  scalingFactor: 1,
+  characterCount: 0,
+  horizontalPlacement: 0,
+  verticalPlacement: 0,
+  selectionStart: 0,
+  selectionEnd: 0,
+  lines: [],
+  color: PsdLegacyTextColor(colorSpace: 0, components: [0, 0, 0, 0]),
+  antiAlias: true,
+);

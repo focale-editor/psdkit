@@ -6,6 +6,7 @@ import 'package:psdkit/src/effects.dart';
 import 'package:psdkit/src/fill_content.dart';
 import 'package:psdkit/src/filter_effects.dart';
 import 'package:psdkit/src/layer_options.dart';
+import 'package:psdkit/src/model/copy.dart';
 import 'package:psdkit/src/paths.dart';
 import 'package:psdkit/src/smart_objects.dart';
 import 'package:psdkit/src/text.dart';

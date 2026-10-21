@@ -84,55 +84,18 @@ Uint8List _encodeSharedMetadata(List<_SharedMetadataEntry> entries) {
   return writer.takeBytes();
 }
 
-/// Decodes one version-16 descriptor with zero-only trailing padding.
-PsDescriptor _decodeVersionedDescriptor(Uint8List bytes) {
-  final PsBinaryReader reader = PsBinaryReader(bytes: bytes);
-  if (reader.readUint32() != 16) {
-    throw const PsFormatException(
-      message: 'Unsupported layer-composition descriptor version',
-    );
-  }
-  final Uint8List payload = reader.readView(reader.remaining);
-  final ({PsDescriptor descriptor, int bytesRead}) decoded = PsDescriptorCodec.decodePrefix(payload);
-  if (payload.skip(decoded.bytesRead).any((byte) => byte != 0)) {
-    throw const PsFormatException(
-      message: 'Unexpected layer-composition descriptor bytes',
-    );
-  }
-  return decoded.descriptor;
-}
-
-/// Encodes one version-16 descriptor with four-byte padding.
-Uint8List _encodeVersionedDescriptor(PsDescriptor descriptor) {
-  final PsBinaryWriter writer = PsBinaryWriter();
-  writer
-    ..writeUint32(16)
-    ..writeBytes(PsDescriptorCodec.encode(descriptor))
-    ..writeZeros((4 - writer.length % 4) % 4);
-  return writer.takeBytes();
-}
-
 /// Returns a layer with one tagged-block key replaced or removed.
 PsdLayer _copyLayerWithBlock(
   PsdLayer source,
   PsdTaggedBlock? replacement, {
   required String key,
-}) => PsdLayer(
-  rectangle: source.rectangle,
-  name: source.name,
-  channels: source.channels,
-  blendMode: source.blendMode,
-  opacity: source.opacity,
-  clipping: source.clipping,
-  flags: source.flags,
-  mask: source.mask,
-  blendingRanges: source.blendingRanges,
+}) => copyPsdLayer(
+  source,
   additionalInfo: [
     for (final PsdTaggedBlock block in source.additionalInfo)
       if (block.key != key) block,
     ?replacement,
   ],
-  writesUnicodeName: source.writesUnicodeName,
 );
 
 /// Builds a Photoshop point descriptor.

@@ -119,20 +119,8 @@ final class PsdDocument {
   }
 
   /// Returns a copy whose `artd` block encodes [defaults], or none when `null`.
-  PsdDocument withArtboardDefaults(PsdArtboardDefaults? defaults) => PsdDocument(
-    version: version,
-    width: width,
-    height: height,
-    channels: channels,
-    depth: depth,
-    colorMode: colorMode,
-    colorModeData: colorModeData,
-    imageResources: imageResources,
-    layers: layers,
-    mergedImage: mergedImage,
-    mergedImageCompression: mergedImageCompression,
-    mergedTransparency: mergedTransparency,
-    globalLayerMaskData: globalLayerMaskData,
+  PsdDocument withArtboardDefaults(PsdArtboardDefaults? defaults) => copyPsdDocument(
+    this,
     additionalLayerInfo: [
       for (final PsdTaggedBlock block in additionalLayerInfo)
         if (block.key != 'artd') block,
@@ -164,20 +152,8 @@ final class PsdDocument {
   /// The patterns are written to the block matching the document [depth]:
   /// `Patt` for 8-bit, `Pat2` for 16-bit, and `Pat3` for 32-bit documents.
   /// Passing an empty list removes every pattern block.
-  PsdDocument withPatterns(List<PsPattern> patterns) => PsdDocument(
-    version: version,
-    width: width,
-    height: height,
-    channels: channels,
-    depth: depth,
-    colorMode: colorMode,
-    colorModeData: colorModeData,
-    imageResources: imageResources,
-    layers: layers,
-    mergedImage: mergedImage,
-    mergedImageCompression: mergedImageCompression,
-    mergedTransparency: mergedTransparency,
-    globalLayerMaskData: globalLayerMaskData,
+  PsdDocument withPatterns(List<PsPattern> patterns) => copyPsdDocument(
+    this,
     additionalLayerInfo: [
       for (final PsdTaggedBlock block in additionalLayerInfo)
         if (!_patternBlockKeys.contains(block.key)) block,
@@ -196,20 +172,8 @@ final class PsdDocument {
   /// Returns a copy whose document-level `Txt2` block contains [engineData].
   ///
   /// Passing `null` removes every existing global text-engine block.
-  PsdDocument withGlobalTextEngineData(PsdGlobalTextEngineData? engineData) => PsdDocument(
-    version: version,
-    width: width,
-    height: height,
-    channels: channels,
-    depth: depth,
-    colorMode: colorMode,
-    colorModeData: colorModeData,
-    imageResources: imageResources,
-    layers: layers,
-    mergedImage: mergedImage,
-    mergedImageCompression: mergedImageCompression,
-    mergedTransparency: mergedTransparency,
-    globalLayerMaskData: globalLayerMaskData,
+  PsdDocument withGlobalTextEngineData(PsdGlobalTextEngineData? engineData) => copyPsdDocument(
+    this,
     additionalLayerInfo: <PsdTaggedBlock>[
       for (final PsdTaggedBlock block in additionalLayerInfo)
         if (block.key != 'Txt2') block,
@@ -228,14 +192,8 @@ final class PsdDocument {
         throw PsWriteException(message: 'Duplicate named path resource id ${path.resourceId}');
       }
     }
-    return PsdDocument(
-      version: version,
-      width: width,
-      height: height,
-      channels: channels,
-      depth: depth,
-      colorMode: colorMode,
-      colorModeData: colorModeData,
+    return copyPsdDocument(
+      this,
       imageResources: <PsdImageResource>[
         for (final PsdImageResource resource in imageResources)
           if (resource.id < 2000 || resource.id > 2997) resource,
@@ -247,12 +205,6 @@ final class PsdDocument {
             data: PsdVectorPathCodec.encode(path.path),
           ),
       ],
-      layers: layers,
-      mergedImage: mergedImage,
-      mergedImageCompression: mergedImageCompression,
-      mergedTransparency: mergedTransparency,
-      globalLayerMaskData: globalLayerMaskData,
-      additionalLayerInfo: additionalLayerInfo,
     );
   }
 
@@ -302,20 +254,8 @@ final class PsdDocument {
   }
 
   /// Returns a copy replacing all filter-cache blocks with one `FEid` payload.
-  PsdDocument withFilterEffects(PsdFilterEffects effects) => PsdDocument(
-    version: version,
-    width: width,
-    height: height,
-    channels: channels,
-    depth: depth,
-    colorMode: colorMode,
-    colorModeData: colorModeData,
-    imageResources: imageResources,
-    layers: layers,
-    mergedImage: mergedImage,
-    mergedImageCompression: mergedImageCompression,
-    mergedTransparency: mergedTransparency,
-    globalLayerMaskData: globalLayerMaskData,
+  PsdDocument withFilterEffects(PsdFilterEffects effects) => copyPsdDocument(
+    this,
     additionalLayerInfo: [
       for (final PsdTaggedBlock block in additionalLayerInfo)
         if (!psdFilterEffectsKeys.contains(block.key)) block,
@@ -324,20 +264,8 @@ final class PsdDocument {
   );
 
   /// Returns a copy whose linked-resource blocks are [blocks].
-  PsdDocument withLinkedResourceBlocks(List<PsdLinkedResourceBlock> blocks) => PsdDocument(
-    version: version,
-    width: width,
-    height: height,
-    channels: channels,
-    depth: depth,
-    colorMode: colorMode,
-    colorModeData: colorModeData,
-    imageResources: imageResources,
-    layers: layers,
-    mergedImage: mergedImage,
-    mergedImageCompression: mergedImageCompression,
-    mergedTransparency: mergedTransparency,
-    globalLayerMaskData: globalLayerMaskData,
+  PsdDocument withLinkedResourceBlocks(List<PsdLinkedResourceBlock> blocks) => copyPsdDocument(
+    this,
     additionalLayerInfo: <PsdTaggedBlock>[
       for (final PsdTaggedBlock block in additionalLayerInfo)
         if (!psdLinkedResourceKeys.contains(block.key)) block,

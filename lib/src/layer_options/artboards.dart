@@ -147,7 +147,7 @@ final class PsdArtboard {
   String get presetName => descriptor.stringValue('artboardPresetName') ?? '';
 
   /// Encodes this artboard as an `artb` block.
-  PsdTaggedBlock toBlock() => PsdTaggedBlock(key: 'artb', data: _encodeVersioned(descriptor));
+  PsdTaggedBlock toBlock() => PsdTaggedBlock(key: 'artb', data: encodePsdVersionedDescriptor(descriptor));
 
   /// Bounds descriptor stored under `artboardRect`.
   PsDescriptor? get _rectangle => descriptor.objectValue('artboardRect');
@@ -227,25 +227,14 @@ final class PsdArtboardDefaults {
   }
 
   /// Encodes these defaults as an `artd` block.
-  PsdTaggedBlock toBlock() => PsdTaggedBlock(key: 'artd', data: _encodeVersioned(descriptor));
+  PsdTaggedBlock toBlock() => PsdTaggedBlock(key: 'artd', data: encodePsdVersionedDescriptor(descriptor));
 }
 
 /// Decodes a version 16 descriptor followed only by zero padding.
 PsDescriptor? _tryDecodeVersioned(Uint8List data) {
   try {
-    final ({PsVersionedDescriptor value, int bytesRead}) decoded = PsVersionedDescriptorCodec.decodePrefix(data, expectedVersion: 16);
-    if (data.skip(decoded.bytesRead).any((value) => value != 0)) {
-      return null;
-    }
-    return decoded.value.descriptor;
+    return decodePsdVersionedDescriptor(data);
   } on FormatException {
     return null;
   }
-}
-
-/// Encodes a version 16 [descriptor] padded to four bytes.
-Uint8List _encodeVersioned(PsDescriptor descriptor) {
-  final PsBinaryWriter writer = PsBinaryWriter()..writeBytes(PsVersionedDescriptorCodec.encode(PsVersionedDescriptor(descriptor: descriptor)));
-  writer.writeZeros((4 - writer.length % 4) % 4);
-  return writer.takeBytes();
 }

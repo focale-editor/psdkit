@@ -3,12 +3,14 @@ import 'dart:typed_data';
 import 'package:psdkit/psdkit.dart';
 import 'package:test/test.dart';
 
+import 'support/memory_output.dart';
+
 /// Verifies byte parity and bounded reads of progressive PSD output.
 void main() {
   for (final PsdCompression compression in [PsdCompression.raw, PsdCompression.rle]) {
     test('$compression progress includes layer and merged rows', () async {
       final PsdDocument document = _fixture(version: .psb, compression: compression);
-      final _MemoryRandomAccessOutput output = _MemoryRandomAccessOutput();
+      final MemoryRandomAccessOutput output = MemoryRandomAccessOutput();
       final List<(int, int)> progress = [];
 
       await PsdCodec.encodeTo(
@@ -32,7 +34,7 @@ void main() {
 
       final Future<int> writing = PsdCodec.encodeTo(
         document,
-        _MemoryRandomAccessOutput(),
+        MemoryRandomAccessOutput(),
         options: PsdWriteOptions(compression: compression),
         onProgress: (completed, total) => progress.add((completed, total)),
       );
@@ -46,7 +48,7 @@ void main() {
     test('progressive RLE output matches ${version.name} byte encoding', () async {
       final PsdDocument document = _fixture(version: version);
       final Uint8List expected = PsdCodec.encode(document);
-      final _MemoryRandomAccessOutput output = _MemoryRandomAccessOutput();
+      final MemoryRandomAccessOutput output = MemoryRandomAccessOutput();
 
       final int length = await PsdCodec.encodeTo(
         PsdStreamDocument.fromDocument(document),
@@ -91,7 +93,7 @@ void main() {
       layers: const [],
       mergedImage: [source],
     );
-    final _MemoryRandomAccessOutput output = _MemoryRandomAccessOutput();
+    final MemoryRandomAccessOutput output = MemoryRandomAccessOutput();
 
     await PsdCodec.encodeTo(streamed, output, rowBatchSize: 2);
 
@@ -107,7 +109,7 @@ void main() {
       compression: PsdCompression.raw,
     );
     final Uint8List expected = PsdCodec.encode(document);
-    final _MemoryRandomAccessOutput output = _MemoryRandomAccessOutput();
+    final MemoryRandomAccessOutput output = MemoryRandomAccessOutput();
 
     await PsdCodec.encodeTo(
       PsdStreamDocument.fromDocument(document),
@@ -121,7 +123,7 @@ void main() {
   test('progressive 16-bit layers use the alternate layer-info block', () async {
     final PsdDocument document = _sixteenBitFixture();
     final Uint8List expected = PsdCodec.encode(document);
-    final _MemoryRandomAccessOutput output = _MemoryRandomAccessOutput();
+    final MemoryRandomAccessOutput output = MemoryRandomAccessOutput();
 
     await PsdCodec.encodeTo(
       PsdStreamDocument.fromDocument(document),
@@ -151,7 +153,7 @@ void main() {
       mergedImageCompression: PsdCompression.rle,
     );
     final Uint8List expected = PsdCodec.encode(document);
-    final _MemoryRandomAccessOutput output = _MemoryRandomAccessOutput();
+    final MemoryRandomAccessOutput output = MemoryRandomAccessOutput();
 
     await PsdCodec.encodeTo(
       PsdStreamDocument.fromDocument(document),
@@ -166,7 +168,7 @@ void main() {
     test('progressive $compression writing accepts empty layer rectangles', () async {
       final PsdDocument document = _emptyRectangleFixture(compression);
       final Uint8List expected = PsdCodec.encode(document);
-      final _MemoryRandomAccessOutput output = _MemoryRandomAccessOutput();
+      final MemoryRandomAccessOutput output = MemoryRandomAccessOutput();
 
       await PsdCodec.encodeTo(
         PsdStreamDocument.fromDocument(document),
@@ -190,7 +192,7 @@ void main() {
     await expectLater(
       PsdCodec.encodeTo(
         PsdStreamDocument.fromDocument(document),
-        _MemoryRandomAccessOutput(),
+        MemoryRandomAccessOutput(),
       ),
       throwsA(isA<PsWriteException>()),
     );
@@ -337,54 +339,5 @@ final class _TrackingPlanarSource implements PsdPlanarSource {
       startRow * rowBytes,
       (startRow + rowCount) * rowBytes,
     );
-  }
-}
-
-/// Stores random-access output in a growable test buffer.
-final class _MemoryRandomAccessOutput implements PsdRandomAccessOutput {
-  /// Mutable backing bytes.
-  Uint8List _bytes = Uint8List(0);
-
-  /// Current cursor.
-  int _position = 0;
-
-  /// Immutable view of the written bytes.
-  Uint8List get bytes => _bytes.asUnmodifiableView();
-
-  @override
-  int get position => _position;
-
-  @override
-  Future<void> flush() async {}
-
-  @override
-  Future<void> setPosition(int position) async {
-    if (position < 0 || position > _bytes.lengthInBytes) {
-      throw RangeError.range(position, 0, _bytes.lengthInBytes);
-    }
-    _position = position;
-  }
-
-  @override
-  Future<void> truncate(int length) async {
-    if (length < 0) {
-      throw RangeError.value(length);
-    }
-    final Uint8List resized = Uint8List(length);
-    resized.setRange(0, length.clamp(0, _bytes.lengthInBytes), _bytes);
-    _bytes = resized;
-    _position = _position.clamp(0, length);
-  }
-
-  @override
-  Future<void> write(Uint8List bytes) async {
-    final int end = _position + bytes.lengthInBytes;
-    if (end > _bytes.lengthInBytes) {
-      final Uint8List grown = Uint8List(end);
-      grown.setRange(0, _bytes.lengthInBytes, _bytes);
-      _bytes = grown;
-    }
-    _bytes.setRange(_position, end, bytes);
-    _position = end;
   }
 }

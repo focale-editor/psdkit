@@ -227,80 +227,18 @@ final class PsdLayer {
   }
 
   /// Returns a copy whose `TySh` block contains [typeTool].
-  PsdLayer withTypeTool(PsdTypeTool typeTool) {
-    final List<PsdTaggedBlock> blocks = <PsdTaggedBlock>[];
-    bool replaced = false;
-    for (final PsdTaggedBlock block in additionalInfo) {
-      if (block.key == 'TySh') {
-        if (!replaced) {
-          blocks.add(PsdTaggedBlock(key: 'TySh', data: PsdTypeToolCodec.encode(typeTool)));
-        }
-        replaced = true;
-      } else if (block.key != 'tySh') {
-        blocks.add(block);
-      }
-    }
-    if (!replaced) {
-      blocks.add(PsdTaggedBlock(key: 'TySh', data: PsdTypeToolCodec.encode(typeTool)));
-    }
-    return PsdLayer(
-      rectangle: rectangle,
-      name: name,
-      channels: channels,
-      blendMode: blendMode,
-      opacity: opacity,
-      clipping: clipping,
-      flags: flags,
-      mask: mask,
-      blendingRanges: blendingRanges,
-      additionalInfo: blocks,
-      writesUnicodeName: writesUnicodeName,
-    );
-  }
+  PsdLayer withTypeTool(PsdTypeTool typeTool) => _withTextBlock(
+    PsdTaggedBlock(key: 'TySh', data: PsdTypeToolCodec.encode(typeTool)),
+    obsoleteKey: 'tySh',
+  );
 
   /// Returns a copy whose `tySh` block contains Photoshop 5.x [typeTool] data.
   ///
   /// Any modern `TySh` block is removed to avoid two conflicting text records.
-  PsdLayer withLegacyTypeTool(PsdLegacyTypeTool typeTool) {
-    final List<PsdTaggedBlock> blocks = <PsdTaggedBlock>[];
-    bool replaced = false;
-    for (final PsdTaggedBlock block in additionalInfo) {
-      if (block.key == 'tySh') {
-        if (!replaced) {
-          blocks.add(
-            PsdTaggedBlock(
-              key: 'tySh',
-              data: PsdLegacyTypeToolCodec.encode(typeTool),
-            ),
-          );
-        }
-        replaced = true;
-      } else if (block.key != 'TySh') {
-        blocks.add(block);
-      }
-    }
-    if (!replaced) {
-      blocks.add(
-        PsdTaggedBlock(
-          key: 'tySh',
-          data: PsdLegacyTypeToolCodec.encode(typeTool),
-        ),
-      );
-    }
-    return PsdLayer(
-      rectangle: rectangle,
-      name: name,
-      channels: channels,
-      blendMode: blendMode,
-      opacity: opacity,
-      clipping: clipping,
-      flags: flags,
-      mask: mask,
-      blendingRanges: blendingRanges,
-      additionalInfo: blocks,
-      writesUnicodeName: writesUnicodeName,
-    );
-  }
+  PsdLayer withLegacyTypeTool(PsdLegacyTypeTool typeTool) => _withTextBlock(
+    PsdTaggedBlock(key: 'tySh', data: PsdLegacyTypeToolCodec.encode(typeTool)),
+    obsoleteKey: 'TySh',
+  );
 
   /// Returns a copy whose effect blocks contain [effects].
   ///
@@ -383,22 +321,37 @@ final class PsdLayer {
   /// Returns a copy marked as [artboard], or unmarked when it is `null`.
   PsdLayer withArtboard(PsdArtboard? artboard) => _withBlocks(const {'artb'}, [?artboard?.toBlock()]);
 
+  /// Replaces the first matching text block and removes conflicting versions.
+  ///
+  /// Existing text keeps its position among unrelated blocks. A newly added
+  /// text block is appended, and duplicate text blocks are removed.
+  PsdLayer _withTextBlock(PsdTaggedBlock replacement, {required String obsoleteKey}) {
+    final List<PsdTaggedBlock> blocks = [];
+    bool replaced = false;
+    for (final PsdTaggedBlock block in additionalInfo) {
+      if (block.key == replacement.key) {
+        if (!replaced) {
+          blocks.add(replacement);
+          replaced = true;
+        }
+      } else if (block.key != obsoleteKey) {
+        blocks.add(block);
+      }
+    }
+    if (!replaced) {
+      blocks.add(replacement);
+    }
+    return copyPsdLayer(this, additionalInfo: blocks);
+  }
+
   /// Returns a copy whose blocks under [keys] are replaced by [replacements].
-  PsdLayer _withBlocks(Set<String> keys, List<PsdTaggedBlock> replacements, {int? flags}) => PsdLayer(
-    rectangle: rectangle,
-    name: name,
-    channels: channels,
-    blendMode: blendMode,
-    opacity: opacity,
-    clipping: clipping,
-    flags: flags ?? this.flags,
-    mask: mask,
-    blendingRanges: blendingRanges,
+  PsdLayer _withBlocks(Set<String> keys, List<PsdTaggedBlock> replacements, {int? flags}) => copyPsdLayer(
+    this,
+    flags: flags,
     additionalInfo: [
       for (final PsdTaggedBlock block in additionalInfo)
         if (!keys.contains(block.key)) block,
       ...replacements,
     ],
-    writesUnicodeName: writesUnicodeName,
   );
 }

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:pscore/pscore.dart';
+import 'package:psdkit/src/core/versioned_descriptor.dart';
 import 'package:psdkit/src/model.dart';
 
 part 'layer_options/artboards.dart';

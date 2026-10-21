@@ -143,7 +143,7 @@ _DecodedLayerInfo _readLayerInfo(PsBinaryReader layerInfo, {required PsdVersion 
         }
         channels.add(PsdChannel(id: descriptor.id, data: decoded, compression: compression));
       }
-      layers.add(_copyLayer(record.layer, channels));
+      layers.add(copyPsdLayer(record.layer, channels: channels));
     }
     if (!layerInfo.isAtEnd) {
       final int trailingOffset = layerInfo.offset;
@@ -161,11 +161,7 @@ _DecodedLayerInfo _readLayerInfo(PsBinaryReader layerInfo, {required PsdVersion 
 
 /// Selects the depth-specific layer-info block, when Photoshop stored one.
 PsdTaggedBlock? _alternativeLayerInfo(List<PsdTaggedBlock> blocks, int depth) {
-  final String key = switch (depth) {
-    16 => 'Lr16',
-    32 => 'Lr32',
-    _ => 'Layr',
-  };
+  final String key = _alternativeLayerInfoKey(depth);
   for (final PsdTaggedBlock block in blocks.reversed) {
     if (block.key == key) {
       return block;
