@@ -1,5 +1,10 @@
 # 📰 PsdKit changelog
 
+## v0.6.1
+Released on October 22, 2026.
+
+* **FIX**: Fixed extended tagged-block lengths. ([#76b9376](https://github.com/focale-editor/psdkit/commit/76b9376))
+
 ## v0.6.0
 Released on October 22, 2026.
 
