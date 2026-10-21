@@ -13,6 +13,7 @@ part 'text/legacy_type_tool.dart';
 part 'text/paragraphs.dart';
 part 'text/styles.dart';
 part 'text/type_tool.dart';
+part 'text/global_engine.dart';
 
 /// A slash-prefixed PostScript name found in decoded Adobe text-engine data.
 final class PsdTextEngineName {
@@ -32,7 +33,22 @@ final class PsdGlobalTextEngineData {
   PsdGlobalTextEngineData({required Uint8List data}) : data = Uint8List.fromList(data);
 
   /// Decodes the PostScript-like payload into maps, lists, values, and names.
-  Object? get structure => PsdTextEngine.decodeStructure(data);
+  Object? get structure => _publicEngineValue(_parseGlobalEngine(data));
+
+  /// Resolves exact kerning and OpenType flags when the indexed text is current.
+  PsdTextContent contentFor(PsdTypeTool typeTool) => _applyGlobalText(this, typeTool);
+
+  /// Updates an existing Photoshop text object, retaining its frame and opaque keys.
+  ///
+  /// Supply [previous] to reject layout and style changes without a known global mapping.
+  /// The object must exist: a partial invented object can make Photoshop reject
+  /// the document. Use a Photoshop-authored template for new global text objects.
+  PsdGlobalTextEngineData withContent(int textIndex, PsdTextContent content, {PsdTextContent? previous}) {
+    if (previous != null) {
+      _validateGlobalTextEdit(previous, content);
+    }
+    return _updateGlobalText(this, textIndex, content);
+  }
 
   /// Decodes [structure], returning `null` when the payload is malformed.
   Object? get tryStructure {

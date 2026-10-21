@@ -27,6 +27,7 @@ List<PsdTaggedBlock> _readTaggedBlocks(PsBinaryReader reader, PsdVersion version
     }
     final PsTaggedBlockHeader header = PsTaggedBlockCodec.readHeader(
       reader,
+      signatures: _tiffSignatures,
       wideLengthResolver: (signature, key) => version == PsdVersion.psb && _widePsbTaggedBlocks.contains(key),
     );
     final Uint8List data = reader.readBytes(header.declaredLength);
@@ -55,7 +56,7 @@ void _skipTaggedPadding(PsBinaryReader reader) {
   for (int padding = 1; padding <= 3 && reader.remaining >= padding + 4; padding++) {
     final bool zeros = Uint8List.sublistView(reader.bytes, reader.offset, reader.offset + padding).every((value) => value == 0);
     final String signature = String.fromCharCodes(Uint8List.sublistView(reader.bytes, reader.offset + padding, reader.offset + padding + 4));
-    if (zeros && (signature == '8BIM' || signature == '8B64')) {
+    if (zeros && _tiffSignatures.contains(signature)) {
       reader.skip(padding);
       return;
     }

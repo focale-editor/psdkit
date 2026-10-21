@@ -72,12 +72,12 @@ List<PsdImageResource> _readImageResources(PsBinaryReader reader) {
 }
 
 /// Reads layer records, global mask bytes, and trailing tagged blocks.
-_LayerSection _readLayerAndMask(PsBinaryReader reader, {required PsdVersion version, required int depth, required PsdReadOptions options}) {
+_LayerSection _readLayerAndMask(PsBinaryReader reader, {required PsdVersion version, required int depth, required PsdReadOptions options, required _PsdDecodeBudget budget}) {
   if (reader.isAtEnd) {
     return _LayerSection(layers: const <PsdLayer>[], mergedTransparency: false, globalMask: Uint8List(0), additionalInfo: const <PsdTaggedBlock>[]);
   }
   final int layerInfoLength = reader.readLength(wide: version == PsdVersion.psb, label: 'layer info');
-  _DecodedLayerInfo decoded = _readLayerInfo(reader.readReader(layerInfoLength), version: version, depth: depth, options: options);
+  final PsBinaryReader primary = reader.readReader(layerInfoLength);
 
   Uint8List globalMask = Uint8List(0);
   if (reader.remaining >= 4) {
@@ -86,14 +86,13 @@ _LayerSection _readLayerAndMask(PsBinaryReader reader, {required PsdVersion vers
   }
   final List<PsdTaggedBlock> additionalInfo = _readTaggedBlocks(reader, version);
   final PsdTaggedBlock? alternative = _alternativeLayerInfo(additionalInfo, depth);
-  if (alternative != null) {
-    decoded = _readLayerInfo(
-      PsBinaryReader(bytes: alternative.data),
-      version: version,
-      depth: depth,
-      options: options,
-    );
-  }
+  final _DecodedLayerInfo decoded = _readLayerInfo(
+    alternative == null ? primary : PsBinaryReader(bytes: alternative.data),
+    version: version,
+    depth: depth,
+    options: options,
+    budget: budget,
+  );
   return _LayerSection(
     layers: decoded.layers,
     mergedTransparency: decoded.mergedTransparency,
@@ -103,7 +102,7 @@ _LayerSection _readLayerAndMask(PsBinaryReader reader, {required PsdVersion vers
 }
 
 /// Reads records and channel payloads from one primary or alternative layer info.
-_DecodedLayerInfo _readLayerInfo(PsBinaryReader layerInfo, {required PsdVersion version, required int depth, required PsdReadOptions options}) {
+_DecodedLayerInfo _readLayerInfo(PsBinaryReader layerInfo, {required PsdVersion version, required int depth, required PsdReadOptions options, required _PsdDecodeBudget budget}) {
   bool mergedTransparency = false;
   final List<PsdLayer> layers = <PsdLayer>[];
   if (!layerInfo.isAtEnd) {
@@ -128,20 +127,28 @@ _DecodedLayerInfo _readLayerInfo(PsBinaryReader layerInfo, {required PsdVersion 
         final PsBinaryReader encoded = layerInfo.readReader(encodedLength);
         final PsdCompression compression = _enumByCode(PsdCompression.values, encoded.readUint16(), 'layer channel compression', encoded);
         final PsdRectangle rectangle = _channelRectangle(record.layer, descriptor.id);
-        final Uint8List payload = encoded.readView(encoded.remaining);
-        final Uint8List decoded = decodePsdChannel(
-          compression: compression,
-          payload: payload,
-          width: rectangle.width,
-          height: rectangle.height,
-          depth: depth,
-          wideRowLengths: version == PsdVersion.psb,
-          maxDecodedBytes: options.maxDecodedBytes,
-        );
-        if (options.preserveSourceEncoding) {
-          _SourceEncoding.remember([decoded], geometry: (rectangle.width, rectangle.height, depth, false), compression: compression, payload: payload, wideRowLengths: version == PsdVersion.psb);
+        final Uint8List payload = encoded.readBytes(encoded.remaining);
+        Uint8List decodeChannel() {
+          final int size = budget.checkGeometry(rectangle.width, rectangle.height, depth, 1, options.maxDecodedBytes);
+          final Uint8List decoded = decodePsdChannel(
+            compression: compression,
+            payload: payload,
+            width: rectangle.width,
+            height: rectangle.height,
+            depth: depth,
+            wideRowLengths: version == PsdVersion.psb,
+            maxDecodedBytes: options.maxDecodedBytes,
+          );
+          budget.commit(size);
+          if (options.preserveSourceEncoding) {
+            _SourceEncoding.remember([decoded], geometry: (rectangle.width, rectangle.height, depth, false), compression: compression, payload: payload, wideRowLengths: version == PsdVersion.psb);
+          }
+          return decoded;
         }
-        channels.add(PsdChannel(id: descriptor.id, data: decoded, compression: compression));
+
+        channels.add(
+          options.lazyPixels ? PsdChannel.lazy(id: descriptor.id, decode: decodeChannel, compression: compression) : PsdChannel(id: descriptor.id, data: decodeChannel(), compression: compression),
+        );
       }
       layers.add(copyPsdLayer(record.layer, channels: channels));
     }

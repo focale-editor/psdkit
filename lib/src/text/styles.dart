@@ -317,6 +317,18 @@ final class PsdTextColor {
   int get argb => alpha << 24 | red << 16 | green << 8 | blue;
 }
 
+/// Automatic pair-spacing method recorded by Photoshop's global text engine.
+enum PsdTextKerning {
+  /// Uses explicit kerning amounts.
+  manual,
+
+  /// Uses the font's kerning metrics.
+  metrics,
+
+  /// Uses Photoshop's optical spacing algorithm.
+  optical,
+}
+
 /// Formatting applied to a range of Photoshop text.
 final class PsdTextStyle {
   /// PostScript or Photoshop font name, when known.
@@ -348,6 +360,12 @@ final class PsdTextStyle {
 
   /// Whether Photoshop calculates kerning automatically.
   final bool automaticKerning;
+
+  /// Exact global-engine mode, when known; takes precedence over [automaticKerning].
+  final PsdTextKerning? kerningMode;
+
+  /// OpenType feature values, keyed by four-character tags such as `calt` or `ss01`.
+  final Map<String, int> openTypeFeatures;
 
   /// Explicit kerning value.
   final double kerning;
@@ -437,6 +455,8 @@ final class PsdTextStyle {
     this.verticalScale = 1,
     this.automaticKerning = true,
     this.kerning = 0,
+    this.kerningMode,
+    this.openTypeFeatures = const {},
     this.baselineShift = 0,
     this.fontCaps = 0,
     this.fontBaseline = 0,
@@ -462,6 +482,88 @@ final class PsdTextStyle {
     this.kashida = 1,
     this.diacriticPosition = 2,
   }) : automaticLeading = automaticLeading ?? lineHeight == null;
+
+  /// Exact kerning mode or the legacy EngineData interpretation.
+  PsdTextKerning get resolvedKerningMode => kerningMode ?? (automaticKerning ? PsdTextKerning.metrics : PsdTextKerning.manual);
+
+  /// Copies formatting while replacing the requested non-null properties.
+  PsdTextStyle copyWith({
+    String? fontFamily,
+    PsdTextFont? font,
+    double? fontSize,
+    PsdTextColor? color,
+    double? tracking,
+    double? lineHeight,
+    bool? automaticLeading,
+    double? horizontalScale,
+    double? verticalScale,
+    bool? automaticKerning,
+    PsdTextKerning? kerningMode,
+    Map<String, int>? openTypeFeatures,
+    double? kerning,
+    double? baselineShift,
+    int? fontCaps,
+    int? fontBaseline,
+    bool? fauxBold,
+    bool? fauxItalic,
+    bool? underline,
+    bool? strikethrough,
+    bool? ligatures,
+    bool? discretionaryLigatures,
+    int? baselineDirection,
+    double? tsume,
+    int? styleRunAlignment,
+    int? language,
+    bool? noBreak,
+    PsdTextColor? strokeColor,
+    bool? fillEnabled,
+    bool? strokeEnabled,
+    bool? fillFirst,
+    double? underlinePosition,
+    double? outlineWidth,
+    int? characterDirection,
+    bool? hindiNumbers,
+    int? kashida,
+    int? diacriticPosition,
+  }) => PsdTextStyle(
+    fontFamily: fontFamily ?? this.fontFamily,
+    font: font ?? (fontFamily == null ? this.font : null),
+    fontSize: fontSize ?? this.fontSize,
+    color: color ?? this.color,
+    tracking: tracking ?? this.tracking,
+    lineHeight: lineHeight ?? this.lineHeight,
+    automaticLeading: automaticLeading ?? this.automaticLeading,
+    horizontalScale: horizontalScale ?? this.horizontalScale,
+    verticalScale: verticalScale ?? this.verticalScale,
+    automaticKerning: automaticKerning ?? this.automaticKerning,
+    kerningMode: kerningMode ?? (automaticKerning == null ? this.kerningMode : null),
+    openTypeFeatures: openTypeFeatures ?? this.openTypeFeatures,
+    kerning: kerning ?? this.kerning,
+    baselineShift: baselineShift ?? this.baselineShift,
+    fontCaps: fontCaps ?? this.fontCaps,
+    fontBaseline: fontBaseline ?? this.fontBaseline,
+    fauxBold: fauxBold ?? this.fauxBold,
+    fauxItalic: fauxItalic ?? this.fauxItalic,
+    underline: underline ?? this.underline,
+    strikethrough: strikethrough ?? this.strikethrough,
+    ligatures: ligatures ?? this.ligatures,
+    discretionaryLigatures: discretionaryLigatures ?? this.discretionaryLigatures,
+    baselineDirection: baselineDirection ?? this.baselineDirection,
+    tsume: tsume ?? this.tsume,
+    styleRunAlignment: styleRunAlignment ?? this.styleRunAlignment,
+    language: language ?? this.language,
+    noBreak: noBreak ?? this.noBreak,
+    strokeColor: strokeColor ?? this.strokeColor,
+    fillEnabled: fillEnabled ?? this.fillEnabled,
+    strokeEnabled: strokeEnabled ?? this.strokeEnabled,
+    fillFirst: fillFirst ?? this.fillFirst,
+    underlinePosition: underlinePosition ?? this.underlinePosition,
+    outlineWidth: outlineWidth ?? this.outlineWidth,
+    characterDirection: characterDirection ?? this.characterDirection,
+    hindiNumbers: hindiNumbers ?? this.hindiNumbers,
+    kashida: kashida ?? this.kashida,
+    diacriticPosition: diacriticPosition ?? this.diacriticPosition,
+  );
 
   /// Preferred font name from complete metadata or the compatibility field.
   String? get resolvedFontFamily => font?.name ?? fontFamily;

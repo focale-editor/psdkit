@@ -105,6 +105,15 @@ enum PsdSectionType {
   const PsdSectionType({required this.code});
 }
 
+/// A recoverable PSD issue reported without inventing replacement pixels.
+final class PsdReadWarning extends PsWarning {
+  /// Creates a warning associated with the damaged merged-image section.
+  const PsdReadWarning({required super.message, super.offset});
+
+  @override
+  String get typeName => 'PsdReadWarning';
+}
+
 /// Limits untrusted input before allocating decoded image buffers.
 final class PsdReadOptions {
   /// Maximum canvas area.
@@ -116,6 +125,18 @@ final class PsdReadOptions {
   /// Maximum size of any single decoded channel or merged image.
   final int maxDecodedBytes;
 
+  /// Maximum sum of all materialized layer and merged-image sample bytes.
+  final int maxTotalDecodedBytes;
+
+  /// Defers channel decompression until its samples are accessed.
+  final bool lazyPixels;
+
+  /// Allows intact layers to open when only the merged image is missing or damaged.
+  ///
+  /// Recovered documents have no merged samples and report a warning. The host
+  /// must render a new composite before saving. Allocation limits still throw.
+  final bool recoverMergedImage;
+
   /// Retains compressed payloads for byte-preserving writes of unchanged pixels.
   ///
   /// This copies compressed data and hashes decoded samples. Editors that build
@@ -125,10 +146,22 @@ final class PsdReadOptions {
   /// Creates defensive parser limits.
   const PsdReadOptions({
     this.preserveSourceEncoding = false,
+    this.lazyPixels = false,
+    this.recoverMergedImage = false,
+    this.maxTotalDecodedBytes = 2147483648,
     this.maxPixels = 500000000,
     this.maxLayers = 100000,
     this.maxDecodedBytes = 2147483648,
   });
+}
+
+/// Selects source preservation or Photoshop-compatible output defaults.
+enum PsdWriteCompatibility {
+  /// Retains the caller's original color-mode bytes and compression choices.
+  preserve,
+
+  /// Supplies missing HDR toning data and replaces 32-bit RLE with RAW.
+  photoshop,
 }
 
 /// Controls container version and default compression during encoding.
@@ -139,6 +172,9 @@ final class PsdWriteOptions {
   /// Overrides every channel's preferred compression.
   final PsdCompression? compression;
 
+  /// Compatibility policy shared by buffered and progressive writers.
+  final PsdWriteCompatibility compatibility;
+
   /// Creates write options.
-  const PsdWriteOptions({this.version, this.compression});
+  const PsdWriteOptions({this.version, this.compression, this.compatibility = PsdWriteCompatibility.photoshop});
 }

@@ -513,3 +513,81 @@ dart run tool/image_resources_corpus_check.dart /path/to/psd-corpus
 ```
 
 `dart run tool/quality_check.dart` enforces Dartdoc on public and private declarations and the project member order: fields, constructors, then methods.
+
+## Photoshop compatibility and bounded reads
+
+Both writers default to `PsdWriteCompatibility.photoshop`. For 32-bit documents
+they supply the observed `hdrt`/`hdra` default when color-mode data is empty,
+and replace RLE with RAW. Existing color-mode bytes are preserved. Select
+`PsdWriteCompatibility.preserve` explicitly to retain the previous choices,
+including 32-bit RLE and absent HDR records. ZIP remains available in the
+buffered writer.
+
+`PsdReadOptions.lazyPixels` defers each layer plane until its `data` getter is
+used; `PsdChannel.isDecoded` reports whether that happened. Accessing the merged
+image list materializes its complete compressed stream. Successful reads are
+cached. The encoded payloads are copied, so later input-buffer changes do not
+alter deferred decoding.
+
+`maxTotalDecodedBytes` bounds the sum of retained decoded sample bytes across
+layers and composite (2 GiB by default), in addition to `maxDecodedBytes` for
+an individual plane or composite. It excludes compressed payloads, metadata,
+and temporary buffers; it is not a process-memory cap. Deferred reads enforce
+the same shared budget when materialized.
+
+`recoverMergedImage: true` retains valid layers if the merged stream is missing
+or damaged. `document.warnings` reports recovery and `mergedImage` is empty;
+with lazy decoding that warning appears when the merged list is accessed.
+Allocation-limit failures and structural layer damage still throw. The host
+must render a replacement composite before writing the recovered document.
+
+## Global text synchronization
+
+`document.textContentFor(layer)` combines TySh EngineData with the object's
+Txt2 data selected by `TextIndex`, only when the stored text agrees. It resolves
+`PsdTextStyle.resolvedKerningMode` as manual, metrics or optical, plus OpenType
+flags (`calt`, `frac`, `ordn`, `swsh`, `titl`, `salt`, `ornm`) and the
+`ss01`–`ss20` stylistic-set mask in `openTypeFeatures`. EngineData
+alone cannot distinguish optical from metrics kerning. UTF-16 ranges are split
+at both engines' style boundaries; stale Txt2 data is ignored.
+
+`document.withTextContent(layerIndex, content)` updates TySh and the existing
+Txt2 object together. It refits run lengths and paragraph arrays, updates common
+character properties, kerning modes and supported OpenType flags, preserves opaque object and
+frame metadata, and removes cached glyph positions when text changes. It does
+not rebuild Photoshop's opaque layout/frame structures or render the layer.
+Shared or invalid TextIndex slots are rejected. Changes to frame geometry, grid settings, manual kerning amounts, paragraph formatting or character extensions without an established global mapping are also rejected rather than leaving contradictory text data. New optical-kerning or stylistic-set
+objects require an existing Photoshop Txt2 template; incomplete invented objects
+are not emitted. The lower-level TySh helpers remain available for standalone
+text editing without global synchronization.
+
+## Photoshop layered TIFF
+
+`PsdTiffCodec.decode` and `encode` handle the payload of TIFF tag 37724, including
+`Layr`, `Lr16`, `Lr32`, `LMsk` and global metadata, with PSD or PSB-sized lengths.
+`decodeResources` and `encodeResources` handle tag 34377. PsdKit does not decode
+the outer TIFF raster; Imcodec exposes both private tags independently.
+
+```dart
+final PsdTiffData layers = PsdTiffCodec.decode(imageSourceData);
+final Uint8List intelPayload = PsdTiffCodec.encode(layers, byteOrder: Endian.little);
+final Uint8List resources = PsdTiffCodec.encodeResources(document.imageResources);
+```
+
+`PsdTiffData.fromDocument` extracts a PSD's layers; `toDocument` combines them
+with the canvas/color metadata and planar composite supplied by a TIFF raster
+decoder. Known numeric fields, signatures, descriptors and RLE row tables are
+converted between Intel and Motorola order. Pixel samples remain in PSD order.
+
+Unknown Intel-order blocks are retained with `isForeignByteOrder` and can be
+written back in Intel order. Saving those opaque blocks as PSD or Motorola TIFF,
+or converting unknown Motorola blocks to Intel order, raises an explicit error.
+No unknown block is silently dropped. Host code must remove or interpret such a
+block explicitly before choosing a different output order.
+
+The bundled PhotoCraft corpus contains 258 Photoshop-authored PSDs, with pinned
+provenance and SHA-256 checks. Tests cover decoded samples and opaque metadata
+through PSD and both TIFF payload orders, plus HDR and Txt2 regressions. They do
+not assert edited-file acceptance by a running Photoshop installation or visual
+rendering parity. See [the corpus notice](../test/corpus/NOTICE.md) and
+[third-party licenses](../THIRD_PARTY_NOTICES.md).

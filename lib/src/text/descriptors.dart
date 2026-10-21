@@ -151,7 +151,7 @@ PsdTextDescriptorBounds? _readDescriptorBounds(PsDescriptorValue? value) {
 double? _descriptorNumber(PsDescriptorValue? value) => switch (value) {
   PsDoubleValue(:final double value) => value,
   PsIntegerValue(:final int value) => value.toDouble(),
-  PsLargeIntegerValue(:final int value) => value.toDouble(),
+  final PsLargeIntegerValue integer => integer.asNumber()?.value,
   PsUnitFloatValue(:final double value) => value,
   _ => null,
 };

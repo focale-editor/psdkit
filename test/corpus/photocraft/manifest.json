@@ -1,0 +1,1572 @@
+{
+  "repository": "https://github.com/storytold/photocraft-corpus",
+  "commit": "0d3343b04edda369e277572d4c65ea97bba25b1f",
+  "files": [
+    {
+      "path": "LICENSE-APACHE",
+      "size": 10174,
+      "gitSha": "f433b1a53f5b830a205fd2df78e2b34974656c7b",
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+    },
+    {
+      "path": "LICENSE-MIT",
+      "size": 1102,
+      "gitSha": "68facca4cf24f653b6656bccd8a31609deea88c8",
+      "sha256": "1a8f66d8a86b146f5336fa0d4b1186576c8aa98e60823080c85c7811cfd810af"
+    },
+    {
+      "path": "NOTICE",
+      "size": 935,
+      "gitSha": "65818fe6fe02744af4aac6027dae80ec0d2cc5b9",
+      "sha256": "575ca1227b6df69677635a40e4ba779468c42c9e62334cf58f784284515bf0a8"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk16/baseline-layer-copy.psd",
+      "size": 111888,
+      "gitSha": "91474e131efb8b1f7de9204ae4530fb91097fe55",
+      "sha256": "a72ac9d56578780866972ee700b44981ed1b68c250c511ec1c823d476a2e394d"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk16/brightness-contrast-legacy.psd",
+      "size": 103442,
+      "gitSha": "40d715fee259bb1e22d4f72074d648e00a3e860c",
+      "sha256": "8673c9f5cfc9cbd3927d49e2366f3c46d1073e6add9f4843560a138cb252afdf"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk16/brightness-contrast.psd",
+      "size": 103516,
+      "gitSha": "be9871867808489301900b8ba71c36d6382053ee",
+      "sha256": "a0bf926902c1e1f2836fc17a303cd3d6abd1d400a4ac22de9a914adcf2a282c6"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk16/channel-mixer.psd",
+      "size": 103206,
+      "gitSha": "1b48c40bfff6dfe84fd06c189496326ddea629e8",
+      "sha256": "dc40cf0b458c0092da0cc7a7a94e62e22cdb437af67a62c84d79354a3a525a9a"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk16/color-balance.psd",
+      "size": 103400,
+      "gitSha": "bd537565cc866d7b6a823cd8ddc497c6a726868e",
+      "sha256": "7cdc65122b7a56ad329dfe4da1d050a624076714b586de06ef628d349277755a"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk16/curves.psd",
+      "size": 103392,
+      "gitSha": "0bf9c07ea4594140cc809ce8f169b74ec99c49d1",
+      "sha256": "35598411d30607800e975226bfac1b933809f7d28410a32e55b91697f2c7b514"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk16/gradient-map.psd",
+      "size": 103384,
+      "gitSha": "d07f29b4ac8aaf0ed1f9f2e38e259508cbcaaa16",
+      "sha256": "b05fccbb4f0676584777d2ce0aff30ed1c84d4ab8c6571004dec8fdf4865c21f"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk16/hue-saturation-colorize.psd",
+      "size": 103250,
+      "gitSha": "e721adab3e8dcf404633144e7d0dc7f191cbdd7b",
+      "sha256": "fa4dbcb05ffd619cc991608514596c6d8e102a00d64936d348834c0cd2920ca7"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk16/hue-saturation.psd",
+      "size": 103376,
+      "gitSha": "c3f5456b421aae1fe87efe3abddb745a00c1941c",
+      "sha256": "e53449856627ad8da0f5a79d77b563fef3dc41d51c4d1d1fff230084162d103c"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk16/invert.psd",
+      "size": 102282,
+      "gitSha": "b42793bbf69de529f6641e9c6371e28012734416",
+      "sha256": "bfd7b439d500d6eaf7d278bac24fdea06fe5a3c87866eaf9fba52b434549d95a"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk16/levels.psd",
+      "size": 103764,
+      "gitSha": "95bc7fc6a9a266867439ef6590a82820963e276b",
+      "sha256": "f2ec5fc028cc61fa688d492d552fe099a25e1ff3731990e48c0c6f069df459a8"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk16/photo-filter.psd",
+      "size": 103236,
+      "gitSha": "58a4c0c2d369167411752ad0d66ebe97b501dfd6",
+      "sha256": "fe2409e15acbeb0392ad2dccde63f67296ffe5850a59f16c15f0290ded76e790"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk16/posterize-4.psd",
+      "size": 103604,
+      "gitSha": "d7763b4f89c830b0f00d6f0e6ef6d4441e9688da",
+      "sha256": "8d08de4b9362ec62a7e7671ea6bba03d82dd9221a123af99ac5e0bb9e8b8366b"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk16/selective-color.psd",
+      "size": 103536,
+      "gitSha": "19711cfc139e4ccb54ba427e870880b3e7b48a89",
+      "sha256": "5401e6580c3fdead63ff1a5fb1eea516f8087058dbde4cd545b7d511fe36d8ae"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk16/threshold-128.psd",
+      "size": 102520,
+      "gitSha": "cfcb77513a53566a8562f396441667f541f13db8",
+      "sha256": "7c8f64ee137582bb0dc0f7cd0851286128d67ab294abc66c3d6f20f8610734bf"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk8/baseline-layer-copy.psd",
+      "size": 73153,
+      "gitSha": "090719c94bd130119aa8c71dd0bedcbf472e555a",
+      "sha256": "5ac999b8356d6a93917fbe0849db26d8bd6b208fba014414e6aef90efe836905"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk8/brightness-contrast-legacy.psd",
+      "size": 50836,
+      "gitSha": "1fa51aae9cf9c53e9be156d5a8926d32b0da5b32",
+      "sha256": "97c9153c57992d5108c07c98ef932861b516f1f76849995890f7d07b16c19b96"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk8/brightness-contrast.psd",
+      "size": 55056,
+      "gitSha": "2808829c55e6c0f266453d0bfe2c46f020b8ebf1",
+      "sha256": "2f2f18e533b234771d4bfadc1da93784dc74999fcd9b699f72fd4cb774edcab3"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk8/channel-mixer.psd",
+      "size": 57685,
+      "gitSha": "c1c307f38a503b76fe8df8782bfb746788bf9e1a",
+      "sha256": "98630c27abe0ee6dc2ea3d1935ac508cfb2c8823e45046b8d3a73a0706be68e3"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk8/color-balance.psd",
+      "size": 52710,
+      "gitSha": "c6302dc6a7eb9b6df47c611b3374510157482eb7",
+      "sha256": "42ce90d2a597fe189a8d8529ac377103b0ec9077c20e490c84c5635c4a335fd7"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk8/curves.psd",
+      "size": 53802,
+      "gitSha": "4c3923a4b11224648514778d1182c834465a0fae",
+      "sha256": "704e7c141bdaafc50bea11d070ed6234a680e4e9a46a3ecc82582bb6d0326552"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk8/gradient-map.psd",
+      "size": 56897,
+      "gitSha": "4aa04e516fb9e5ba89869968c23aa0e5fda5b673",
+      "sha256": "0f620fd461dba8e5f609c5d4764338631284d75511ab5f85e8af2f334d5af7cc"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk8/hue-saturation-colorize.psd",
+      "size": 54489,
+      "gitSha": "24f0ccdaff8edd6384f331dce868058ede8f3022",
+      "sha256": "b415136d5a96a6a3f15019e811a662513be1d6f26a68cd0c84ddf8807f814bde"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk8/hue-saturation.psd",
+      "size": 56087,
+      "gitSha": "a8fbdb835f456d7c4f19d45a6018930a89f7fc38",
+      "sha256": "c23e04dc74e4171659ab8b57aee65ad6ee12325e152f48bddf639a716c32033c"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk8/invert.psd",
+      "size": 54477,
+      "gitSha": "6787c58162cebf3644017662a27d6d8d7b94e539",
+      "sha256": "55643dac46d3ca7f3ac3a55a0e86192454d4a36f104e7e5c188ab93718dae7cc"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk8/levels.psd",
+      "size": 52385,
+      "gitSha": "f87d4218c9bf26f8b6927647b50b7fbde6d2db7c",
+      "sha256": "878459305a4eca17ed51e80f40ad47802308708dd792720da820196085dda18e"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk8/photo-filter.psd",
+      "size": 58270,
+      "gitSha": "36932df989c97d3bc14267406a48992a1ab67f6b",
+      "sha256": "a4cf08d366217280e375c3f356ffbe47a5a9e73ec53839a9a4f7535fa0f9566a"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk8/posterize-4.psd",
+      "size": 42386,
+      "gitSha": "004ae2e7cabee64431fc64efe05c4d1f2ecee45c",
+      "sha256": "92b0606ebfdff354a345f2bbfeee9b8e3f400e4edcc72ef0c2ba6e40f23ef60c"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk8/selective-color.psd",
+      "size": 55012,
+      "gitSha": "d620efffd02a950dc7b44dfb0cf4c79b1a569891",
+      "sha256": "a7beaee81ae8343fb9a72c390a7a9cfa74c4d49db19111a34d520908c538f398"
+    },
+    {
+      "path": "photoshop/adjustments/cmyk8/threshold-128.psd",
+      "size": 39270,
+      "gitSha": "1a203daffdb108cc1da19a257d25df963e2bbd8e",
+      "sha256": "cbd49d9d06d718315ee5d63db31eac6577d5b62992a8c84b3d9f3dae1795060f"
+    },
+    {
+      "path": "photoshop/adjustments/gray16/baseline-layer-copy.psd",
+      "size": 45904,
+      "gitSha": "7f6daf9def7ced2083c3cb7ba4703d2d6a8d4a66",
+      "sha256": "b83f91c4bda29287c8baa54fd99a616129250c80aeea1d4e3eb6566d67b7d385"
+    },
+    {
+      "path": "photoshop/adjustments/gray16/brightness-contrast-legacy.psd",
+      "size": 42392,
+      "gitSha": "8a03946622dbf314112a81be7b66123e3a8f6904",
+      "sha256": "16755e94ab6502aff95cdce97000a9b13f83cc8a65127ae1745cef0541af34d4"
+    },
+    {
+      "path": "photoshop/adjustments/gray16/brightness-contrast.psd",
+      "size": 42546,
+      "gitSha": "1ab8a44602db0249190d3a6b8a40fa76f65ec3e0",
+      "sha256": "c894b0444dff3cc692ce376f7883997f65e82ddc213b4c96af06d03af18d5704"
+    },
+    {
+      "path": "photoshop/adjustments/gray16/curves.psd",
+      "size": 42446,
+      "gitSha": "777b95312412900990074d226a64816208863d85",
+      "sha256": "5bd11dac0d97bd08d8a9e12611aeb71775a3d660aec2d6aaec0e9200c7bba812"
+    },
+    {
+      "path": "photoshop/adjustments/gray16/exposure.psd",
+      "size": 42230,
+      "gitSha": "fb6df30dd932d3a65ac9bec51bc67a1fa58e4b31",
+      "sha256": "bf2b3c0791cdd03764647257baabb32f5caaabba13cfc0816723874865f6b954"
+    },
+    {
+      "path": "photoshop/adjustments/gray16/gradient-map.psd",
+      "size": 42576,
+      "gitSha": "7f06b610506d82ab2cc0baa82b7b78d070394667",
+      "sha256": "292d7700812d6967e7cbae399d4893d87e6f7020e57f9e0cd0996bd9ca57bc86"
+    },
+    {
+      "path": "photoshop/adjustments/gray16/invert.psd",
+      "size": 42502,
+      "gitSha": "acccdb2027cbf10506239f8e4374187e5936eab3",
+      "sha256": "43f548e8e0ec306a035a89938b375799ad96a98f30852ee800b2ca8402d187e1"
+    },
+    {
+      "path": "photoshop/adjustments/gray16/levels.psd",
+      "size": 42914,
+      "gitSha": "99b03605e635c86fb8e2a529d7a989900a6d48f2",
+      "sha256": "477d41d9e65fe316e74f443d903cb21350a3841a574ceac521458d657809e20d"
+    },
+    {
+      "path": "photoshop/adjustments/gray16/posterize-4.psd",
+      "size": 42504,
+      "gitSha": "cd45d5ef72c02296a3e5a0ee9038a1d25171e151",
+      "sha256": "7fefe2ff5d15cfed2861dea7bfee7409ba3374c14da444e891444b3dc5d343b5"
+    },
+    {
+      "path": "photoshop/adjustments/gray16/threshold-128.psd",
+      "size": 42108,
+      "gitSha": "bd86c2859980463530d55f25b83d7e1fa5c9cb8d",
+      "sha256": "c445bd36a46a41ca2a17dff6bc18652f21ccaa5990e26c89e948cb92feb15b7a"
+    },
+    {
+      "path": "photoshop/adjustments/gray32/baseline-layer-copy.psd",
+      "size": 80486,
+      "gitSha": "a8415280643527bb0f438463b3002c993f95b57a",
+      "sha256": "b8924389849513fabeb31a6cf724530df26161f70d3be3e409f5eecaa3c5800f"
+    },
+    {
+      "path": "photoshop/adjustments/gray32/brightness-contrast-legacy.psd",
+      "size": 68858,
+      "gitSha": "0b2b79c9e53973e7f2e043da2d9831fd2af4be32",
+      "sha256": "8a88c4c18ba28972e43804dcf18665c5de4613c9f7cc37e3bf930392ef64326e"
+    },
+    {
+      "path": "photoshop/adjustments/gray32/brightness-contrast.psd",
+      "size": 68960,
+      "gitSha": "523b3ce625cce72cd891eddedbd0e3de5af47125",
+      "sha256": "d106ff622b31842130cd7d66a9eb3563a9053d553180821a5b6dd199eb6d7f62"
+    },
+    {
+      "path": "photoshop/adjustments/gray32/curves.psd",
+      "size": 68892,
+      "gitSha": "a91d492870bc73fb6a3cd78ccac6a20866abfc14",
+      "sha256": "c7939a0ccb659016e3922ae39669a44b559904b86b9b56dd95985bccc9b4b5b2"
+    },
+    {
+      "path": "photoshop/adjustments/gray32/exposure.psd",
+      "size": 68620,
+      "gitSha": "0f1d77b70ca89ef96f817744405ae2608b0d6bdd",
+      "sha256": "e1daca4047885af3e005c077b4ee17d3d237173db1883145f8710ae8bf13a6cc"
+    },
+    {
+      "path": "photoshop/adjustments/gray32/levels.psd",
+      "size": 69370,
+      "gitSha": "41d864d69fa26d85f91105bc6bd0d7b88b23317e",
+      "sha256": "db1d78d84eee47c75adc980eb6439c3c252b9367cf233ae42f0942a71f0ce99f"
+    },
+    {
+      "path": "photoshop/adjustments/gray8/baseline-layer-copy.psd",
+      "size": 42199,
+      "gitSha": "2227950a9f58ba309046dec9dceb54fb5bac0adb",
+      "sha256": "6fa1540980ebb675830a6feccbc168dea55463391833be33406412bddba30723"
+    },
+    {
+      "path": "photoshop/adjustments/gray8/brightness-contrast-legacy.psd",
+      "size": 32698,
+      "gitSha": "d6ededbb51733fac4fd5126b172eb8998ad863e5",
+      "sha256": "37b571ff3d4d5cbee04c264032df258de78716834cac2da7ed99cbe99729a141"
+    },
+    {
+      "path": "photoshop/adjustments/gray8/brightness-contrast.psd",
+      "size": 34494,
+      "gitSha": "da49621dee988763860ab6baa6e6c72a917c31e9",
+      "sha256": "47e831743115033fe653ec4629efcb4937ba2191057471c6ac6ce3fcab2bf25b"
+    },
+    {
+      "path": "photoshop/adjustments/gray8/curves.psd",
+      "size": 34601,
+      "gitSha": "efbde69932cdab361fb08cd8186c6a4336bcab80",
+      "sha256": "6b55267f72862273445dade16c7a78dd8ca9bcdffe7810f5765e452bcf811fbd"
+    },
+    {
+      "path": "photoshop/adjustments/gray8/exposure.psd",
+      "size": 32455,
+      "gitSha": "e3736bc38f981f6e67d64f8df3f4954debbc84d2",
+      "sha256": "2e02daf9d3b185762770eb76821f5769f85429450bf0877ff93e2c48f7b63e9a"
+    },
+    {
+      "path": "photoshop/adjustments/gray8/gradient-map.psd",
+      "size": 34796,
+      "gitSha": "1fe60737f59b592441a6867c7cc3e64f74b9f5fb",
+      "sha256": "b58acaa4db29bdcc1f2a3d7779a2af18fda0e87f9d96ad2867cb53c3afb67a95"
+    },
+    {
+      "path": "photoshop/adjustments/gray8/invert.psd",
+      "size": 34769,
+      "gitSha": "dd44d664d5a1b0a6ac89bedb88b178c2696fc595",
+      "sha256": "12c70f70bbaf5c6b0c17334d0114dc4268e531e4c7135b4aaa120f4994cc3150"
+    },
+    {
+      "path": "photoshop/adjustments/gray8/levels.psd",
+      "size": 34387,
+      "gitSha": "ea411690a7a733facc7e2987d1ce3b1007335db5",
+      "sha256": "0e8f8244ad71a61c20b94f42368845c917ae837424c45ab5ae63d58437917f11"
+    },
+    {
+      "path": "photoshop/adjustments/gray8/posterize-4.psd",
+      "size": 28838,
+      "gitSha": "78e506d73d85785e16338b4aa8b490502725e04a",
+      "sha256": "d35901ddb8a8686cd29d9ca152b29a536339d8a457858a6a4e57ada64208318f"
+    },
+    {
+      "path": "photoshop/adjustments/gray8/threshold-128.psd",
+      "size": 27946,
+      "gitSha": "d1da02943fd80989c45c8ee46d44fab7a186e547",
+      "sha256": "04696eae7ce479e05ce8c8dc10de730dec6915aa25a052e28dce0c32811f0f5a"
+    },
+    {
+      "path": "photoshop/adjustments/lab16/baseline-layer-copy.psd",
+      "size": 92636,
+      "gitSha": "8df8621796ce1decfefb34ec0c5e64fdd802ba74",
+      "sha256": "c880c7fb100d75c1e5f4945e25b5fe1234c99f931dc785ec62bf05084c45cbe7"
+    },
+    {
+      "path": "photoshop/adjustments/lab16/brightness-contrast-legacy.psd",
+      "size": 84402,
+      "gitSha": "a31c4de374d916f27066b5bb00107f44b78c0bb6",
+      "sha256": "1e98efa7080388a4302dfc4bb34e695060c0ee33051cdc7172ee3af90a113251"
+    },
+    {
+      "path": "photoshop/adjustments/lab16/brightness-contrast.psd",
+      "size": 84592,
+      "gitSha": "3f34a8712534bededf14af63bc428bccdd939cd4",
+      "sha256": "4befccae6cd4ec403eec3bcda969d65307a2ee34cc17b9f283dde4c78e0ba780"
+    },
+    {
+      "path": "photoshop/adjustments/lab16/curves.psd",
+      "size": 84500,
+      "gitSha": "308ee256e0d065e87f5d0422688d02a92f143ef3",
+      "sha256": "4ed03804e54bf6ee6b78e3734e3206933f89c32d88205993ab519d239631719f"
+    },
+    {
+      "path": "photoshop/adjustments/lab16/gradient-map.psd",
+      "size": 84336,
+      "gitSha": "1da3c164db59839c858c4c8f82d3dc9fb7989559",
+      "sha256": "5750f0c402fb521df6e2f4fb3fed649361d0932d8f49f352525049b790748a13"
+    },
+    {
+      "path": "photoshop/adjustments/lab16/hue-saturation-colorize.psd",
+      "size": 84320,
+      "gitSha": "9589397dfe30e3d475e5fd74334c794d3ed4a356",
+      "sha256": "dc061ab3fc224fd4887f2b181e4fe4a661f6c0c568c09087fc94f87376e06758"
+    },
+    {
+      "path": "photoshop/adjustments/lab16/hue-saturation.psd",
+      "size": 84702,
+      "gitSha": "ecdf8a3e0a3c66a4e1e9801c69660c3d4c78b308",
+      "sha256": "7d0944e5deae288febc7ead26b650f2d2f021b464aa5e62390c7dda67d00069e"
+    },
+    {
+      "path": "photoshop/adjustments/lab16/invert.psd",
+      "size": 84262,
+      "gitSha": "fb7a140fe751c847419c24cb6691f4255dfba621",
+      "sha256": "21a3c5cafdbf9b1e049c3b45f3a44a714e06807cf5c8f5f52b0c3f074d9af267"
+    },
+    {
+      "path": "photoshop/adjustments/lab16/levels.psd",
+      "size": 84978,
+      "gitSha": "23a2dbb0da2eb18c372e673b76e9dd7b86960936",
+      "sha256": "498d8c8178f7998643d541bb532f6e67566406873afa5dffb52a2793f08b191f"
+    },
+    {
+      "path": "photoshop/adjustments/lab16/photo-filter.psd",
+      "size": 84390,
+      "gitSha": "7d7ae358b3a13059edc098ff410209ce03a1405c",
+      "sha256": "8d3aca0371fe342ee810720e5b3d2e4fa510f54c197553cc435edcc84b437bc8"
+    },
+    {
+      "path": "photoshop/adjustments/lab16/posterize-4.psd",
+      "size": 84912,
+      "gitSha": "48c1b9448fc8f8eee3deee98fd70ddb8607e658e",
+      "sha256": "501c4917722c9c7ceb82e5918480b7b3350bf0c22048030ad99a8bf862d30508"
+    },
+    {
+      "path": "photoshop/adjustments/lab16/threshold-128.psd",
+      "size": 83742,
+      "gitSha": "5932dcd8c438bafc5e8cb3bdfdbd6e1cdb13c502",
+      "sha256": "9080641d2f92a350fb12def9f4b4fe490cab3ad88808e60d40e393bd65d379b4"
+    },
+    {
+      "path": "photoshop/adjustments/lab8/baseline-layer-copy.psd",
+      "size": 73179,
+      "gitSha": "73306d35ebc45d012a25ee17632523a09a9e54ec",
+      "sha256": "ece5abcbb2efc27ff3bed174700155f2bfb012e0bde0146dc4966f780f39cf58"
+    },
+    {
+      "path": "photoshop/adjustments/lab8/brightness-contrast-legacy.psd",
+      "size": 53247,
+      "gitSha": "722984c1bcaa03db7a3848becd5dfdc775380363",
+      "sha256": "1b4510eef13d4393765408e7518732419995bcf0d679bb2681e205c326d07de7"
+    },
+    {
+      "path": "photoshop/adjustments/lab8/brightness-contrast.psd",
+      "size": 55321,
+      "gitSha": "44015cc4aebc65456ac6c79b1e8da38e8fc70931",
+      "sha256": "76670eef132a8f3a20c14a197aa7cad838705235a365ca29965b695ff9be73ce"
+    },
+    {
+      "path": "photoshop/adjustments/lab8/curves.psd",
+      "size": 54985,
+      "gitSha": "dddce5cc7b326d02a0ea1034a273bfc85cd9fada",
+      "sha256": "25f57ec7a787198df08d4f5c8a539a9f1676d67ccd784928cb425b9a49b69ace"
+    },
+    {
+      "path": "photoshop/adjustments/lab8/gradient-map.psd",
+      "size": 53014,
+      "gitSha": "ed58b88546ab02c7a4118634b5e8fdf931c88585",
+      "sha256": "6ecd52ab42e48bf95410bda76d5c61c8fa4bb44d42ef354d58972b2219996429"
+    },
+    {
+      "path": "photoshop/adjustments/lab8/hue-saturation-colorize.psd",
+      "size": 45530,
+      "gitSha": "703aad84ab730fea9b21e72fbc4a495d30361734",
+      "sha256": "3c8daaa96ee12bcfc4fcd9b7fa58aef98b30455d56f8861fbb89e30eb88b5fbd"
+    },
+    {
+      "path": "photoshop/adjustments/lab8/hue-saturation.psd",
+      "size": 56145,
+      "gitSha": "68aa75e0615463f9fd0f8dcb4952a17935ab7c62",
+      "sha256": "c9b2b21eab43d5c84f5ff7d60fb40a28575a1037a168466c48a0dfc4d6e0178f"
+    },
+    {
+      "path": "photoshop/adjustments/lab8/invert.psd",
+      "size": 55323,
+      "gitSha": "43ae186af7ae0401e7bc58b021c9421a39b66d4b",
+      "sha256": "e4ce3ef3350f6a5944a15ef4dea27efa79c950d08d3454091455eaa3e653904d"
+    },
+    {
+      "path": "photoshop/adjustments/lab8/levels.psd",
+      "size": 54996,
+      "gitSha": "341d20a7cfc268b27f2c58612519849c4bedb769",
+      "sha256": "f13cd7300e9dea246083cbea458ff3d0e0e7c75168449649d0b40522fe076b8c"
+    },
+    {
+      "path": "photoshop/adjustments/lab8/photo-filter.psd",
+      "size": 56062,
+      "gitSha": "cf6710634852183b96b67943df9cfb8c07d83dcc",
+      "sha256": "30a08eaafda594e7adb4a3bd00a638b9d90c6b3f97b3286bc3b175df7d8efc79"
+    },
+    {
+      "path": "photoshop/adjustments/lab8/posterize-4.psd",
+      "size": 42116,
+      "gitSha": "e0e699f892299bc106d4f7138b5070725eba37b4",
+      "sha256": "fd18fbe6aa8296a77ee56d2ef0a97a6c6cccc840ebe37a6eb5d47c7988f775d9"
+    },
+    {
+      "path": "photoshop/adjustments/lab8/threshold-128.psd",
+      "size": 38990,
+      "gitSha": "1b67e17d3e211f638a2f4c646e63e98c82b6edf1",
+      "sha256": "9329e85c3d1086b967cfb79ab4e93dc8f56420d1c285a21afcec0209a45df7b0"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/baseline-layer-copy.psd",
+      "size": 80540,
+      "gitSha": "7c04365c902d90f8af94fa5c767af25899c89c0c",
+      "sha256": "f31e10d19689df9dba71ebdc60652b28eb364ad8da9040a80bc5aeffcf34228e"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/black-white-tint.psd",
+      "size": 78298,
+      "gitSha": "897ccffa8b7cfa316de41f800f4ac81cd69129e7",
+      "sha256": "a003c0f86331cccf7fc22d707263f4290aaa856c74d7967b3eed4cdc059e8348"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/brightness-contrast-legacy.psd",
+      "size": 78626,
+      "gitSha": "b31171f2fe4f5b3db2f3fd6e32e0458ce84ab1b1",
+      "sha256": "8e93194ad4587454ef85497f5f2a7e41cdf53ddc802e9d829d9e833dd188cf75"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/brightness-contrast.psd",
+      "size": 78676,
+      "gitSha": "731fdf575281973f46ca8068d170a4468a950370",
+      "sha256": "640b6ba15db3d7ae11e6ab66f5f69d1d0f1f26a383b9d2625bd48ce07ac512ef"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/channel-mixer.psd",
+      "size": 78380,
+      "gitSha": "b590eb175654022a5b710523147cc8a1e5e0899f",
+      "sha256": "670f8e89a7bbbb125fcee8ad2f85d6943991974a967d1f7cb6bef8d5a0fdb0f7"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/color-balance.psd",
+      "size": 78552,
+      "gitSha": "6a9cf83b60293484aed78f4d02f43b5f2ea5d5fe",
+      "sha256": "67e2ffdfe7578d27e31626c46c1d02a1c791ee694fac3b14075fc419e1b3ce35"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/curves-per-channel.psd",
+      "size": 78508,
+      "gitSha": "ac3a264bac87269b6fbdd29208db5b5eb83d21f0",
+      "sha256": "d265fa814a1f3b0b273277e6361377c607ab8d84e92998cb7ce32bb378bbb4e5"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/curves.psd",
+      "size": 78602,
+      "gitSha": "60a5d4d70e025a85e92cd56e70dcdfe2e8646eb0",
+      "sha256": "5110de5abd4852bb178a8dfe24de877d05cbb718fb11e6505708186a36ffcd4e"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/exposure.psd",
+      "size": 78592,
+      "gitSha": "8fa21662d3cf891eadcdfeab3066053f34f7916f",
+      "sha256": "fa336dda24690d69d559e65c3e13e70aaaf1108c5c423b57a432e584f66a8922"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/gradient-map.psd",
+      "size": 78370,
+      "gitSha": "370be78f2de06c854164eaf7a8a1628581335dc4",
+      "sha256": "36427df813db4f658cf089f49f3e910b8608bff24e1a3e0d406330893cc380c3"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/hue-saturation-colorize.psd",
+      "size": 78156,
+      "gitSha": "ade82a3c7b7941ccda2f99a303467feb6029ad9f",
+      "sha256": "4fbc647a3bd41f7b6a133303aa9c0a140b2fffbbcae9a5d38be217db2a02a248"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/hue-saturation.psd",
+      "size": 78512,
+      "gitSha": "28c99b255b998f4f909768a6c54804fa5f529d93",
+      "sha256": "68e7f3a054ae869932694fbaff7274a5c42d7b24f0225704866cf823c7c02c12"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/invert.psd",
+      "size": 78418,
+      "gitSha": "e1f008523facac4b3451c0577d747a0f6dbe6f67",
+      "sha256": "357326a37773180dc46f38d50c2564b8711f95c1903bf1ac9b90d913f47c3d36"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/levels.psd",
+      "size": 79020,
+      "gitSha": "f0e438d0afa1baf27ab5f5cef1710a9884b4c0d5",
+      "sha256": "fbb18d1cfa5fc74cf1c4777b99acdc2465b2920574bd9069b5a2ac129c8151d9"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/photo-filter.psd",
+      "size": 78384,
+      "gitSha": "27423be4a95ec240eb6dd3b6314aeb408094f222",
+      "sha256": "9caa7008c9d91cec961e935611e29ed86c95aa7e36d3dd94cb9263299ee28b21"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/posterize-4.psd",
+      "size": 78856,
+      "gitSha": "1b177eaa53399f0c1a03548d8c2ecbba45339f76",
+      "sha256": "77813afc8a0510ce93afd74b9b16c7ba6b1956e3370c1816e3532aadc043e47b"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/selective-color.psd",
+      "size": 78578,
+      "gitSha": "9088122f88b09896d67673b36b9c075a649fb81f",
+      "sha256": "2959f37160ed8c9d43227bfb9e322aa88390b1e2a19ffc5c268bbf2981f2e5c4"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/threshold-128.psd",
+      "size": 77708,
+      "gitSha": "725d65247dbfef8fb828ccd9d20ab3b247c0464c",
+      "sha256": "df271003f8553a7936ac51f2a29cfa62849928189ceae325151cc18e1058d3ea"
+    },
+    {
+      "path": "photoshop/adjustments/rgb16/vibrance.psd",
+      "size": 78390,
+      "gitSha": "e904f54a781e50252501623414acb2d9bc3eb1ed",
+      "sha256": "12243fcbf527f8ff12549149cffaf1c53c99df78a1bd920e6f0c7cceb66bc657"
+    },
+    {
+      "path": "photoshop/adjustments/rgb32/baseline-layer-copy.psd",
+      "size": 143536,
+      "gitSha": "521e18885a2eaf8cc7d8fa15c9eb28c36f724b82",
+      "sha256": "73199414108280d7717cc5c908a76f51c5e3091d7471e21e7d0bac1a75734f32"
+    },
+    {
+      "path": "photoshop/adjustments/rgb32/black-white-tint.psd",
+      "size": 137282,
+      "gitSha": "b90ed907e39737dd151fa91a1ed80823ed7c8465",
+      "sha256": "ca4b4c0e0fd9a9811fe78170b69dbd71a78b17a0b592ff72ef094b50170a4636"
+    },
+    {
+      "path": "photoshop/adjustments/rgb32/brightness-contrast-legacy.psd",
+      "size": 137726,
+      "gitSha": "92138893f372b5eee0724a29731a05a7bcedebdc",
+      "sha256": "7a324c38ca40359556842de48a6c2bf7bf77dbe1bb646c313f1471a2779da570"
+    },
+    {
+      "path": "photoshop/adjustments/rgb32/brightness-contrast.psd",
+      "size": 137710,
+      "gitSha": "4425c9a6293c9bcf76c5f11c823424ea6aa16934",
+      "sha256": "3ed8b3f6bf60ee836a3bca969316c9d081a48267a4a1cf620489cce9dad47d6d"
+    },
+    {
+      "path": "photoshop/adjustments/rgb32/channel-mixer.psd",
+      "size": 137446,
+      "gitSha": "3b02e9b29e1c32ffd15ac13839c597ab58690d40",
+      "sha256": "304cece11d39b95b36b5bba71839d0e3b0ac9cc4586dafda08591dd0caee2189"
+    },
+    {
+      "path": "photoshop/adjustments/rgb32/color-balance.psd",
+      "size": 137714,
+      "gitSha": "515f05ef67d67140af31648b6f0c6680bd69c5aa",
+      "sha256": "19ef867ea57c902aefd89503dc6d05b5f839e7687c99c7e482d2e2636fa62f74"
+    },
+    {
+      "path": "photoshop/adjustments/rgb32/curves-per-channel.psd",
+      "size": 137494,
+      "gitSha": "02d668cd7e5f4f3ee60e217d3f8daf0ec53fc66a",
+      "sha256": "781c929acc361409c224965e4c945eb13b2c779667e298a8569a560aad6655e0"
+    },
+    {
+      "path": "photoshop/adjustments/rgb32/curves.psd",
+      "size": 137652,
+      "gitSha": "e1ba1f7fc3be9600e67195bd0d0157ba8cd29c72",
+      "sha256": "96342bdfa83cda50bb0e5899aeb54c4d656d6a595447923f02fc891225585f1a"
+    },
+    {
+      "path": "photoshop/adjustments/rgb32/exposure.psd",
+      "size": 137576,
+      "gitSha": "fee3f1628eb81a61c3b8c7245844ed435e456212",
+      "sha256": "b07baeda9a7b7dff31e986d07c70f05a089383573a5a27e2390495ddfe4b00a1"
+    },
+    {
+      "path": "photoshop/adjustments/rgb32/hue-saturation-colorize.psd",
+      "size": 137048,
+      "gitSha": "3978354024ddd54fa2c00847646f85ccdec72b76",
+      "sha256": "f42475cfe75ea2cb96ca47fce8b4c99a54821ed9cf0072e188f4e71efa32b6f3"
+    },
+    {
+      "path": "photoshop/adjustments/rgb32/hue-saturation.psd",
+      "size": 137750,
+      "gitSha": "654ada1474c71dc58556c3027f2a3c1ac31cfc6a",
+      "sha256": "e5c59828a07b8a888f18614f9c8445f62e3a8974955df2821e3ecda44ae856ba"
+    },
+    {
+      "path": "photoshop/adjustments/rgb32/levels.psd",
+      "size": 138266,
+      "gitSha": "6aae865850b3a15640999b7e731df92399e8fa5b",
+      "sha256": "aa2eb41afb426f181a56a45fda2abda4e4d75fa6126007aa9179f54dc282a50f"
+    },
+    {
+      "path": "photoshop/adjustments/rgb32/photo-filter.psd",
+      "size": 137424,
+      "gitSha": "2bf5b36931eb3a935ff6c7c28d1bebb71cfc133a",
+      "sha256": "c653f562b531822416cb4c1136505d990738aa541199403bc1494e342f6ead43"
+    },
+    {
+      "path": "photoshop/adjustments/rgb32/selective-color.psd",
+      "size": 137620,
+      "gitSha": "03822f9739cbf24d7e083daad7f203cce8c34d13",
+      "sha256": "d9b465f4565a1dcf65781e45f4e4523a82f97d9781ad4236de9339d923fdddd2"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/baseline-layer-copy.psd",
+      "size": 54371,
+      "gitSha": "47b7d165528ce168e5e8c8bf4453d3b0c05a3839",
+      "sha256": "9f8891cc875196eb26a91e91879bae1e59719cf7fb806d5d7c80301d0ca18914"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/black-white-tint.psd",
+      "size": 49371,
+      "gitSha": "2b04c1551806a675c62c5eeda423c326af834131",
+      "sha256": "80a2e1ad2507335b722174b2e35ec9e76ad648d901370f153937a9c5da882a65"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/brightness-contrast-legacy.psd",
+      "size": 39900,
+      "gitSha": "274eb64f30923c7825c706271054ebf845ca1995",
+      "sha256": "a49675a1bfc5c6638020511b6ac73fe90bd2681e7b9f4c73855b5180beb0e6fe"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/brightness-contrast.psd",
+      "size": 43219,
+      "gitSha": "d68d907df0313f407c98270826b0e6af79e15b85",
+      "sha256": "10074c81b1ce26fdbd263f2629e28b57781e28072cf2a8a01271827ff6fea7ab"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/channel-mixer.psd",
+      "size": 46880,
+      "gitSha": "3fc1fe547f74ddd362045134c83b66b64dbd766c",
+      "sha256": "88483af89e465b389b95a53b6b58a0b8dcf708aaf290bf9de53caf3e67dbfb6b"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/clipped-hue-sat-blend-color.psd",
+      "size": 42650,
+      "gitSha": "70ebb46756a7dee2cd8019b873777d6bd2515d34",
+      "sha256": "d8e9eefd434a1c762a2df2ef17a19e13e2b0d16218a8235d3294748e9f45fd9b"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/color-balance.psd",
+      "size": 41771,
+      "gitSha": "df2dba07b0172d4d147ae891e20b6b491d5fc9c6",
+      "sha256": "318ba3fc481a9ffd855d6914ceaea0e5539ab8bf3dfe4f4e3f6d23d6606f5aa4"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/curves-per-channel.psd",
+      "size": 43067,
+      "gitSha": "c9c7f44edf6a644fd816d10ff80d8a5e6b0133f0",
+      "sha256": "abc3da8b42bf13384c2d593af425fbbf6f245ce0e2491b2de6aeb69a96380bc1"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/curves.psd",
+      "size": 43050,
+      "gitSha": "3220278f908f9c5bf446380c3d8490aa98b6d54d",
+      "sha256": "d82a45068b914495a8459ff4d5f9c691899e57ecf5f3d616db0aff549e4ff8eb"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/exposure.psd",
+      "size": 39408,
+      "gitSha": "d585a15e661bdcca5065da698c046bdc7373b8cd",
+      "sha256": "4b3a9d86d8ebe5bfac9b9accbfdf1ab6a29aac6063bf2c0acec11f301baf9376"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/gradient-map.psd",
+      "size": 48063,
+      "gitSha": "ebc7286cf201859e8e78df83573804213c234041",
+      "sha256": "487b3bbc5ce633e2609f1f6acc986720e6b5c8fd800d90ece5c8439897f0d717"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/hue-saturation-colorize.psd",
+      "size": 38731,
+      "gitSha": "c83f85a6463e70e746538494da1e90002a3b96fa",
+      "sha256": "1c5c3acff99ff37afa27fea4680c0bc95fe1bd1916e69b7ce66ff20c030a11ab"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/hue-saturation.psd",
+      "size": 43373,
+      "gitSha": "3f54a1bd256934554748ab085548ce397c0af28a",
+      "sha256": "9ab0ca62274d5c8b0781cf969a34b15b0744bd6cef04110864f0a4b531194b26"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/invert.psd",
+      "size": 42969,
+      "gitSha": "6e05245f909ef7bd81e74ebc4848cde6a0473187",
+      "sha256": "ed6443b9fadfb7cf42a367a64f0d35e89ab7eb18336908f40977ab0ed02c963f"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/levels.psd",
+      "size": 41668,
+      "gitSha": "364b03364f04a2c2f2ca71100c3640119b5a9a40",
+      "sha256": "cffca23ba5ea56c0ee534123a53fd4382bae8d4a2b3579057dacc8a6e1c9c6c4"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/masked-curves-gradient-mask-opacity60.psd",
+      "size": 68280,
+      "gitSha": "d12d9dd4f94159bbf7dc7a00793a40f695bed4fd",
+      "sha256": "0431b691dc293ebb00ef423ebf23bc7f74500753e1c927380c3d9ad8bbb8f601"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/photo-filter.psd",
+      "size": 48862,
+      "gitSha": "b5bfa3ed6ad9a450ae4e660ffe1f29125cc6b57b",
+      "sha256": "77862a1f7bca7e13ae4e8245e81d85fc017e2a7bd61bcb71a873bbd1c34cfa58"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/posterize-4.psd",
+      "size": 35908,
+      "gitSha": "b31e8c28b89d7e2964e910e6a922d82cd88ff22c",
+      "sha256": "a262755c1d50322a08bef1ed8ea20fa43317a58089d0b34359dc2040b697a06a"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/selective-color.psd",
+      "size": 43701,
+      "gitSha": "3889e3619b60d1423ac8b3682aea052d6a0f5bb2",
+      "sha256": "53ce529ff5a4a5bc66d05d791429f418d43a1334af99b6cc6468a31295094266"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/stack-levels-curves-hue-posterize.psd",
+      "size": 39084,
+      "gitSha": "67b1c4836481ee1abb2ed32a382a9bd2dcb6e57d",
+      "sha256": "d0abafbb1109b0e619e2a950b2fc7c20e4a43c2211bb73760ab78f1272ae6745"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/threshold-128.psd",
+      "size": 33478,
+      "gitSha": "02473473bbb4c71e5385421671841f305ed56cdf",
+      "sha256": "5bf48b3feb75bfe715f4b1813a1e75995849c2aec5c7e3875c414ddce387a3cf"
+    },
+    {
+      "path": "photoshop/adjustments/rgb8/vibrance.psd",
+      "size": 46937,
+      "gitSha": "7b0902fa6172acfc63746dd8365354f83b491a41",
+      "sha256": "6284d9396c29417274aeba1df8f60a47b9f50d2bfba6d9793a72e9b395700c5b"
+    },
+    {
+      "path": "photoshop/effects/bevel-emboss-chisel-hard.psd",
+      "size": 59436,
+      "gitSha": "eb8684b6e610cda6d91f9d8f7642e64425ffc852",
+      "sha256": "bbbbb451d15296d5f8f9cc4c4428df70ceea5bd980df27f351e8c53282bcf435"
+    },
+    {
+      "path": "photoshop/effects/bevel-emboss-chisel-soft.psd",
+      "size": 59969,
+      "gitSha": "5ad7dffdf6ccd57af1cf477671a2ac9945c60b8c",
+      "sha256": "785aaa2ee7ad0b5e87255f3a3567f0ef098a46044084abfab28dc451132c8cc0"
+    },
+    {
+      "path": "photoshop/effects/bevel-emboss-smooth-colored-normal.psd",
+      "size": 55768,
+      "gitSha": "4adc1f7ca952a983194ea1776aaa8d4bcf695bcf",
+      "sha256": "c6cfa46646584df02ac0bdb3916e789483cf690561b60766f623962ff1547fcd"
+    },
+    {
+      "path": "photoshop/effects/bevel-emboss-smooth.psd",
+      "size": 58236,
+      "gitSha": "bc0c8a2fb82fde538e50bdff43d4a1e907e3fc65",
+      "sha256": "14b17d64262362cb7b3f75b5622723f4fc8532b15b9ed772f6a979754e38c774"
+    },
+    {
+      "path": "photoshop/effects/bevel-inner-chisel-hard.psd",
+      "size": 58792,
+      "gitSha": "22eca08775be8d6c10af2643d43e942f07548a37",
+      "sha256": "1a54c1317628f4d7f0de0072fa3c8952d501b97e29f3e211d5c716f1f42971ad"
+    },
+    {
+      "path": "photoshop/effects/bevel-inner-chisel-soft.psd",
+      "size": 59766,
+      "gitSha": "56f94acf87b466841a6a0a3a815b4a3bf3a5cedf",
+      "sha256": "07af0f8aff34ee7a88224ec997c7342abcc072b18587dbc7990ba740827904fe"
+    },
+    {
+      "path": "photoshop/effects/bevel-inner-contour-double-ring-aa-r70.psd",
+      "size": 66794,
+      "gitSha": "c92b64a1f6619460b4d2373a4fba5d83a4ef7f68",
+      "sha256": "a9399b5f64a9c0c2941487061446da218d9aa15634afd9f7c553ece4dae59318"
+    },
+    {
+      "path": "photoshop/effects/bevel-inner-contour-ramp-peak.psd",
+      "size": 65086,
+      "gitSha": "a8e8258b597bc8037ab2677214534e82b4e750c8",
+      "sha256": "262897e70ca69d5f1953abf32f11d1e3bf7bd7b1cd7ba09c5806411add9cd3c7"
+    },
+    {
+      "path": "photoshop/effects/bevel-inner-gloss-double-ring-aa.psd",
+      "size": 64403,
+      "gitSha": "07baa7fd6b8ca1bccb29a9e9dee02bc967c114d8",
+      "sha256": "80f6812693ca2fefd63465824335e6e31a142c61c69ab74382e6fe8cfefaccf5"
+    },
+    {
+      "path": "photoshop/effects/bevel-inner-gloss-ramp-peak.psd",
+      "size": 62280,
+      "gitSha": "521aff72584dd523367cb67f5150ddcbfafe0933",
+      "sha256": "3428a0fb2e5ba583d11502e69f3f185f79ff9efdea9397c79221a0d733620dbb"
+    },
+    {
+      "path": "photoshop/effects/bevel-inner-smooth-a45-alt65-depth300.psd",
+      "size": 55974,
+      "gitSha": "60319598d0a3b2b500724af5405fedb497ad59a0",
+      "sha256": "4a5d2df7ea4ae8311bfd770a0cf3db6fda4812a8f7806e15be7f8db8b610efed"
+    },
+    {
+      "path": "photoshop/effects/bevel-inner-smooth-down-soften4.psd",
+      "size": 66225,
+      "gitSha": "5562f408a7294dfbcff4f949e1d21b200247c6dd",
+      "sha256": "e9d83d61777475d806b041acfeffc761aea682e631224dd3bf1157b9bed2145d"
+    },
+    {
+      "path": "photoshop/effects/bevel-inner-smooth.psd",
+      "size": 61229,
+      "gitSha": "15e4b479e5a379427208d2cba65c09d69d90ff2e",
+      "sha256": "18386df1ac2289a0b663a9605f8da9c3f29a54fa0dbaf8383c2cabb8ad9ca3ea"
+    },
+    {
+      "path": "photoshop/effects/bevel-outer-chisel-hard.psd",
+      "size": 54242,
+      "gitSha": "c207ce0bda0c6aa70802a13b67fea578556b25e3",
+      "sha256": "8c4c02373bf126881cc4ff924f417e21512e996e0cf4e4305c07e633bab4af83"
+    },
+    {
+      "path": "photoshop/effects/bevel-outer-chisel-soft.psd",
+      "size": 54035,
+      "gitSha": "b4f7df979e190e1037a728439d122c705cdd3661",
+      "sha256": "c2ee75350f618af38e8a01a70d2acfa4946d7b8647d66d03545d440a0e68f64d"
+    },
+    {
+      "path": "photoshop/effects/bevel-outer-on-gradient-bg.psd",
+      "size": 210335,
+      "gitSha": "5ca3e650e17c600709d82d7772e6911a1df36a55",
+      "sha256": "62b2c396be00b5994177957682a38515c7622e86d1a047d6becfd7c58b15e146"
+    },
+    {
+      "path": "photoshop/effects/bevel-outer-smooth.psd",
+      "size": 54901,
+      "gitSha": "17522fc9886bf6a8d1795f9fd995d5d71f73d4ad",
+      "sha256": "663d9ed575a2d2aa4c52a6d3ec7a5c213d27f0d8b7a42c866252307e4f191254"
+    },
+    {
+      "path": "photoshop/effects/bevel-pillow-chisel-hard-gloss-and-contour.psd",
+      "size": 52773,
+      "gitSha": "0f0985e4017b392c484fe16f48132f44ae7fb789",
+      "sha256": "88bb46bc8b09564d0ba31ac1ca51c5098e7bc1fe10eadaee34c4f9c7d6d444b7"
+    },
+    {
+      "path": "photoshop/effects/bevel-pillow-chisel-hard.psd",
+      "size": 59137,
+      "gitSha": "acc586791eca76ae54fca0701bd0c397fd0147de",
+      "sha256": "e783af329d6f617cf96ee16d4d160a945b3e6848b632d04e03947de084f6bf0e"
+    },
+    {
+      "path": "photoshop/effects/bevel-pillow-chisel-soft.psd",
+      "size": 59783,
+      "gitSha": "bd8bd001632d39f110e7081cce265ba3557700f3",
+      "sha256": "077767ed4793c712206653312a15c07af74fd75073172808b911b7a60952a89d"
+    },
+    {
+      "path": "photoshop/effects/bevel-pillow-smooth.psd",
+      "size": 58358,
+      "gitSha": "0e9f229019d909f92d4b1f85fb6801027cc5b4c3",
+      "sha256": "70f5dc0461e6801df4caf036e1fc7a7bb03a9122a148a58af1ea139a0fddfe58"
+    },
+    {
+      "path": "photoshop/effects/bevel-stroke-chisel-hard.psd",
+      "size": 54325,
+      "gitSha": "de9ffc0cc931aec281bffbf743e4a5956e7ab189",
+      "sha256": "7acc9af0adf16f32a079ac7c5577eed1413238c5cf51fc4ed69f8fe07f4d858d"
+    },
+    {
+      "path": "photoshop/effects/bevel-stroke-chisel-soft.psd",
+      "size": 55319,
+      "gitSha": "50197bdb41559c5589b0316fb4807da6919f37a7",
+      "sha256": "110e96c2b0258e36e36a2210142b096534febe8271e6b3840041700d5e5b8789"
+    },
+    {
+      "path": "photoshop/effects/bevel-stroke-emboss-center-stroke-chisel-soft.psd",
+      "size": 61456,
+      "gitSha": "0eb2a9289f015d05dfc383344d46964defc570dd",
+      "sha256": "0e1482eb86e808d0cac3fa2b0cafc86c734787b5669eb9e2b7dec3de98c7f956"
+    },
+    {
+      "path": "photoshop/effects/bevel-stroke-emboss-inside-stroke.psd",
+      "size": 58620,
+      "gitSha": "a62b5f7eb67a9b855ca7d6bc38a96082508d968f",
+      "sha256": "7762caed02776268c87233fb4b6ee8680bdceb5e89317dfbf65cc52a44799c66"
+    },
+    {
+      "path": "photoshop/effects/bevel-stroke-smooth.psd",
+      "size": 56887,
+      "gitSha": "7bad0fbb04346b348049c634d3aceedd2d0f0026",
+      "sha256": "638dc0e837cabc6d0ee158bed209af952f61b0d9e4ecde9d89bef8ac61209f12"
+    },
+    {
+      "path": "photoshop/effects/combo-bevel-satin-glows-stroke.psd",
+      "size": 231862,
+      "gitSha": "7e042333c5e6b87233b4000cd7d75e9412cf55b9",
+      "sha256": "b91f4f0b2ae856afb3699ae804610980c95a2534cdeac9c3bc4a1614cb3640f7"
+    },
+    {
+      "path": "photoshop/effects/inner-glow-center-precise-choke30.psd",
+      "size": 57412,
+      "gitSha": "65e42f56ddaf8615ef4116f205c97043275709ce",
+      "sha256": "c7c65c82da8289e8b542611ad5e9cc2e3fcb69cf3ba9c2372a9a1b122bd3bcc2"
+    },
+    {
+      "path": "photoshop/effects/inner-glow-edge-contour-ramp-peak.psd",
+      "size": 60901,
+      "gitSha": "f5de24a8de3a8894f971eaf958e9d81ac3e30203",
+      "sha256": "b047a813a14bdbd53cfaff9ca2ba26455dec9beb8c010feb913d468546a9977d"
+    },
+    {
+      "path": "photoshop/effects/inner-glow-edge-soft.psd",
+      "size": 63782,
+      "gitSha": "368950dc9173bc126b03bc4acbda0850868104aa",
+      "sha256": "8ad57903692280ba3d1cf438dc9165c8abe34411b609b8d8d57e67f00c8be365"
+    },
+    {
+      "path": "photoshop/effects/outer-glow-contour-double-ring-r60.psd",
+      "size": 213721,
+      "gitSha": "0472767c934da3ba531f3aa26e1786433d2a4387",
+      "sha256": "c170707cde402b1790cdd40ff3fdeb8e4373375c1cb703da3b8074fc26ab2230"
+    },
+    {
+      "path": "photoshop/effects/outer-glow-gradient.psd",
+      "size": 208934,
+      "gitSha": "f650f88711a4732f1ae10963fc758db38afc25fa",
+      "sha256": "da6f2622a5e2b7b84818542793de122da6f15d221f8b937b6e025a976ef18a4d"
+    },
+    {
+      "path": "photoshop/effects/outer-glow-precise-spread40.psd",
+      "size": 206595,
+      "gitSha": "e00ebc3cc80353514ee7e062806486714a9a9822",
+      "sha256": "d55dc366e754ed46cdfdc66495149ef9c51a679c3228a1fe1766aa6240b4951c"
+    },
+    {
+      "path": "photoshop/effects/outer-glow-soft.psd",
+      "size": 211971,
+      "gitSha": "79ee81014262a1199c55dc0cbe17ed4df19bbc7c",
+      "sha256": "f20c9ec307607a6e781fe583675434a81e233836aa4cfb56390c7bb950470daf"
+    },
+    {
+      "path": "photoshop/effects/satin-default.psd",
+      "size": 66182,
+      "gitSha": "a7966cb47d4df8b9140d1af385b88cce28ab5d3d",
+      "sha256": "ac79fa1c7ce6cd6e6db847bd2c5b3399569556caa1d2ee0783250069ba97fd7f"
+    },
+    {
+      "path": "photoshop/effects/satin-inverted-ramp-peak-aa.psd",
+      "size": 65335,
+      "gitSha": "5e3f23022d22a46fce90ba09f95bcb7c51751769",
+      "sha256": "b1797dfbe45d795c4ff749ad89c707374596a51f20232d13385e86e70ac840f6"
+    },
+    {
+      "path": "photoshop/effects/satin-linear-screen.psd",
+      "size": 70661,
+      "gitSha": "2c537ba6846f1879fdbd93fa3f923324df035bc4",
+      "sha256": "66f58e80cce3ddf78f1eea9de50b3a6680565f53d11d9fcb9f867ed2f808455d"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-add-noise-gaussian-mono-20-seed.psd",
+      "size": 1189527,
+      "gitSha": "3bf9e7c35712a85c9d6a88c04765a0d09d6a223c",
+      "sha256": "023f4c365695e3c3df415c1a506d0b53ed02818b49b4ea0e99bd434af7c5991d"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-add-noise-uniform-12-seed.psd",
+      "size": 1185490,
+      "gitSha": "2187d1bd20c2188fc72e82b36293520ace8f64d7",
+      "sha256": "b19334171d4c217885c96acf268f2b2f9867c0a3ea11e4ecaff1e84c74fc1e5b"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-blend-difference-50.psd",
+      "size": 1137217,
+      "gitSha": "175b75bd5b4aa8a763ecbca8ffb5e6912d5b77d0",
+      "sha256": "1aff6589704afe1bfec5524e98c41d5597c7c21859e99aa4c4dd3d2de1b7678f"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-blend-multiply-60.psd",
+      "size": 1171756,
+      "gitSha": "d9474a86f266db32d844c061bc71e3c74864960d",
+      "sha256": "c9dca359d516a1a7a3d791f6a974fea9c464d680f4e4d856f64505d63ed99656"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-blend-screen-100.psd",
+      "size": 1148131,
+      "gitSha": "7e25b39e6d5af4ed9043f9a53490579f182f0853",
+      "sha256": "859a678d78a9e3b83608793b2423102d37582982eb1ea191d1049830dbd2026c"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-box-blur-r5.psd",
+      "size": 1160501,
+      "gitSha": "cea4a8ed871642fdc6f98c9e7d01dcaad6927747",
+      "sha256": "c7a198d786d979179ac9a6733ea333e8d903e9157e91096d91105a8d66637a8a"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-curves.psd",
+      "size": 1132472,
+      "gitSha": "546664fe4ebe0d805473f65f8a349c4191eb87cc",
+      "sha256": "466e24d095ffe47937d28a0022a14cf0c37d4c3aadf85b7fbffb8222c277a6af"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-emboss-135-3-100.psd",
+      "size": 1132890,
+      "gitSha": "d027a8bad437c8394f08a2994b1cc2235f91a39b",
+      "sha256": "ee47fd52e0d97872721b4f1d3c0fe80ebce6f823de72b2140164e20fb3a92233"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-filter-mask-gradient.psd",
+      "size": 1198888,
+      "gitSha": "cb8a0bfc7df42b8f316231e07b496775747180ea",
+      "sha256": "f8854458ae12da8a47fe42d518ac389dbe3159b2bbe2a93783f099569dc90ee0"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-filter-mask-hard.psd",
+      "size": 1174394,
+      "gitSha": "f3b89470f90b271df3d617289aad4cf487a0e128",
+      "sha256": "52a91cdaa77fcc98ef342d02d43fb56f5586c3ee335b0d72fe70deeadbb12cfd"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-gaussian-blur-r1.5.psd",
+      "size": 1152653,
+      "gitSha": "6ded5fdbae2ff382ddc86ce6a52f297ddc6a297c",
+      "sha256": "5c981732df2bbfdb19652c21f2b5964ee52f62df4ac4ee1994b2ff9519672dbb"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-gaussian-blur-r20.psd",
+      "size": 1197260,
+      "gitSha": "ec6f7f3baff72711a71071a0a61916f1b0f77781",
+      "sha256": "174788381399a166109e770c536312fbbebcd27ea00bd952f86f50d434a0d115"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-gaussian-blur-r4.psd",
+      "size": 1176539,
+      "gitSha": "5a911af25711cce17b35c8bcf62fe381f29d3810",
+      "sha256": "501cbf378b92b9c32f41344a551676c4ec39e516f02c50abe02633eb44017002"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-high-pass-r3.psd",
+      "size": 1140838,
+      "gitSha": "f6c750b2c3aa320a4329dd472f62e82b6c0c0e91",
+      "sha256": "a05044f49992e624c71f575b71b63d001c9c0668209e2768b6eb6ccce1bd8936"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-layer-opacity-blend.psd",
+      "size": 1167011,
+      "gitSha": "339b87acd91ce08c5fe467d5ae2a44ed82cf8de0",
+      "sha256": "72ba610dceb18c14a44d3118700e3373e0c0b12c03220c441f7939a32d81d00f"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-levels.psd",
+      "size": 1124084,
+      "gitSha": "af426b5aa7fc60ab7c8b27a534e3641e7d3aec52",
+      "sha256": "4f753eed08866810a902db17e6d82c0c98041e129ff62f6b7fccff42012640df"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-maximum-r2.psd",
+      "size": 1131725,
+      "gitSha": "cbcccde233914b5afd383b5909ccf5a9a0e4f09a",
+      "sha256": "f72e19ee6db42b0e285f5b8caaf4031c7f248503e0fe9ccf4155761f7e369e2e"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-median-r3.psd",
+      "size": 1133684,
+      "gitSha": "82f8b81fd738c4bbd5b46d18d4e241e258a59335",
+      "sha256": "ac42bbfb868188069bfee2c06b349180ccf088b589f25e382f7a48643cd91943"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-minimum-r2.psd",
+      "size": 1134292,
+      "gitSha": "d1052a667b6d589625abc54320ca9de1db6c43bc",
+      "sha256": "c3740ecf2601512d0113a79c672ec4affc5092ada5bb12c4f330b9897a720608"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-mosaic-8.psd",
+      "size": 1113842,
+      "gitSha": "6537712612df1edf6233e5ff077abd8e24cc47af",
+      "sha256": "bd561dc103f9abeda27af52b1101d56644343b7203ad9662174ae6e9ee175296"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-motion-blur-a0-d25.psd",
+      "size": 1164975,
+      "gitSha": "05d9267e08d0e3e5f93265e73f7cd2e93c952614",
+      "sha256": "b400368977d2f78822b9392869b61cf6b4f1656a115d38a4f6ecce43fa5d4693"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-motion-blur-a30-d12.psd",
+      "size": 1161480,
+      "gitSha": "e19c3dcd27ffe91a2337dadb49eb563e8d123de8",
+      "sha256": "75555689e92a8e984ccace9e4fc5c2a4f0ae6abe31364d2d93eea1df5799dbbd"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-none-plain.psd",
+      "size": 1110816,
+      "gitSha": "5d72daff64fd5f9e65a896b5c5d0773b84bc3cc6",
+      "sha256": "5327015b70f1427e6ac28054131e166209dec4643aaa1d4bbf79de472dcbef5a"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-none-transformed.psd",
+      "size": 1102143,
+      "gitSha": "dd1168b5ffd637f1fd22b1adbd6c6df17780d3b0",
+      "sha256": "c4698d699e525fed9ad37fc1b4d694b494c366264df77217ca51104789ee3484"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-shadows-highlights.psd",
+      "size": 1142057,
+      "gitSha": "516b75c1d5c6ac2a61cd4280fa0ce384ac4a3e16",
+      "sha256": "3485236eaf01729d9f640f72c16f730e6adc663abf7148c9c17dd6cdf6acef10"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-stack-blend-and-mask.psd",
+      "size": 1158669,
+      "gitSha": "24d13862c09ca848d19a9525099e79af2efc36c0",
+      "sha256": "3b1cab8cf7d539146df2beea4d4923e2dbcd2904c510a8867bbe352f94f2408f"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-stack-blur-unsharp-motion.psd",
+      "size": 1166282,
+      "gitSha": "564f3126cd2e1fb9079a2b1b68c7215e210f8ab4",
+      "sha256": "0e31ef912f818de7cc75bd5604d6e5dcfd8867f8040cfdc1a595e72a77b5f4f6"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-transformed-gaussian.psd",
+      "size": 1168114,
+      "gitSha": "c5c3ff0f33a0e9500d91419438f996e9af8eece5",
+      "sha256": "f39f61eb27347074f8453d06e55fcca8df3dc58674353fa939e7e6faa99d1a2f"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-unsharp-mask-150-r2-t0.psd",
+      "size": 1137597,
+      "gitSha": "0caf0d417e61f0e7d364ddc14f0e9ee85bd2c998",
+      "sha256": "77d8dfa49b7a11df3e41ffac535fa5b0dccad2aaadd4c8a069fe8b9307eaa644"
+    },
+    {
+      "path": "photoshop/smart-filters/sf-unsharp-mask-300-r5-t8.psd",
+      "size": 1133206,
+      "gitSha": "585fd836ad091c80b7bad9fc02cde22021c1ef77",
+      "sha256": "ff2b1189400dd2000e2117188f9d537e99773d91d1e5eb5ad2994755a06c8f05"
+    },
+    {
+      "path": "photoshop/text/align-point-left-center-right.psd",
+      "size": 85393,
+      "gitSha": "de4531aa47e44ba1bb115ced8b0217487b08b5ba",
+      "sha256": "b49c79a59e1bf27c5aa01859d22ff0e127c795e7ca731665302994a421181db9"
+    },
+    {
+      "path": "photoshop/text/antialias-crisp.psd",
+      "size": 55911,
+      "gitSha": "6c2942b1ba29dbb5c1f9299d152c6ff3c198a7b7",
+      "sha256": "b7bdfd710a562b7776f8e2ea61ff572dfa27bb08cf64c642e3867c21a2822044"
+    },
+    {
+      "path": "photoshop/text/antialias-none.psd",
+      "size": 53776,
+      "gitSha": "734baddd3e11208aed0ff6014dadfe3d3750491b",
+      "sha256": "8d03faba9e0c0bf8b416669eababff8060bd2601c89932769088401da241f62c"
+    },
+    {
+      "path": "photoshop/text/antialias-sharp.psd",
+      "size": 55585,
+      "gitSha": "cc2cd7a776324e81eb87d9be2e075f732d2abb26",
+      "sha256": "d58a6735dffeedac52ff97dc645e08716e743e8967b1fb356bd219861683d873"
+    },
+    {
+      "path": "photoshop/text/antialias-smooth.psd",
+      "size": 55895,
+      "gitSha": "e3d712ca433cba4dd48634e5c3beb037f8e71324",
+      "sha256": "679d9cc50d447bc13dc6423cd9312c1aff00c015cdebd72fbdf106e2bcabf227"
+    },
+    {
+      "path": "photoshop/text/antialias-strong.psd",
+      "size": 56189,
+      "gitSha": "7e41bbb9040db391d31b90544a02d33d5f5892fe",
+      "sha256": "c351676cd1563c73e0fec570c6de0d7bde61557289d47f4eac95e9b0cbc0e54b"
+    },
+    {
+      "path": "photoshop/text/baseline-shift-runs.psd",
+      "size": 66067,
+      "gitSha": "ac4daaa71130fdac16ed7baf606a276c6b5a3249",
+      "sha256": "64882ffef640371b3e1ab8fd6d4750e8b40a3880a5f21425d9fc9a96085d1d35"
+    },
+    {
+      "path": "photoshop/text/caps-all-caps.psd",
+      "size": 55248,
+      "gitSha": "c5db36f0c96abfe4e42740d73f1ee98817b01d80",
+      "sha256": "12798bce71eb049a1c875d24a4f96b9319a028da06714a6a2167f39923ed0731"
+    },
+    {
+      "path": "photoshop/text/caps-small-caps-faux-arial.psd",
+      "size": 54915,
+      "gitSha": "89ad1b81bc34d08dc2cb1adf34ff88745b84695e",
+      "sha256": "da13596f17faea5cb22783b4b322948fabab98192e06f00fed3eeffb81ac99dd"
+    },
+    {
+      "path": "photoshop/text/caps-small-caps-opentype-source-serif.psd",
+      "size": 55636,
+      "gitSha": "30838496a08540b65422d1c35bd95236a9f8bdb4",
+      "sha256": "11e38a0dbda2275979be9287c6e7c8518db2e0d00eebc89ef05d973ad02597dd"
+    },
+    {
+      "path": "photoshop/text/faux-bold-italic-runs.psd",
+      "size": 69572,
+      "gitSha": "ea7beb65bed5688bb21209bef81e8bf34e213c32",
+      "sha256": "11c27c05a1cce82a4905f7fb98a310a07a5a05e058f976f6426f341beba7ceb9"
+    },
+    {
+      "path": "photoshop/text/kerning-metrics.psd",
+      "size": 61592,
+      "gitSha": "369fb160a76901ccb5f10cfe0e2ebc6a8e1718d6",
+      "sha256": "c4d90278476b5c22120cdfa7646269bdce3dc3908013b4e17c55facad035206e"
+    },
+    {
+      "path": "photoshop/text/kerning-off-partial.psd",
+      "size": 64314,
+      "gitSha": "9e20dd10f5646fe24fecb91ff0a5c665dbe2ba44",
+      "sha256": "84798092da42111a7b1a9a9f773a1c6e211335cb89cf915c4cbaa52c0084ae6c"
+    },
+    {
+      "path": "photoshop/text/kerning-off.psd",
+      "size": 61414,
+      "gitSha": "a8b197b056b6b0dcaef70dc4803a8637ae73a451",
+      "sha256": "088fdc7779603923c9ce9b873e7ed369aa77fa15f400481e5cc6bb499ebd90c7"
+    },
+    {
+      "path": "photoshop/text/kerning-optical-24pt.psd",
+      "size": 55489,
+      "gitSha": "a0346fe2569898ee849fe4de5808190c1500336b",
+      "sha256": "a08ceb324f2fa34ceb5e20024c8ee20055a9121058759a8d39f0b8f7db6c0da0"
+    },
+    {
+      "path": "photoshop/text/kerning-optical.psd",
+      "size": 61824,
+      "gitSha": "a6a28438e58ea7bb2f0a7b31d1021107968b7c90",
+      "sha256": "4515c4ae650a32efc4ff4c10f6fbf89ccd11383f3502ad584dfee0463762e331"
+    },
+    {
+      "path": "photoshop/text/leading-manual-30-paragraph.psd",
+      "size": 106248,
+      "gitSha": "b3f71e923314a2c92fa9c55adeb0fd9b1420e84c",
+      "sha256": "e98d48f0704cf01538b362de847470a7260d49bbc9b63d2071fa9988cb0d0603"
+    },
+    {
+      "path": "photoshop/text/leading-mixed-runs-point.psd",
+      "size": 73427,
+      "gitSha": "858ea2dcf935d984788c00058ba540beb85812e5",
+      "sha256": "b04abd8de6091818b7b777a8c408c181f402cbd5b75a399bad6e6283ecab5b92"
+    },
+    {
+      "path": "photoshop/text/opentype-discretionary-ligatures.psd",
+      "size": 59698,
+      "gitSha": "60d68d345d059aeec86f2cc3da64885f1756a5b6",
+      "sha256": "0252007af1d6af38714d54443ceaf2fd339970bec1991d274cff10e29cc40d07"
+    },
+    {
+      "path": "photoshop/text/opentype-fractions.psd",
+      "size": 54025,
+      "gitSha": "e69c914107b358ad3300ef6a81b099c2df425199",
+      "sha256": "2522b2496e5bbda9e7d47ed20c8a5ba200a15673acbfc7a417c1cff411955e5a"
+    },
+    {
+      "path": "photoshop/text/opentype-ligatures-on-off.psd",
+      "size": 90902,
+      "gitSha": "76d671df3a3bfb9185249db42bc8e5f8940a9e8b",
+      "sha256": "2b7584d15861f6ac4871f9bc1355a7270998b5b7b1d6133d019ea64a45d3fb23"
+    },
+    {
+      "path": "photoshop/text/opentype-oldstyle-figures.psd",
+      "size": 59597,
+      "gitSha": "6406d9fa8964b3447131b37313259b936e1bf062",
+      "sha256": "da479e7312d2548d4df7c33b2042a4a476caa0e6ecb7d6babd6b30fd167c6a4f"
+    },
+    {
+      "path": "photoshop/text/opentype-ordinals.psd",
+      "size": 55249,
+      "gitSha": "1d7f615659a89fff325cb748fd7efcb7a6276214",
+      "sha256": "29d73b905c8688360323caafa5c7cf127ca69d5acd40380972422d2eb9647c9a"
+    },
+    {
+      "path": "photoshop/text/paragraph-box-center.psd",
+      "size": 103954,
+      "gitSha": "da31b9eaa6c9c441926e18a694af4be35bd61d4f",
+      "sha256": "2b97aa928feecd470eebbc2b8084b1e38e09674b6568723384dd7568ced7bb75"
+    },
+    {
+      "path": "photoshop/text/paragraph-box-left.psd",
+      "size": 103962,
+      "gitSha": "b53f24c0dafcb07f5069b79b920728a7c0441623",
+      "sha256": "dac6fcd54bb1e25a0a5d978bb0ac57a321d119ad54c04d0814e7083ff984466a"
+    },
+    {
+      "path": "photoshop/text/paragraph-box-right.psd",
+      "size": 103994,
+      "gitSha": "1f625f8e3bd835c278020ad12db30d4151d3397a",
+      "sha256": "ac90162bde727a50b03e38d60ace79c63b6550d41265e154d15fab86e4eb0737"
+    },
+    {
+      "path": "photoshop/text/paragraph-hyphenation-narrow.psd",
+      "size": 89180,
+      "gitSha": "d4be1c8de2e33ab09162cd0a2b375792d2c08d3a",
+      "sha256": "f97d93cf6f30d5c699222056210607f79523fed3afd14f5d6500be4f9d559f1e"
+    },
+    {
+      "path": "photoshop/text/paragraph-indents-space-before-after.psd",
+      "size": 100207,
+      "gitSha": "99f6dc3be3a5153fb999c64aa28507a94bee3695",
+      "sha256": "33d54e862de11b12c725914710699a03cca0cbb2db504ea7209c993194bcce78"
+    },
+    {
+      "path": "photoshop/text/paragraph-justify-all.psd",
+      "size": 104314,
+      "gitSha": "15ca542759093fc7561a08b0a8bbfeaf252d2687",
+      "sha256": "3754cf3647d81e0c57d388705d8394caa6cfb2be459d9d3312d0621f05395d4f"
+    },
+    {
+      "path": "photoshop/text/paragraph-justify-center.psd",
+      "size": 104333,
+      "gitSha": "25f3aaa1e2ab69ba0793339573cd7c2be53106a1",
+      "sha256": "1391606d9e38bdabb1fec1bcf5ef784a013220839b834e397c8542e297ca3d4a"
+    },
+    {
+      "path": "photoshop/text/paragraph-justify-left.psd",
+      "size": 104312,
+      "gitSha": "54d2ed867994d27c628b63a11c4154eb96331234",
+      "sha256": "15f2e504f7c06bcc6df4ec1e17215babf300230af5575e18221705c86da383c0"
+    },
+    {
+      "path": "photoshop/text/paragraph-justify-right.psd",
+      "size": 104333,
+      "gitSha": "99f5b6c9993e5284b477ef1c70f117957b0780d3",
+      "sha256": "f5fc6f814276d72c496d192fd9b99c3ebd79bea1566530a960a1d84baed13688"
+    },
+    {
+      "path": "photoshop/text/paragraph-multi-style-runs.psd",
+      "size": 125173,
+      "gitSha": "57b019d2db32bf8f1ef91cf07d11304ac00d0693",
+      "sha256": "929d3e0b755b4915329bbbcb23128b809b86547bfcf710e4471a6ca8032e163b"
+    },
+    {
+      "path": "photoshop/text/paragraph-no-hyphenation-narrow.psd",
+      "size": 94042,
+      "gitSha": "cdfa41df9d0b7975c276fa06aaf9b2f93a96d078",
+      "sha256": "113ec2a6c19a023757df909ae01137798d59935ec9b73150055a4eab49bc8ecd"
+    },
+    {
+      "path": "photoshop/text/path-circle.psd",
+      "size": 77208,
+      "gitSha": "d06fd26da56d90d484a58f5cfd0fd21bd7a0ec9d",
+      "sha256": "10962d5723db0400b11f070b701e8ad63462ffdb3dbc5417a4a5213d82795d7b"
+    },
+    {
+      "path": "photoshop/text/path-wave-open.psd",
+      "size": 49160,
+      "gitSha": "1591711184e9f067ced235e6d9865e434237cdb8",
+      "sha256": "3585ad8f9579e50eff4eecc993f986b0cfa453c105c39ba099f747c4fd0c97e7"
+    },
+    {
+      "path": "photoshop/text/point-arial-24.psd",
+      "size": 54903,
+      "gitSha": "c60217aec514f0bfb3e773e3aa9f285a877d9709",
+      "sha256": "ce30c40215d7a08581ff4be7937bca7e5fdf9a2faacffc77c0679861d94e4114"
+    },
+    {
+      "path": "photoshop/text/point-fonts-mixed-runs.psd",
+      "size": 66190,
+      "gitSha": "1e91576be3d8a6b30a7e844fc04c165e3c9fa9ab",
+      "sha256": "a46350eaa73daf9f9b1a10b05647c3a8c36684fa7374a82b6cfa7be4aa791e3f"
+    },
+    {
+      "path": "photoshop/text/point-multiline-fonts.psd",
+      "size": 95267,
+      "gitSha": "82eabab360732aa5059c13f03359d9f7156e30db",
+      "sha256": "63269a1abc496ac8deeae2c16aa5a7b83810164f914486b9a2e1ff246ca872c5"
+    },
+    {
+      "path": "photoshop/text/point-sizes-colors-runs.psd",
+      "size": 70852,
+      "gitSha": "ae43566c11f3dfe0873c434ddd832d63a628739a",
+      "sha256": "c31961b76e953f915b811ba34d0546b2eb179a26fa17c19e4a990e3dc04e0caf"
+    },
+    {
+      "path": "photoshop/text/scale-horizontal-vertical.psd",
+      "size": 59699,
+      "gitSha": "8983ad188aa104eec59f0805ca79531b7a3a522a",
+      "sha256": "9c70731ac43cc5227034b3c96afd53f25a11ce63892e649702f99869ad900d5e"
+    },
+    {
+      "path": "photoshop/text/super-subscript-runs.psd",
+      "size": 65731,
+      "gitSha": "0d875bed9f2188099da94b2eba131f2b57392372",
+      "sha256": "5e2cba83b5209d1fa49113a42e953c1f2959d1dc371e4b76c2e5ff296682b382"
+    },
+    {
+      "path": "photoshop/text/text-on-gradient-blend-multiply.psd",
+      "size": 126976,
+      "gitSha": "755f3220221af3c8aef5418ec55226e64c6ebb93",
+      "sha256": "8e24f354439757e18313a1cb5d627f80e2646bcdce6e71723599011a3ae97498"
+    },
+    {
+      "path": "photoshop/text/text-with-layer-styles.psd",
+      "size": 84372,
+      "gitSha": "0e661c263d6b2170f9f33a158c8888061d4690fa",
+      "sha256": "4e5bd113f2b825df7d5385c51ebfbf3e05aba1fd4bf6fcdb7e5d7a3f657bb3e3"
+    },
+    {
+      "path": "photoshop/text/tracking-minus60-runs.psd",
+      "size": 60678,
+      "gitSha": "aea7154ec85ce0fad6c794b1273b3c1bd2c692bb",
+      "sha256": "11c5a14bc55f34628893fad4e98064747c8a644c572bdb7b496450aeb59acd37"
+    },
+    {
+      "path": "photoshop/text/tracking-plus200.psd",
+      "size": 51990,
+      "gitSha": "72b37e25e876f817646d3ca953777a83a7529e95",
+      "sha256": "110e0c73f1dba131eaae97ac828001f347e957a2a0e4b81eb9b146af3c211829"
+    },
+    {
+      "path": "photoshop/text/underline-strikethrough.psd",
+      "size": 63667,
+      "gitSha": "fb788857f265720bfdeacfd4056ddddf4e2fabe2",
+      "sha256": "e5c64d48a33b768b3f9b7a85fa8ef9c28488dcb62df33f4e8b3b67ee526ac1ca"
+    },
+    {
+      "path": "photoshop/text/vertical-cjk-hiragino.psd",
+      "size": 65967,
+      "gitSha": "088aa0e59508497959d80549f064392f1a741c0a",
+      "sha256": "11794ef0933b20b846427760a755d659da18501f802789111c9b951d6b1825b0"
+    },
+    {
+      "path": "photoshop/text/vertical-latin-arial.psd",
+      "size": 57378,
+      "gitSha": "b6eb0d1f34839af40fe5c00d3c3f32d83a93e3ff",
+      "sha256": "c7c23d929a8fe75d5cc02afff09b43eeef505fd41d7d616afeb95f2dbc984e75"
+    },
+    {
+      "path": "photoshop/text/vertical-latin-upright.psd",
+      "size": 57618,
+      "gitSha": "434ca54d6513f001dd01424b66d2a789a440a1c2",
+      "sha256": "dd9d8e4b2147fd842d76e0fcee6c53868051feba1045ae59cbe5e323028e08c6"
+    },
+    {
+      "path": "photoshop/text/vertical-paragraph-box.psd",
+      "size": 78808,
+      "gitSha": "054fa9eaa35291a1a73619ce4d52b24a4c67a3dc",
+      "sha256": "3c627eab3c890f4183bb5d52bbbd24655aad30326be8c57e8a8549d250a02507"
+    },
+    {
+      "path": "photoshop/text/warp-arc-50.psd",
+      "size": 72276,
+      "gitSha": "7ef5c8b0a6d071ae636fb7f5c6377f99d78683b2",
+      "sha256": "d292ae66af22d18b93a1a083a9accbcd514f4dbc3ad7784e12451e8fe8e44f82"
+    },
+    {
+      "path": "photoshop/text/warp-bulge-60-persp.psd",
+      "size": 98311,
+      "gitSha": "70bbb59f150a642c912b8f915f7777902afbba77",
+      "sha256": "c4eea1f306495f67f9e8e763e5faf6a9f481356b607326e6b266e61001bb9c73"
+    },
+    {
+      "path": "photoshop/text/warp-flag-40.psd",
+      "size": 69807,
+      "gitSha": "262e3f6d148049a2c8fe89e321ef448b0546fe85",
+      "sha256": "23fffed5158ad2651507d953ec2d1f7f8d29096ec91023a34c144520a814839a"
+    },
+    {
+      "path": "photoshop/text/warp-rise-vertical-30.psd",
+      "size": 69525,
+      "gitSha": "5a84a3d85a8726c51b8ce2f3b0a54c221140e918",
+      "sha256": "a4ce58653f5dc1366214055407286966c94d7cab80380f42f6adfb6732c81013"
+    },
+    {
+      "path": "photoshop/text/warp-twist-35.psd",
+      "size": 67954,
+      "gitSha": "753e2684738960e83cfa04a662e15463dcfc6dec",
+      "sha256": "a530ee19a34a3bcbfa8466cf90b86d739f7a55724e5e9d6b8deb6b1143786ede"
+    }
+  ]
+}

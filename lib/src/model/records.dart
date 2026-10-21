@@ -72,6 +72,9 @@ final class PsdTaggedBlock {
     required this.data,
     this.signature = '8BIM',
   });
+
+  /// Whether the payload is opaque Intel-order TIFF data, unsuitable for PSD export.
+  bool get isForeignByteOrder => signature == 'MIB8' || signature == '46B8';
 }
 
 /// Parsed layer-mask metadata.
@@ -115,7 +118,10 @@ final class PsdChannel {
   final int id;
 
   /// Big-endian sample bytes in row-major order.
-  final Uint8List data;
+  final Uint8List? _data;
+
+  /// Deferred sample cache, absent for an authored or eagerly decoded plane.
+  final _PsdLazyChannel? _lazy;
 
   /// Preferred encoding when the document is written.
   final PsdCompression compression;
@@ -123,7 +129,40 @@ final class PsdChannel {
   /// Creates channel samples.
   const PsdChannel({
     required this.id,
-    required this.data,
+    required Uint8List data,
     this.compression = PsdCompression.rle,
-  });
+    // Keep the public named argument `data` for source compatibility.
+    // ignore: prefer_initializing_formals
+  }) : _data = data,
+       _lazy = null;
+
+  /// Creates a channel whose decoder is called at most once after a successful read.
+  PsdChannel.lazy({required this.id, required Uint8List Function() decode, required this.compression}) : _data = null, _lazy = _PsdLazyChannel(decode: decode);
+
+  /// Big-endian sample bytes, materializing this channel on first access.
+  Uint8List get data => _data ?? _lazy!.data;
+
+  /// Whether samples are already resident without invoking the decoder.
+  bool get isDecoded => _data != null || _lazy!._data != null;
+}
+
+/// Caches a successful deferred decode without changing the channel's public model.
+final class _PsdLazyChannel {
+  /// Callback released after it has produced its owned sample buffer.
+  Uint8List Function()? _decode;
+
+  /// Materialized sample bytes.
+  Uint8List? _data;
+
+  /// Holds a decoder until the first sample access.
+  _PsdLazyChannel({required this._decode});
+
+  /// Resolves and caches the plane exactly once.
+  Uint8List get data {
+    if (_data == null) {
+      _data = _decode!();
+      _decode = null;
+    }
+    return _data!;
+  }
 }

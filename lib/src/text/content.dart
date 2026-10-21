@@ -154,6 +154,45 @@ final class PsdTextContent {
     this.smallCapSize = 0.7,
   });
 
+  /// Copies content while replacing the requested properties.
+  PsdTextContent copyWith({
+    String? text,
+    PsdTextOrientation? orientation,
+    List<PsdTextStyleRun>? styleRuns,
+    List<PsdTextParagraph>? paragraphs,
+    PsdTextAntiAlias? antiAlias,
+    PsdTextGridding? gridding,
+    bool? useFractionalGlyphWidths,
+    PsdTextGridInfo? gridInfo,
+    PsdTextShapeType? shapeType,
+    bool? hasShapeMetadata,
+    PsdTextPoint? pointBase,
+    PsdTextBox? boxBounds,
+    double? superscriptSize,
+    double? superscriptPosition,
+    double? subscriptSize,
+    double? subscriptPosition,
+    double? smallCapSize,
+  }) => PsdTextContent(
+    text: text ?? this.text,
+    orientation: orientation ?? this.orientation,
+    styleRuns: styleRuns ?? this.styleRuns,
+    paragraphs: paragraphs ?? this.paragraphs,
+    antiAlias: antiAlias ?? this.antiAlias,
+    gridding: gridding ?? this.gridding,
+    useFractionalGlyphWidths: useFractionalGlyphWidths ?? this.useFractionalGlyphWidths,
+    gridInfo: gridInfo ?? this.gridInfo,
+    shapeType: shapeType ?? this.shapeType,
+    hasShapeMetadata: hasShapeMetadata ?? this.hasShapeMetadata,
+    pointBase: pointBase ?? this.pointBase,
+    boxBounds: boxBounds ?? this.boxBounds,
+    superscriptSize: superscriptSize ?? this.superscriptSize,
+    superscriptPosition: superscriptPosition ?? this.superscriptPosition,
+    subscriptSize: subscriptSize ?? this.subscriptSize,
+    subscriptPosition: subscriptPosition ?? this.subscriptPosition,
+    smallCapSize: smallCapSize ?? this.smallCapSize,
+  );
+
   /// Returns the most specific style covering [offset], when available.
   PsdTextStyle? styleAt(int offset) {
     for (final PsdTextStyleRun run in styleRuns.reversed) {

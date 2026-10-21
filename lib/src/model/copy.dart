@@ -6,10 +6,12 @@ import 'package:psdkit/src/model.dart';
 /// encoding or padding associated with them by the codec.
 PsdDocument copyPsdDocument(
   PsdDocument document, {
+  List<PsdLayer>? layers,
   List<PsdImageResource>? imageResources,
   List<PsdTaggedBlock>? additionalLayerInfo,
 }) => PsdDocument(
   version: document.version,
+  warnings: document.warnings,
   width: document.width,
   height: document.height,
   channels: document.channels,
@@ -17,7 +19,7 @@ PsdDocument copyPsdDocument(
   colorMode: document.colorMode,
   colorModeData: document.colorModeData,
   imageResources: imageResources ?? document.imageResources,
-  layers: document.layers,
+  layers: layers ?? document.layers,
   mergedImage: document.mergedImage,
   mergedImageCompression: document.mergedImageCompression,
   mergedTransparency: document.mergedTransparency,

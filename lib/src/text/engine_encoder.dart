@@ -99,7 +99,7 @@ void _writeStyleProperties(
     '/HorizontalScale ${_engineNumber(style.horizontalScale)} '
     '/VerticalScale ${_engineNumber(style.verticalScale)} '
     '/Tracking ${_engineNumber(style.tracking ?? 0)} '
-    '/AutoKerning ${style.automaticKerning} /Kerning ${_engineNumber(style.kerning)} '
+    '/AutoKerning ${style.resolvedKerningMode != PsdTextKerning.manual} /Kerning ${_engineNumber(style.kerning)} '
     '/BaselineShift ${_engineNumber(style.baselineShift)} '
     '/FontCaps ${style.fontCaps} /FontBaseline ${style.fontBaseline} '
     '/Underline ${style.underline} /Strikethrough ${style.strikethrough} '
@@ -112,6 +112,11 @@ void _writeStyleProperties(
     writer,
     style.color ?? const PsdTextColor(alpha: 255, red: 0, green: 0, blue: 0),
   );
+  for (final MapEntry<String, String> feature in _engineOpenTypeKeys.entries) {
+    if (style.openTypeFeatures.containsKey(feature.value)) {
+      writer.ascii('/${feature.key} ${style.openTypeFeatures[feature.value]! > 0} ');
+    }
+  }
   writer.ascii('/StrokeColor ');
   _writeColor(
     writer,

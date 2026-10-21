@@ -44,6 +44,12 @@ final class PsdDocument {
   /// Tagged blocks following global layer-mask information.
   final List<PsdTaggedBlock> additionalLayerInfo;
 
+  /// Recoverable read issues; deferred merged decoding can append warnings.
+  ///
+  /// Decoded documents expose an unmodifiable view. No layer damage or
+  /// allocation-limit failure is converted into a warning.
+  final List<PsdReadWarning> warnings;
+
   /// Creates a document from planar, uncompressed channel samples.
   PsdDocument({
     required this.width,
@@ -53,6 +59,7 @@ final class PsdDocument {
     required this.colorMode,
     required this.mergedImage,
     this.version = PsdVersion.psd,
+    this.warnings = const [],
     Uint8List? colorModeData,
     this.imageResources = const [],
     this.layers = const [],
@@ -62,6 +69,37 @@ final class PsdDocument {
     this.additionalLayerInfo = const [],
   }) : colorModeData = colorModeData ?? Uint8List(0),
        globalLayerMaskData = globalLayerMaskData ?? Uint8List(0);
+
+  /// Resolves one type layer with the document-level kerning and OpenType settings.
+  PsdTextContent? textContentFor(PsdLayer layer) {
+    final PsdTypeTool? typeTool = layer.typeTool;
+    return typeTool == null ? null : globalTextEngineData?.contentFor(typeTool) ?? typeTool.content;
+  }
+
+  /// Updates a type layer and its existing global text object in one operation.
+  ///
+  /// A shared or invalid `TextIndex` is rejected instead of changing another layer.
+  /// Unsupported global layout/paragraph/style edits throw rather than desynchronize Txt2.
+  /// Layer raster pixels and the merged preview still need rendering by the host.
+  PsdDocument withTextContent(int layerIndex, PsdTextContent content) {
+    RangeError.checkValidIndex(layerIndex, layers);
+    final PsdLayer layer = layers[layerIndex];
+    final PsdTypeTool? typeTool = layer.typeTool;
+    if (typeTool == null) {
+      throw ArgumentError('The selected layer has no TySh text');
+    }
+    final PsdGlobalTextEngineData? global = globalTextEngineData;
+    if (global != null && layers.where((value) => value.typeTool?.textIndex == typeTool.textIndex).length != 1) {
+      throw StateError('TextIndex is shared by multiple layers');
+    }
+    if (global == null &&
+        content.styleRuns.any((run) => run.style.resolvedKerningMode == PsdTextKerning.optical || run.style.openTypeFeatures.entries.any((entry) => entry.key.startsWith('ss') && entry.value != 0))) {
+      throw StateError('Optical kerning and stylistic sets require a Photoshop Txt2 template');
+    }
+    final List<PsdLayer> updated = [...layers]..[layerIndex] = layer.withTypeTool(typeTool.withContent(content));
+    final PsdDocument result = copyPsdDocument(this, layers: updated);
+    return global == null ? result : result.withGlobalTextEngineData(global.withContent(typeTool.textIndex, content, previous: typeTool.content));
+  }
 
   /// Named document paths stored in image-resource ids 2000 through 2997.
   List<PsdNamedPath> get namedPaths {
@@ -82,7 +120,7 @@ final class PsdDocument {
   List<PsdLinkedResourceBlock> get linkedResourceBlocks {
     final List<PsdLinkedResourceBlock> result = <PsdLinkedResourceBlock>[];
     for (final PsdTaggedBlock block in additionalLayerInfo) {
-      if (!psdLinkedResourceKeys.contains(block.key)) {
+      if (block.isForeignByteOrder || !psdLinkedResourceKeys.contains(block.key)) {
         continue;
       }
       final PsdLinkedResourceBlock? decoded = PsdLinkedResourceCodec.tryDecode(block.data, key: block.key);
@@ -101,7 +139,7 @@ final class PsdDocument {
   /// Document-level `Txt2` text-engine data, when present.
   PsdGlobalTextEngineData? get globalTextEngineData {
     for (final PsdTaggedBlock block in additionalLayerInfo.reversed) {
-      if (block.key == 'Txt2') {
+      if (block.key == 'Txt2' && !block.isForeignByteOrder) {
         return PsdGlobalTextEngineData(data: block.data);
       }
     }
@@ -111,7 +149,7 @@ final class PsdDocument {
   /// Document-wide artboard defaults from the `artd` block, when present.
   PsdArtboardDefaults? get artboardDefaults {
     for (final PsdTaggedBlock block in additionalLayerInfo.reversed) {
-      if (block.key == 'artd') {
+      if (block.key == 'artd' && !block.isForeignByteOrder) {
         return PsdArtboardDefaults.tryDecode(block.data);
       }
     }
@@ -134,7 +172,7 @@ final class PsdDocument {
   /// records are skipped, so a damaged block never hides the remaining ones.
   List<PsPattern> get patterns => [
     for (final PsdTaggedBlock block in additionalLayerInfo)
-      if (_patternBlockKeys.contains(block.key)) ..._decodePatternBlock(block.data),
+      if (!block.isForeignByteOrder && _patternBlockKeys.contains(block.key)) ..._decodePatternBlock(block.data),
   ];
 
   /// Returns the embedded pattern whose identifier is [id], when present.
@@ -228,7 +266,7 @@ final class PsdDocument {
   /// tagged blocks opaque rather than interpreting them as absent masks.
   List<PsdFilterEffects> get filterEffectBlocks => [
     for (final PsdTaggedBlock block in additionalLayerInfo)
-      if (psdFilterEffectsKeys.contains(block.key)) PsdFilterEffectsCodec.decode(block.data),
+      if (!block.isForeignByteOrder && psdFilterEffectsKeys.contains(block.key)) PsdFilterEffectsCodec.decode(block.data),
   ];
 
   /// Finds an unambiguous cache by placement identity, never by source identity.

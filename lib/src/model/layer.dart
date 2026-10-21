@@ -63,7 +63,7 @@ final class PsdLayer {
   /// Photoshop writes, falling back to the legacy `brit` values without it.
   PsdAdjustment? get adjustment {
     for (final PsdTaggedBlock block in additionalInfo.reversed) {
-      if (psdAdjustmentKeys.contains(block.key)) {
+      if (!block.isForeignByteOrder && psdAdjustmentKeys.contains(block.key)) {
         final PsdAdjustment? decoded = PsdAdjustmentCodec.tryDecode(block.data, key: block.key);
         return decoded is PsdBrightnessContrastAdjustment ? _modernBrightnessContrast(decoded) ?? decoded : decoded;
       }
@@ -209,7 +209,7 @@ final class PsdLayer {
   /// Returns the last tagged block matching [key].
   PsdTaggedBlock? taggedBlock(String key) {
     for (final PsdTaggedBlock block in additionalInfo.reversed) {
-      if (block.key == key) {
+      if (block.key == key && !block.isForeignByteOrder) {
         return block;
       }
     }

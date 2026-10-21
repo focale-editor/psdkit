@@ -80,6 +80,7 @@ final class _PsdStreamingWriter {
 
   /// Writes a complete document and returns its final byte length.
   Future<int> write(PsdStreamDocument source) async {
+    _rejectForeignTiffBlocks(source.metadata, layers: source.layers.map((layer) => layer.metadata));
     final PsdDocument document = source.metadata;
     final PsdVersion version = options.version ?? document.version;
     _validateHeader(
@@ -116,7 +117,7 @@ final class _PsdStreamingWriter {
     await output.truncate(0);
     await output.setPosition(0);
     await _writeHeader(document, version);
-    await _writeColorModeData(document.colorModeData);
+    await _writeColorModeData(_outputColorModeData(document, options));
     await _writeResources(document.imageResources);
     await _writeLayerAndMask(source, version);
     await _writeMergedImage(source, version);
@@ -271,7 +272,7 @@ final class _PsdStreamingWriter {
     }
     for (final _PsdChannelPatch pending in channels) {
       final int channelStart = output.position;
-      final PsdCompression compression = options.compression ?? pending.channel.compression;
+      final PsdCompression compression = _outputCompression(pending.channel.compression, source.metadata.depth, options);
       await _writeUint16(compression.code);
       await _planes.write(
         [pending.channel.source],
@@ -296,7 +297,7 @@ final class _PsdStreamingWriter {
     PsdStreamDocument source,
     PsdVersion version,
   ) async {
-    final PsdCompression compression = options.compression ?? source.metadata.mergedImageCompression;
+    final PsdCompression compression = _outputCompression(source.metadata.mergedImageCompression, source.metadata.depth, options);
     await _writeUint16(compression.code);
     await _planes.write(
       source.mergedImage,

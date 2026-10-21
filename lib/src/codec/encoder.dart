@@ -49,12 +49,12 @@ Uint8List _writeImageResources(List<PsdImageResource> resources) {
 }
 
 /// Serializes the complete layer-and-mask section payload.
-Uint8List _writeLayerAndMask(PsdDocument document, {required PsdVersion version, required PsdCompression? compressionOverride}) {
+Uint8List _writeLayerAndMask(PsdDocument document, {required PsdVersion version, required PsdWriteOptions options}) {
   if (document.layers.isEmpty && document.globalLayerMaskData.isEmpty && document.additionalLayerInfo.isEmpty) {
     return Uint8List(0);
   }
   final PsBinaryWriter writer = PsBinaryWriter();
-  final Uint8List encodedLayers = _writeLayerInfo(document, version: version, compressionOverride: compressionOverride);
+  final Uint8List encodedLayers = _writeLayerInfo(document, version: version, options: options);
   final _PsdLayerInfoLayout layout = _layerInfoLayout(
     depth: document.depth,
     hasLayers: document.layers.isNotEmpty,
@@ -72,7 +72,7 @@ Uint8List _writeLayerAndMask(PsdDocument document, {required PsdVersion version,
 }
 
 /// Serializes layer records followed by their encoded planar channels.
-Uint8List _writeLayerInfo(PsdDocument document, {required PsdVersion version, required PsdCompression? compressionOverride}) {
+Uint8List _writeLayerInfo(PsdDocument document, {required PsdVersion version, required PsdWriteOptions options}) {
   if (document.layers.isEmpty) {
     return Uint8List(0);
   }
@@ -84,7 +84,7 @@ Uint8List _writeLayerInfo(PsdDocument document, {required PsdVersion version, re
     final List<_EncodedChannel> channels = <_EncodedChannel>[];
     for (final PsdChannel channel in layer.channels) {
       final PsdRectangle rectangle = _channelRectangle(layer, channel.id);
-      final PsdCompression compression = compressionOverride ?? channel.compression;
+      final PsdCompression compression = _outputCompression(channel.compression, document.depth, options);
       channels.add(
         _EncodedChannel(
           compression: compression,

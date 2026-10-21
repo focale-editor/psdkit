@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -8,19 +9,26 @@ import 'package:psdkit/src/model/copy.dart';
 
 part 'codec/binary_io.dart';
 part 'codec/decoder.dart';
+part 'codec/lazy_pixels.dart';
 part 'codec/encoder.dart';
 part 'codec/layer_info_layout.dart';
 part 'codec/metadata_writer.dart';
+part 'codec/hdr.dart';
 part 'codec/plane_writer.dart';
 part 'codec/source_encoding.dart';
 part 'codec/streaming_encoder.dart';
 part 'codec/streaming_model.dart';
 part 'codec/tagged_blocks.dart';
+part 'codec/tiff.dart';
+part 'codec/tiff_transcoder.dart';
+part 'codec/tiff_payloads.dart';
 
 /// Reads and writes complete PSD and PSB byte streams.
 abstract final class PsdCodec {
   /// Decodes [bytes] into an editable, loss-preserving document model.
   static PsdDocument decode(Uint8List bytes, {PsdReadOptions options = const PsdReadOptions()}) {
+    final _PsdDecodeBudget budget = _PsdDecodeBudget(maximum: options.maxTotalDecodedBytes);
+    final List<PsdReadWarning> warnings = [];
     final PsBinaryReader reader = PsBinaryReader(bytes: bytes);
     if (reader.readString(4) != '8BPS') {
       throw PsFormatException(message: 'Invalid file signature', source: bytes, offset: 0);
@@ -44,28 +52,48 @@ abstract final class PsdCodec {
       version: version,
       depth: depth,
       options: options,
+      budget: budget,
     );
 
-    if (reader.remaining < 2) {
-      throw PsFormatException(message: 'Missing merged image data', source: bytes, offset: reader.offset);
+    final int mergedOffset = reader.offset;
+    final int? compressionCode = reader.remaining < 2 ? null : reader.readUint16();
+    final PsdCompression? parsedCompression = PsdCompression.values.where((value) => value.code == compressionCode).firstOrNull;
+    final PsdCompression mergedCompression = parsedCompression ?? PsdCompression.raw;
+    final Uint8List mergedPayload = reader.readBytes(reader.remaining);
+    List<Uint8List> decodeMerged() {
+      final int size = budget.checkGeometry(width, height, depth, channelCount, options.maxDecodedBytes);
+      try {
+        if (parsedCompression == null) {
+          throw PsFormatException(message: 'Missing or unsupported merged image compression', offset: mergedOffset);
+        }
+        final List<Uint8List> samples = decodePsdMergedImage(
+          compression: mergedCompression,
+          payload: mergedPayload,
+          channels: channelCount,
+          width: width,
+          height: height,
+          depth: depth,
+          wideRowLengths: version == PsdVersion.psb,
+          maxDecodedBytes: options.maxDecodedBytes,
+        );
+        budget.commit(size);
+        if (options.preserveSourceEncoding) {
+          _SourceEncoding.remember(samples, geometry: (width, height, depth, true), compression: mergedCompression, payload: mergedPayload, wideRowLengths: version == PsdVersion.psb);
+        }
+        return samples;
+      } on PsFormatException catch (error) {
+        if (!options.recoverMergedImage || layerSection.layers.isEmpty) {
+          rethrow;
+        }
+        warnings.add(PsdReadWarning(message: 'Merged image unavailable; layer records were retained: ${error.message}', offset: mergedOffset));
+        return const [];
+      }
     }
-    final PsdCompression mergedCompression = _enumByCode(PsdCompression.values, reader.readUint16(), 'merged image compression', reader);
-    final Uint8List mergedPayload = reader.readView(reader.remaining);
-    final List<Uint8List> mergedImage = decodePsdMergedImage(
-      compression: mergedCompression,
-      payload: mergedPayload,
-      channels: channelCount,
-      width: width,
-      height: height,
-      depth: depth,
-      wideRowLengths: version == PsdVersion.psb,
-      maxDecodedBytes: options.maxDecodedBytes,
-    );
-    if (options.preserveSourceEncoding) {
-      _SourceEncoding.remember(mergedImage, geometry: (width, height, depth, true), compression: mergedCompression, payload: mergedPayload, wideRowLengths: version == PsdVersion.psb);
-    }
+
+    final List<Uint8List> mergedImage = options.lazyPixels ? _PsdLazyMergedImage(decode: decodeMerged) : decodeMerged();
     return PsdDocument(
       version: version,
+      warnings: UnmodifiableListView(warnings),
       width: width,
       height: height,
       channels: channelCount,
@@ -84,6 +112,7 @@ abstract final class PsdCodec {
 
   /// Encodes [document] into a complete PSD or PSB file.
   static Uint8List encode(PsdDocument document, {PsdWriteOptions options = const PsdWriteOptions()}) {
+    _rejectForeignTiffBlocks(document);
     final PsdVersion version = options.version ?? document.version;
     _validateHeader(
       version: version,
@@ -99,20 +128,21 @@ abstract final class PsdCodec {
     }
     final PsBinaryWriter writer = PsBinaryWriter();
     _writeDocumentHeader(writer, document, version);
+    final Uint8List colorModeData = _outputColorModeData(document, options);
     writer
-      ..writeUint32(document.colorModeData.length)
-      ..writeBytes(document.colorModeData);
+      ..writeUint32(colorModeData.length)
+      ..writeBytes(colorModeData);
 
     final Uint8List resources = _writeImageResources(document.imageResources);
     writer
       ..writeUint32(resources.length)
       ..writeBytes(resources);
-    final Uint8List layerAndMask = _writeLayerAndMask(document, version: version, compressionOverride: options.compression);
+    final Uint8List layerAndMask = _writeLayerAndMask(document, version: version, options: options);
     writer
       ..writeLength(layerAndMask.length, wide: version == PsdVersion.psb)
       ..writeBytes(layerAndMask);
 
-    final PsdCompression mergedCompression = options.compression ?? document.mergedImageCompression;
+    final PsdCompression mergedCompression = _outputCompression(document.mergedImageCompression, document.depth, options);
     final Uint8List imageData =
         _SourceEncoding.reuse(document.mergedImage, geometry: (document.width, document.height, document.depth, true), compression: mergedCompression, wideRowLengths: version == PsdVersion.psb) ??
         encodePsdMergedImage(

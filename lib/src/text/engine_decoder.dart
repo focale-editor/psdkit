@@ -129,6 +129,10 @@ List<PsdTextStyleRun> _readStyleRuns(
           verticalScale: _number(data['VerticalScale']) ?? 1,
           automaticKerning: _engineBoolean(data['AutoKerning']) ?? true,
           kerning: _number(data['Kerning']) ?? 0,
+          openTypeFeatures: Map.unmodifiable({
+            for (final MapEntry<String, String> feature in _engineOpenTypeKeys.entries)
+              if (_engineBoolean(data[feature.key]) case final bool enabled) feature.value: enabled ? 1 : 0,
+          }),
           baselineShift: _number(data['BaselineShift']) ?? 0,
           fontCaps: _integer(data['FontCaps']) ?? 0,
           fontBaseline: _integer(data['FontBaseline']) ?? 0,

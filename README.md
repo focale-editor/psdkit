@@ -4,7 +4,7 @@
 
 # PsdKit
 
-Read, inspect, edit, and write Adobe Photoshop PSD and PSB files in Dart.
+Read, inspect, edit, and write Adobe Photoshop PSD, PSB and layered TIFF payloads in Dart.
 
 PsdKit is intended for applications that need to work with Photoshop documents without launching Photoshop. It lets you access the canvas, layers, previews, editable content, and document metadata while preserving Photoshop data that your application does not change.
 
@@ -83,7 +83,10 @@ for (final PsdLayer layer in document.layers) {
 }
 ```
 
-`withText` keeps the existing formatting and adjusts its ranges to the new text. Use `withContent` when you also need to change fonts, colors, paragraphs, or text geometry. The technical reference shows how to [place an edited layer back into a document](docs/PSD.md#updating-copy-based-models).
+Use `document.textContentFor(layer)` to include Txt2 optical kerning and
+OpenType settings. `document.withTextContent(layerIndex, content)` synchronizes
+an existing Photoshop text object in TySh and Txt2. The lower-level `withText`
+keeps the existing EngineData formatting and adjusts its ranges to the new text. Use `withContent` when you also need to change fonts, colors, paragraphs, or text geometry. The technical reference shows how to [place an edited layer back into a document](docs/PSD.md#updating-copy-based-models).
 
 ### Work with other Photoshop features
 
@@ -105,6 +108,16 @@ The [PSD and PSB technical reference](docs/PSD.md) contains examples for each fe
 ### Create a new document
 
 New PSD documents can be assembled from RGBA pixels, raster layers, and editable feature models. See the complete [document creation example](example/psdkit_example.dart).
+
+## Compatibility controls
+
+The writers supply missing 32-bit HDR records and avoid 32-bit RLE by default.
+Use `PsdWriteCompatibility.preserve` for the previous preservation behavior.
+Reads support lazy samples, an aggregate decoded-byte limit, and opt-in recovery
+of intact layers when the merged preview is damaged. `PsdTiffCodec` handles
+Photoshop TIFF layer/resource tags in either byte order. See the
+[compatibility and TIFF reference](docs/PSD.md#photoshop-compatibility-and-bounded-reads)
+for limits and examples.
 
 ## Rendering expectations
 
