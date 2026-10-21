@@ -173,6 +173,8 @@ final PsdTypeTool typeTool = PsdTypeTool.fromText(
 final PsdLayer textLayer = rasterPreviewLayer.withTypeTool(typeTool);
 ```
 
+Text colors keep Adobe's normalized `Values` at full precision in `PsdTextColor.values` (alpha first, then the components of `colorSpace`); the 8-bit fields round them, and encoding prefers `values` when present. `PsdTextColor.fromValues` creates such a color, for instance from a 16-bit or wide-gamut source.
+
 The final `TySh` bounds are single-precision values and remain separate from optional unit-bearing `bounds` and `boundingBox` descriptor values. `PsdTextContent.hasShapeMetadata` distinguishes explicit point text from an older or malformed engine payload whose rendered shape tree is absent, allowing consumers to apply a compatibility fallback safely. Common warp settings are available through `PsdTypeTool.warp` and `withWarp`; unknown custom-warp descriptor entries remain untouched.
 
 Photoshop 5.0 and 5.5 `tySh` records are available through `PsdLayer.legacyTypeTool` and `withLegacyTypeTool`. Their published face, style, line, color, and transform structures can be decoded and re-encoded with `PsdLegacyTypeToolCodec`. Document-level `Txt2` bytes are available through `PsdDocument.globalTextEngineData`; its `structure` getter provides an immutable representation of Adobe text-engine dictionaries and arrays.

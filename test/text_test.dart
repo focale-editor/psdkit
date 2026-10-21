@@ -102,6 +102,35 @@ void main() {
       expect(decoded.bounds.right, 210);
     });
 
+    test('keeps normalized color values at full precision', () {
+      final PsdTextColor rgb = PsdTextColor.fromValues(PsdTextColorSpace.rgb, const [0.9, 0.1020408, 0.9025, 0.0981]);
+      final PsdTextColor cmyk = PsdTextColor.fromValues(PsdTextColorSpace.cmyk, const [1, 0.2, 0.2, 0.2, 0.4013]);
+      final PsdTypeTool source = PsdTypeTool.fromText(
+        content: PsdTextContent(
+          text: 'Exact',
+          orientation: PsdTextOrientation.horizontal,
+          styleRuns: [
+            PsdTextStyleRun(
+              start: 0,
+              length: 5,
+              style: PsdTextStyle(fontFamily: 'Inter-Regular', fontSize: 12, color: rgb, strokeColor: cmyk),
+            ),
+          ],
+        ),
+        bounds: const PsdTextBounds(left: 0, top: 0, right: 100, bottom: 20),
+      );
+
+      final PsdTextStyle style = PsdTypeToolCodec.decode(PsdTypeToolCodec.encode(source)).content.styleRuns.single.style;
+
+      expect(style.color?.values, orderedEquals(rgb.values!));
+      expect(style.color?.red, 26);
+      expect(style.color?.alpha, 230);
+      expect(style.strokeColor?.colorSpace, PsdTextColorSpace.cmyk);
+      expect(style.strokeColor?.values, orderedEquals(cmyk.values!));
+      expect(style.strokeColor?.black, 102);
+      expect(const PsdTextColor(alpha: 255, red: 1, green: 2, blue: 3).values, isNull);
+    });
+
     test('uses Adobe paragraph justification values', () {
       const Map<PsdTextJustification, int> values = {
         PsdTextJustification.left: 0,

@@ -62,13 +62,22 @@ enum PsdTextShapeType {
 /// Color space retained from an Adobe text-engine color value.
 enum PsdTextColorSpace {
   /// A single grayscale component.
-  grayscale,
+  grayscale(engineType: 0, componentCount: 1),
 
   /// Red, green, and blue components.
-  rgb,
+  rgb(engineType: 1, componentCount: 3),
 
   /// Cyan, magenta, yellow, and black components.
-  cmyk,
+  cmyk(engineType: 2, componentCount: 4);
+
+  /// Adobe text-engine `Type` of a color in this space.
+  final int engineType;
+
+  /// Number of components, without alpha.
+  final int componentCount;
+
+  /// Creates a color space with its engine type and component count.
+  const PsdTextColorSpace({required this.engineType, required this.componentCount});
 }
 
 /// Warp preset stored by a Photoshop type tool.
@@ -230,6 +239,13 @@ final class PsdTextColor {
   /// Original black component, when [colorSpace] is CMYK.
   final int? black;
 
+  /// Adobe's normalized `Values` at full precision, when known.
+  ///
+  /// Alpha comes first, then the components of [colorSpace]: one gray, three
+  /// RGB or four CMYK values, each from 0 through 1. The integer fields round
+  /// them to 8 bits; writing prefers these values when present.
+  final List<double>? values;
+
   /// Creates an RGB text color.
   const PsdTextColor({
     required this.alpha,
@@ -241,7 +257,8 @@ final class PsdTextColor {
        cyan = null,
        magenta = null,
        yellow = null,
-       black = null;
+       black = null,
+       values = null;
 
   /// Creates a grayscale text color.
   const PsdTextColor.grayscale({this.alpha = 255, required int value})
@@ -253,7 +270,8 @@ final class PsdTextColor {
       cyan = null,
       magenta = null,
       yellow = null,
-      black = null;
+      black = null,
+      values = null;
 
   /// Creates a CMYK text color while exposing an approximate RGB preview.
   factory PsdTextColor.cmyk({
@@ -280,6 +298,37 @@ final class PsdTextColor {
     );
   }
 
+  /// Creates a color from Adobe's normalized `Values` in [colorSpace].
+  ///
+  /// [values] holds alpha, then the components of [colorSpace]; see
+  /// [PsdTextColor.values]. They are kept at full precision.
+  factory PsdTextColor.fromValues(PsdTextColorSpace colorSpace, List<double> values) {
+    final int count = colorSpace.componentCount + 1;
+    if (values.length != count || values.any((value) => !value.isFinite)) {
+      throw ArgumentError.value(values, 'values', '${colorSpace.name} needs $count finite values');
+    }
+    final List<double> normalized = List.unmodifiable([for (final double value in values) value.clamp(0, 1).toDouble()]);
+    int channel(int index) => (normalized[index] * 255).round();
+    final PsdTextColor rounded = switch (colorSpace) {
+      PsdTextColorSpace.grayscale => PsdTextColor.grayscale(alpha: channel(0), value: channel(1)),
+      PsdTextColorSpace.rgb => PsdTextColor(alpha: channel(0), red: channel(1), green: channel(2), blue: channel(3)),
+      PsdTextColorSpace.cmyk => PsdTextColor.cmyk(alpha: channel(0), cyan: channel(1), magenta: channel(2), yellow: channel(3), black: channel(4)),
+    };
+    return PsdTextColor._(
+      colorSpace: colorSpace,
+      alpha: rounded.alpha,
+      red: rounded.red,
+      green: rounded.green,
+      blue: rounded.blue,
+      gray: rounded.gray,
+      cyan: rounded.cyan,
+      magenta: rounded.magenta,
+      yellow: rounded.yellow,
+      black: rounded.black,
+      values: normalized,
+    );
+  }
+
   /// Creates a color with already resolved preview and source components.
   const PsdTextColor._({
     required this.colorSpace,
@@ -287,11 +336,13 @@ final class PsdTextColor {
     required this.red,
     required this.green,
     required this.blue,
+    this.gray,
     this.cyan,
     this.magenta,
     this.yellow,
     this.black,
-  }) : gray = null;
+    this.values,
+  });
 
   /// The color packed as an ARGB integer.
   int get argb => alpha << 24 | red << 16 | green << 8 | blue;
@@ -2055,7 +2106,7 @@ abstract final class PsdTextEngine {
     return result;
   }
 
-  /// Converts an Adobe color dictionary into 8-bit RGBA components.
+  /// Reads an Adobe color dictionary, keeping its normalized values.
   static PsdTextColor? _readColor(Object? value) {
     final _PsdEngineDictionary? color = _dictionary(value);
     final int? type = _integer(color?['Type']);
@@ -2064,20 +2115,17 @@ abstract final class PsdTextEngine {
       return null;
     }
 
-    /// Converts one normalized color component to an 8-bit channel.
-    int channel(int index) => ((_number(components[index]) ?? 0).clamp(0, 1) * 255).round();
-    return switch (type) {
-      0 when components.length >= 2 => PsdTextColor.grayscale(alpha: channel(0), value: channel(1)),
-      1 when components.length >= 4 => PsdTextColor(alpha: channel(0), red: channel(1), green: channel(2), blue: channel(3)),
-      2 when components.length >= 5 => PsdTextColor.cmyk(
-        alpha: channel(0),
-        cyan: channel(1),
-        magenta: channel(2),
-        yellow: channel(3),
-        black: channel(4),
-      ),
-      _ => null,
-    };
+    final PsdTextColorSpace? colorSpace = PsdTextColorSpace.values.where((space) => space.engineType == type && components.length > space.componentCount).firstOrNull;
+    if (colorSpace == null) {
+      return null;
+    }
+    return PsdTextColor.fromValues(colorSpace, [
+      for (int index = 0; index <= colorSpace.componentCount; index++)
+        switch (_number(components[index])) {
+          final double value when value.isFinite => value,
+          _ => 0,
+        },
+    ]);
   }
 
   /// Reads baseline-grid properties from [engine].
@@ -2203,6 +2251,10 @@ abstract final class PsdTextEngine {
 
   /// Writes a color dictionary without converting its original color space.
   static void _writeColor(_PsdEngineWriter writer, PsdTextColor color) {
+    if (color.values case final List<double> values) {
+      writer.ascii('<< /Type ${color.colorSpace.engineType} /Values [ ${values.map(_engineNumber).join(' ')} ] >> ');
+      return;
+    }
     switch (color.colorSpace) {
       case PsdTextColorSpace.grayscale:
         writer.ascii(
