@@ -15,6 +15,16 @@ const Set<String> _widePsbTaggedBlocks = <String>{
   'FEid',
   'FXid',
   'PxSD',
+  // Additional wide keys emitted by Photoshop and recognized by psd-tools.
+  // The ag-psd psb2 corpus exercises cinf; the signature alone is not decisive.
+  'lnk3',
+  'lnkE',
+  'pths',
+  'extd',
+  'extn',
+  'FELS',
+  'cinf',
+  'artd',
 };
 
 /// Reads aligned additional-layer-information blocks to the bounded end.
