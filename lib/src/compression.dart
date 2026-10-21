@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:pscore/pscore.dart';
 import 'package:psdkit/src/model.dart';
-import 'package:psdkit/src/zlib.dart';
+import 'package:zcodec/zcodec.dart';
 
 /// Returns the number of stored bytes in one planar row.
 int psdRowBytes(int width, int depth) => (width * depth + 7) ~/ 8;
@@ -40,7 +40,7 @@ Uint8List decodePsdChannel({
 /// Inflates [input] with an exact allocation bound and normalizes failures.
 Uint8List _decodeZip(Uint8List input, int expectedBytes) {
   try {
-    return psdZlibDecode(input, maxOutputBytes: expectedBytes);
+    return _psdZlibDecode(input, maxOutputBytes: expectedBytes);
   } on UnsupportedError {
     rethrow;
   } on Object catch (error) {
@@ -64,8 +64,8 @@ Uint8List encodePsdChannel({
   return switch (compression) {
     PsdCompression.raw => data,
     PsdCompression.rle => _encodeRle(data, psdRowBytes(width, depth), height, wideRowLengths),
-    PsdCompression.zip => psdZlibEncode(data),
-    PsdCompression.zipPrediction => psdZlibEncode(_applyPrediction(data, width, height, depth)),
+    PsdCompression.zip => _psdZlibEncode(data),
+    PsdCompression.zipPrediction => _psdZlibEncode(_applyPrediction(data, width, height, depth)),
   };
 }
 
@@ -143,7 +143,7 @@ Uint8List encodePsdMergedImage({
   return switch (compression) {
     PsdCompression.raw => data,
     PsdCompression.rle => _encodeRle(data, psdRowBytes(width, depth), height * channels.length, wideRowLengths),
-    PsdCompression.zip || PsdCompression.zipPrediction => psdZlibEncode(data),
+    PsdCompression.zip || PsdCompression.zipPrediction => _psdZlibEncode(data),
   };
 }
 
@@ -274,3 +274,9 @@ Uint8List _applyFloatPrediction(Uint8List input, int width, int height) {
   }
   return output;
 }
+
+/// Decompresses a zlib stream without allowing more than [maxOutputBytes].
+Uint8List _psdZlibDecode(Uint8List input, {required int maxOutputBytes}) => ZlibCodec(maxOutputBytes: maxOutputBytes).decode(input);
+
+/// Compresses bytes into a zlib stream using the pure-Dart codec.
+Uint8List _psdZlibEncode(Uint8List input) => const ZlibCodec().encode(input);

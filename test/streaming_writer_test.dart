@@ -5,6 +5,43 @@ import 'package:test/test.dart';
 
 /// Verifies byte parity and bounded reads of progressive PSD output.
 void main() {
+  for (final PsdCompression compression in [PsdCompression.raw, PsdCompression.rle]) {
+    test('$compression progress includes layer and merged rows', () async {
+      final PsdDocument document = _fixture(version: .psb, compression: compression);
+      final _MemoryRandomAccessOutput output = _MemoryRandomAccessOutput();
+      final List<(int, int)> progress = [];
+
+      await PsdCodec.encodeTo(
+        PsdStreamDocument.fromDocument(document),
+        output,
+        rowBatchSize: 1,
+        onProgress: (completed, total) => progress.add((completed, total)),
+      );
+
+      expect(progress, [for (int completed = 1; completed <= 16; completed++) (completed, 16)]);
+      expect(output.bytes, orderedEquals(PsdCodec.encode(document)));
+    });
+
+    test('$compression rejects incomplete source rows before reporting progress', () async {
+      final PsdStreamDocument document = PsdStreamDocument(
+        metadata: PsdDocument(width: 2, height: 1, channels: 1, depth: 8, colorMode: .grayscale, mergedImage: []),
+        layers: [],
+        mergedImage: [_IncompletePlanarSource()],
+      );
+      final List<(int, int)> progress = [];
+
+      final Future<int> writing = PsdCodec.encodeTo(
+        document,
+        _MemoryRandomAccessOutput(),
+        options: PsdWriteOptions(compression: compression),
+        onProgress: (completed, total) => progress.add((completed, total)),
+      );
+
+      await expectLater(writing, throwsA(isA<PsWriteException>()));
+      expect(progress, isEmpty);
+    });
+  }
+
   for (final PsdVersion version in PsdVersion.values) {
     test('progressive RLE output matches ${version.name} byte encoding', () async {
       final PsdDocument document = _fixture(version: version);
@@ -266,6 +303,12 @@ PsdDocument _fixture({
     mergedImageCompression: compression,
     mergedTransparency: true,
   );
+}
+
+/// Returns fewer bytes than the requested two-byte row.
+final class _IncompletePlanarSource implements PsdPlanarSource {
+  @override
+  Future<Uint8List> readRows({required int startRow, required int rowCount}) async => Uint8List(1);
 }
 
 /// Records the largest row batch requested by the writer.

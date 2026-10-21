@@ -1,184 +1,4 @@
-part of 'codec.dart';
-
-/// Receives PSD bytes while allowing earlier length fields to be patched.
-///
-/// Implementations own their underlying file or buffer. [PsdCodec.encodeTo]
-/// flushes but does not close the output.
-abstract interface class PsdRandomAccessOutput {
-  /// Current zero-based byte position.
-  int get position;
-
-  /// Discards existing output and sets its length to [length].
-  Future<void> truncate(int length);
-
-  /// Moves the next write to [position].
-  Future<void> setPosition(int position);
-
-  /// Writes every byte in [bytes] at the current position.
-  Future<void> write(Uint8List bytes);
-
-  /// Makes every completed write durable according to the backing store.
-  Future<void> flush();
-}
-
-/// Supplies uncompressed big-endian samples for one planar channel.
-abstract interface class PsdPlanarSource {
-  /// Reads [rowCount] complete rows beginning at [startRow].
-  ///
-  /// The returned bytes must contain exactly the requested rows in row-major
-  /// order. A writer never overlaps requests and consumes rows in ascending
-  /// order, but sources may support arbitrary reads when convenient.
-  Future<Uint8List> readRows({
-    required int startRow,
-    required int rowCount,
-  });
-}
-
-/// Adapts an in-memory plane to the progressive writer.
-final class PsdMemoryPlanarSource implements PsdPlanarSource {
-  /// Complete row-major plane supplied by the caller.
-  final Uint8List bytes;
-
-  /// Stored bytes in one row.
-  ///
-  /// Zero is valid for the empty planes of a group divider or of any layer
-  /// whose rectangle has no width; [bytes] must then be empty as well.
-  final int rowBytes;
-
-  /// Creates a source over [bytes] without copying them.
-  ///
-  /// The caller must not mutate [bytes] until writing has completed.
-  PsdMemoryPlanarSource({
-    required this.bytes,
-    required this.rowBytes,
-  }) {
-    final bool divides = rowBytes == 0 ? bytes.lengthInBytes == 0 : bytes.lengthInBytes % rowBytes == 0;
-    if (rowBytes < 0 || !divides) {
-      throw ArgumentError.value(
-        rowBytes,
-        'rowBytes',
-        'must divide the plane byte length exactly',
-      );
-    }
-  }
-
-  @override
-  Future<Uint8List> readRows({
-    required int startRow,
-    required int rowCount,
-  }) async {
-    final int start = startRow * rowBytes;
-    final int end = start + rowCount * rowBytes;
-    if (startRow < 0 || rowCount < 1 || end > bytes.lengthInBytes) {
-      throw RangeError.range(
-        end,
-        0,
-        bytes.lengthInBytes,
-        'requested rows',
-      );
-    }
-    return Uint8List.sublistView(bytes, start, end);
-  }
-}
-
-/// Associates a layer channel identifier with progressive sample storage.
-final class PsdStreamChannel {
-  /// Component id, where `-1` is transparency and `-2` is the user mask.
-  final int id;
-
-  /// Uncompressed samples read by the writer.
-  final PsdPlanarSource source;
-
-  /// Preferred encoding when no global override is supplied.
-  final PsdCompression compression;
-
-  /// Creates one progressively writable layer channel.
-  const PsdStreamChannel({
-    required this.id,
-    required this.source,
-    this.compression = PsdCompression.rle,
-  });
-}
-
-/// Combines layer metadata with independently supplied channel samples.
-final class PsdStreamLayer {
-  /// Layer record metadata and tagged blocks.
-  ///
-  /// [PsdLayer.channels] is ignored; [channels] is authoritative.
-  final PsdLayer metadata;
-
-  /// Channels written after all layer records.
-  final List<PsdStreamChannel> channels;
-
-  /// Creates one progressively writable layer.
-  const PsdStreamLayer({
-    required this.metadata,
-    required this.channels,
-  });
-}
-
-/// Describes a PSD or PSB whose pixel planes can be read incrementally.
-final class PsdStreamDocument {
-  /// Document header, resources, global mask, and tagged-block metadata.
-  ///
-  /// [PsdDocument.layers] and [PsdDocument.mergedImage] are ignored; [layers]
-  /// and [mergedImage] are authoritative.
-  final PsdDocument metadata;
-
-  /// Flat layer-record order with progressive channel sources.
-  final List<PsdStreamLayer> layers;
-
-  /// Merged-image planes in file order.
-  final List<PsdPlanarSource> mergedImage;
-
-  /// Creates a progressively writable document.
-  const PsdStreamDocument({
-    required this.metadata,
-    required this.layers,
-    required this.mergedImage,
-  });
-
-  /// Wraps every plane in [document] without copying its samples.
-  factory PsdStreamDocument.fromDocument(PsdDocument document) {
-    final int mergedRowBytes = psdRowBytes(
-      document.width,
-      document.depth,
-    );
-    return PsdStreamDocument(
-      metadata: document,
-      layers: [
-        for (final PsdLayer layer in document.layers)
-          PsdStreamLayer(
-            metadata: layer,
-            channels: [
-              for (final PsdChannel channel in layer.channels)
-                PsdStreamChannel(
-                  id: channel.id,
-                  source: PsdMemoryPlanarSource(
-                    bytes: channel.data,
-                    rowBytes: psdRowBytes(
-                      _channelRectangle(layer, channel.id).width,
-                      document.depth,
-                    ),
-                  ),
-                  compression: channel.compression,
-                ),
-            ],
-          ),
-      ],
-      mergedImage: [
-        for (final Uint8List channel in document.mergedImage)
-          PsdMemoryPlanarSource(
-            bytes: channel,
-            rowBytes: mergedRowBytes,
-          ),
-      ],
-    );
-  }
-}
-
-/// Reports completed and total source rows during progressive encoding.
-typedef PsdWriteProgress = void Function(int completedRows, int totalRows);
+part of '../codec.dart';
 
 /// Locates one fixed-width length field for a later backpatch.
 final class _PsdLengthPatch {
@@ -234,6 +54,13 @@ final class _PsdStreamingWriter {
 
   /// Source rows already consumed.
   int _completedRows = 0;
+
+  /// Encodes pixel planes while this writer owns section order and progress.
+  late final _PsdPlaneWriter _planes = _PsdPlaneWriter(
+    output: output,
+    rowBatchSize: rowBatchSize,
+    onRows: _reportRows,
+  );
 
   /// Creates a bounded progressive writer.
   _PsdStreamingWriter({
@@ -532,7 +359,7 @@ final class _PsdStreamingWriter {
       final int channelStart = output.position;
       final PsdCompression compression = options.compression ?? pending.channel.compression;
       await _writeUint16(compression.code);
-      await _writePlaneSources(
+      await _planes.write(
         [pending.channel.source],
         compression: compression,
         width: pending.width,
@@ -557,7 +384,7 @@ final class _PsdStreamingWriter {
   ) async {
     final PsdCompression compression = options.compression ?? source.metadata.mergedImageCompression;
     await _writeUint16(compression.code);
-    await _writePlaneSources(
+    await _planes.write(
       source.mergedImage,
       compression: compression,
       width: source.metadata.width,
@@ -565,173 +392,6 @@ final class _PsdStreamingWriter {
       depth: source.metadata.depth,
       wideRowLengths: version == PsdVersion.psb,
     );
-  }
-
-  /// Writes one or more planes using bounded source reads.
-  Future<void> _writePlaneSources(
-    List<PsdPlanarSource> sources, {
-    required PsdCompression compression,
-    required int width,
-    required int height,
-    required int depth,
-    required bool wideRowLengths,
-  }) async {
-    switch (compression) {
-      case PsdCompression.raw:
-        for (final PsdPlanarSource source in sources) {
-          await _writeRawPlane(
-            source,
-            width: width,
-            height: height,
-            depth: depth,
-          );
-        }
-      case PsdCompression.rle:
-        await _writeRlePlanes(
-          sources,
-          width: width,
-          height: height,
-          depth: depth,
-          wideRowLengths: wideRowLengths,
-        );
-      case PsdCompression.zip || PsdCompression.zipPrediction:
-        throw const PsWriteException(
-          message:
-              'Progressive PSD writing supports RAW and RLE compression; '
-              'use PsdCodec.encode for ZIP compression',
-        );
-    }
-  }
-
-  /// Copies a raw plane in bounded row batches.
-  Future<void> _writeRawPlane(
-    PsdPlanarSource source, {
-    required int width,
-    required int height,
-    required int depth,
-  }) async {
-    final int rowBytes = psdRowBytes(width, depth);
-    for (int startRow = 0; startRow < height;) {
-      final int count = (height - startRow).clamp(1, rowBatchSize);
-      final Uint8List rows = await source.readRows(
-        startRow: startRow,
-        rowCount: count,
-      );
-      _validateRows(rows, rowBytes: rowBytes, rowCount: count);
-      await output.write(rows);
-      startRow += count;
-      _reportRows(count);
-    }
-  }
-
-  /// Writes PackBits row bodies while backpatching bounded length batches.
-  Future<void> _writeRlePlanes(
-    List<PsdPlanarSource> sources, {
-    required int width,
-    required int height,
-    required int depth,
-    required bool wideRowLengths,
-  }) async {
-    final int rowBytes = psdRowBytes(width, depth);
-    final int lengthBytes = wideRowLengths ? 4 : 2;
-    final int rowCount = height * sources.length;
-    final int tableOffset = output.position;
-    await _writeZeros(rowCount * lengthBytes);
-    const int lengthsPerBatch = 4096;
-    final Uint32List lengths = Uint32List(lengthsPerBatch);
-    int batchStartIndex = 0;
-    int lengthIndex = 0;
-    for (final PsdPlanarSource source in sources) {
-      for (int startRow = 0; startRow < height;) {
-        final int count = (height - startRow).clamp(1, rowBatchSize);
-        final Uint8List rows = await source.readRows(
-          startRow: startRow,
-          rowCount: count,
-        );
-        _validateRows(rows, rowBytes: rowBytes, rowCount: count);
-        for (int row = 0; row < count; row++) {
-          final Uint8List encoded = PsPackBitsCodec.encodeRow(
-            Uint8List.sublistView(
-              rows,
-              row * rowBytes,
-              (row + 1) * rowBytes,
-            ),
-          );
-          if (!wideRowLengths && encoded.lengthInBytes > 0xffff) {
-            throw const PsWriteException(
-              message:
-                  'A PSD PackBits row exceeds 65535 encoded bytes; '
-                  'use PSB or ZIP',
-            );
-          }
-          lengths[lengthIndex - batchStartIndex] = encoded.lengthInBytes;
-          lengthIndex++;
-          await output.write(encoded);
-          if (lengthIndex - batchStartIndex == lengths.length) {
-            await _patchRleRowLengths(
-              tableOffset,
-              batchStartIndex,
-              lengths,
-              lengths.length,
-              lengthBytes,
-            );
-            batchStartIndex = lengthIndex;
-          }
-        }
-        startRow += count;
-        _reportRows(count);
-      }
-    }
-    final int remaining = lengthIndex - batchStartIndex;
-    if (remaining > 0) {
-      await _patchRleRowLengths(
-        tableOffset,
-        batchStartIndex,
-        lengths,
-        remaining,
-        lengthBytes,
-      );
-    }
-  }
-
-  /// Backpatches [count] row lengths without losing the append position.
-  Future<void> _patchRleRowLengths(
-    int tableOffset,
-    int startIndex,
-    Uint32List lengths,
-    int count,
-    int lengthBytes,
-  ) async {
-    final int end = output.position;
-    await output.setPosition(tableOffset + startIndex * lengthBytes);
-    final Uint8List bytes = Uint8List(count * lengthBytes);
-    final ByteData values = ByteData.sublistView(bytes);
-    for (int index = 0; index < count; index++) {
-      final int value = lengths[index];
-      if (lengthBytes == 4) {
-        values.setUint32(index * 4, value);
-      } else {
-        values.setUint16(index * 2, value);
-      }
-    }
-    await output.write(bytes);
-    await output.setPosition(end);
-  }
-
-  /// Verifies that one source fulfilled its exact row contract.
-  void _validateRows(
-    Uint8List rows, {
-    required int rowBytes,
-    required int rowCount,
-  }) {
-    final int expected = rowBytes * rowCount;
-    if (rows.lengthInBytes != expected) {
-      throw PsWriteException(
-        message:
-            'Planar source returned ${rows.lengthInBytes} bytes; '
-            '$rowCount rows require $expected',
-      );
-    }
   }
 
   /// Notifies the progress observer after source rows are consumed.
@@ -815,19 +475,5 @@ final class _PsdStreamingWriter {
   Future<void> _writeUint32(int value) async {
     final PsBinaryWriter writer = PsBinaryWriter()..writeUint32(value);
     await output.write(writer.takeBytes());
-  }
-
-  /// Writes [count] zero bytes without allocating one giant placeholder.
-  Future<void> _writeZeros(int count) async {
-    const int batchSize = 64 * 1024;
-    final Uint8List batch = Uint8List(batchSize);
-    int remaining = count;
-    while (remaining > 0) {
-      final int written = remaining.clamp(1, batchSize);
-      await output.write(
-        written == batchSize ? batch : Uint8List.sublistView(batch, 0, written),
-      );
-      remaining -= written;
-    }
   }
 }
