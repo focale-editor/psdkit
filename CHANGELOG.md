@@ -1,5 +1,10 @@
 # 📰 PsdKit changelog
 
+## v0.6.2
+Released on October 31, 2026.
+
+* **REFACTOR**: Reused the shared PsCore text-engine codec. ([#5c755eb](https://github.com/focale-editor/psdkit/commit/5c755eb))
+
 ## v0.6.1
 Released on October 22, 2026.
 
