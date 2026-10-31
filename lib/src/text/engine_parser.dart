@@ -1,11 +1,5 @@
 part of '../text.dart';
 
-/// Maximum dictionary and array nesting accepted from untrusted engine data.
-///
-/// Photoshop writes far shallower structures; the bound keeps a hostile file
-/// from exhausting the stack through the parser's recursion.
-const int _maximumEngineDepth = 64;
-
 /// Removes the Photoshop terminator from a descriptor or engine string.
 String _withoutTerminalNull(String value) => value.endsWith('\u0000') ? value.substring(0, value.length - 1) : value;
 
@@ -39,215 +33,36 @@ final class _PsdEngineName {
   const _PsdEngineName({required this.value});
 }
 
-/// Bounded parser for the PostScript subset used by Adobe `EngineData`.
+/// Adapts the shared EngineData reader to Photoshop's private editing nodes.
 final class _PsdEngineParser {
-  /// Bytes being parsed.
-  final Uint8List _bytes;
+  /// Shared parser retaining Photoshop's historical duplicate-key policy.
+  final PsEngineReader _reader;
 
-  /// Current byte offset.
-  int _offset;
+  /// Creates a parser at an optional absolute byte position.
+  _PsdEngineParser({required Uint8List bytes, int offset = 0}) : _reader = PsEngineReader.view(bytes: bytes, offset: offset, allowDuplicateKeys: true);
 
-  /// Number of dictionaries and arrays currently open.
-  int _depth = 0;
+  /// Current absolute source position.
+  int get offset => _reader.offset;
 
-  /// Creates an engine-data parser.
-  _PsdEngineParser({required this._bytes, this._offset = 0});
+  /// Reads one root while retaining the existing tolerant trailing-data policy.
+  Object? parse() => _privateEngineValue(_reader.readRoot(requireEnd: false));
 
-  /// Current byte offset.
-  int get offset => _offset;
-
-  /// Parses the single root value.
-  Object? parse() {
-    _skipTrivia();
-    final Object? result = _readValue();
-    _skipTrivia();
-    return result;
-  }
-
-  /// Reads a literal string at the current offset.
-  _PsdEngineString readLiteralString() {
-    if (_offset >= _bytes.length || _bytes[_offset] != 0x28) {
-      throw const FormatException('Expected EngineData string');
-    }
-    _offset++;
-    int depth = 1;
-    final BytesBuilder value = BytesBuilder(copy: false);
-    while (_offset < _bytes.length) {
-      final int byte = _bytes[_offset++];
-      if (byte == 0x5c) {
-        if (_offset >= _bytes.length) {
-          throw const FormatException('Truncated EngineData escape');
-        }
-        final int escaped = _bytes[_offset++];
-        if (escaped == 0x0a) {
-          continue;
-        }
-        if (escaped == 0x0d) {
-          if (_offset < _bytes.length && _bytes[_offset] == 0x0a) {
-            _offset++;
-          }
-          continue;
-        }
-        if (escaped >= 0x30 && escaped <= 0x37) {
-          int octal = escaped - 0x30;
-          int count = 1;
-          while (count < 3 && _offset < _bytes.length && _bytes[_offset] >= 0x30 && _bytes[_offset] <= 0x37) {
-            octal = octal * 8 + _bytes[_offset++] - 0x30;
-            count++;
-          }
-          value.addByte(octal & 0xff);
-        } else {
-          value.addByte(switch (escaped) {
-            0x6e => 0x0a,
-            0x72 => 0x0d,
-            0x74 => 0x09,
-            0x62 => 0x08,
-            0x66 => 0x0c,
-            _ => escaped,
-          });
-        }
-      } else if (byte == 0x28) {
-        depth++;
-        value.addByte(byte);
-      } else if (byte == 0x29) {
-        if (--depth == 0) {
-          return _PsdEngineString(bytes: value.takeBytes());
-        }
-        value.addByte(byte);
-      } else {
-        value.addByte(byte);
-      }
-    }
-    throw const FormatException('Unterminated EngineData string');
-  }
-
-  /// Reads one engine-data value.
-  Object? _readValue() {
-    _skipTrivia();
-    if (_offset >= _bytes.length) {
-      throw const FormatException('Missing EngineData value');
-    }
-    if (_startsWith('<<')) {
-      return _readDictionary();
-    }
-    if (_bytes[_offset] == 0x5b) {
-      return _readArray();
-    }
-    if (_bytes[_offset] == 0x28) {
-      return readLiteralString();
-    }
-    if (_bytes[_offset] == 0x2f) {
-      return _PsdEngineName(value: _readName());
-    }
-    final String token = _readToken();
-    if (token == 'true') {
-      return true;
-    }
-    if (token == 'false') {
-      return false;
-    }
-    if (token == 'null') {
-      return null;
-    }
-    return num.tryParse(token) ?? token;
-  }
-
-  /// Reads a `<< ... >>` dictionary.
-  _PsdEngineDictionary _readDictionary() {
-    _enter();
-    _offset += 2;
-    final Map<String, Object?> values = <String, Object?>{};
-    while (true) {
-      _skipTrivia();
-      if (_startsWith('>>')) {
-        _offset += 2;
-        _depth--;
-        return _PsdEngineDictionary(values: values);
-      }
-      if (_offset >= _bytes.length || _bytes[_offset] != 0x2f) {
-        throw const FormatException('Expected EngineData dictionary key');
-      }
-      final String key = _readName();
-      values[key] = _readValue();
-    }
-  }
-
-  /// Reads a `[ ... ]` array.
-  List<Object?> _readArray() {
-    _enter();
-    _offset++;
-    final List<Object?> values = <Object?>[];
-    while (true) {
-      _skipTrivia();
-      if (_offset >= _bytes.length) {
-        throw const FormatException('Unterminated EngineData array');
-      }
-      if (_bytes[_offset] == 0x5d) {
-        _offset++;
-        _depth--;
-        return values;
-      }
-      values.add(_readValue());
-    }
-  }
-
-  /// Opens one nesting level, rejecting input that would exhaust the stack.
-  void _enter() {
-    if (++_depth > _maximumEngineDepth) {
-      throw const FormatException('EngineData nesting exceeds the supported depth');
-    }
-  }
-
-  /// Reads a slash-prefixed PostScript name.
-  String _readName() {
-    _offset++;
-    final int start = _offset;
-    while (_offset < _bytes.length && !_isDelimiter(_bytes[_offset])) {
-      _offset++;
-    }
-    return String.fromCharCodes(Uint8List.sublistView(_bytes, start, _offset));
-  }
-
-  /// Reads a bare token.
-  String _readToken() {
-    final int start = _offset;
-    while (_offset < _bytes.length && !_isDelimiter(_bytes[_offset])) {
-      _offset++;
-    }
-    if (start == _offset) {
-      throw const FormatException('Empty EngineData token');
-    }
-    return String.fromCharCodes(Uint8List.sublistView(_bytes, start, _offset));
-  }
-
-  /// Skips spaces and percent comments.
-  void _skipTrivia() {
-    while (_offset < _bytes.length) {
-      if (_isWhitespace(_bytes[_offset])) {
-        _offset++;
-      } else if (_bytes[_offset] == 0x25) {
-        while (_offset < _bytes.length && _bytes[_offset] != 0x0a && _bytes[_offset] != 0x0d) {
-          _offset++;
-        }
-      } else {
-        return;
-      }
-    }
-  }
-
-  /// Whether upcoming bytes equal [value].
-  bool _startsWith(String value) {
-    if (_offset + value.length > _bytes.length) {
-      return false;
-    }
-    for (int index = 0; index < value.length; index++) {
-      if (_bytes[_offset + index] != value.codeUnitAt(index)) {
-        return false;
-      }
-    }
-    return true;
-  }
+  /// Reads one literal string without normalizing its binary UTF-16 bytes.
+  _PsdEngineString readLiteralString() => _privateEngineValue(_reader.readLiteralString())! as _PsdEngineString;
 }
+
+/// Converts immutable shared nodes into the private mutable editing structure.
+Object? _privateEngineValue(PsEngineValue value) => switch (value) {
+  PsEngineDictionary(:final values) => _PsdEngineDictionary(values: {for (final MapEntry<String, PsEngineValue> entry in values.entries) entry.key: _privateEngineValue(entry.value)}),
+  PsEngineArray(:final values) => [for (final PsEngineValue entry in values) _privateEngineValue(entry)],
+  PsEngineString(:final bytes) => _PsdEngineString(bytes: bytes),
+  PsEngineName(:final value) => _PsdEngineName(value: value),
+  PsEngineNumber(:final value) => value,
+  PsEngineBoolean(:final value) => value,
+  PsEngineNull() => null,
+  // Preserve the legacy parser's scalar fallback for existing PSD callers.
+  PsEngineToken(:final value) => num.tryParse(value) ?? value,
+};
 
 /// Removes the required final paragraph mark from an EngineData editor string.
 String _withoutEngineTerminator(String value) {

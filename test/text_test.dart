@@ -547,6 +547,32 @@ void main() {
       expect(source.withGlobalTextEngineData(null).globalTextEngineData, isNull);
     });
 
+    test('retains binary UTF-16 line endings and legacy duplicate keys through PsCore', () {
+      final Uint8List bytes = Uint8List.fromList([
+        ...'/Text ('.codeUnits,
+        254,
+        255,
+        0,
+        65,
+        0,
+        13,
+        0,
+        10,
+        216,
+        61,
+        222,
+        0,
+        ...') /Key 1 /Key 2 /Unknown future'.codeUnits,
+      ]);
+      final PsdGlobalTextEngineData data = PsdGlobalTextEngineData(data: bytes);
+      final Map<String, Object?> structure = data.structure! as Map<String, Object?>;
+      expect(structure['Text'], 'A\r\n😀');
+      expect(structure['Key'], 2);
+      expect(structure['Unknown'], 'future');
+      expect(data.data, orderedEquals(bytes));
+      expect(PsdGlobalTextEngineData(data: Uint8List.fromList('<< /Key 1 >> extra'.codeUnits)).tryStructure, isNull);
+    });
+
     test('survives a complete layered PSD export and import', () {
       final PsdLayer textLayer = PsdLayer(
         rectangle: const PsdRectangle(top: 0, left: 0, bottom: 1, right: 1),

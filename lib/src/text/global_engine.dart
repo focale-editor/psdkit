@@ -25,17 +25,8 @@ const Map<String, String> _globalOpenTypeKeys = {
 
 /// Parses either Photoshop's bare dictionary or an explicitly wrapped dictionary.
 _PsdEngineDictionary _parseGlobalEngine(Uint8List data) {
-  final _PsdEngineParser probe = _PsdEngineParser(bytes: data).._skipTrivia();
-  final Uint8List wrapped = probe._startsWith('<<')
-      ? data
-      : (BytesBuilder(copy: false)
-              ..add([60, 60, 32])
-              ..add(data)
-              ..add([32, 62, 62]))
-            .takeBytes();
-  final _PsdEngineParser parser = _PsdEngineParser(bytes: wrapped);
-  final Object? root = parser.parse();
-  if (root is! _PsdEngineDictionary || parser.offset != wrapped.length) {
+  final Object? root = _privateEngineValue(PsEngineReader(bytes: data, allowDuplicateKeys: true).readRoot(allowBareDictionary: true));
+  if (root is! _PsdEngineDictionary) {
     throw const FormatException('Expected a complete Txt2 dictionary');
   }
   return root;
@@ -314,43 +305,23 @@ Object? _cloneEngine(Object? value) => switch (value) {
 
 /// Serializes parsed engine values while retaining unknown binary strings exactly.
 void _writeEngineValue(_PsdEngineWriter writer, Object? value, {bool bare = false}) {
-  switch (value) {
-    case _PsdEngineDictionary(:final values):
-      if (!bare) {
-        writer.ascii('<< ');
-      }
-      for (final MapEntry<String, Object?> entry in values.entries) {
-        writer.ascii('/${entry.key} ');
-        _writeEngineValue(writer, entry.value);
-      }
-      if (!bare) {
-        writer.ascii('>> ');
-      }
-    case final List<Object?> values:
-      writer.ascii('[ ');
-      for (final Object? item in values) {
-        _writeEngineValue(writer, item);
-      }
-      writer.ascii('] ');
-    case _PsdEngineString(:final bytes):
-      writer.ascii('(');
-      writer._bytes.add(_escapePostScript(bytes));
-      writer.ascii(') ');
-    case _PsdEngineName(:final value):
-      writer.ascii('/$value ');
-    case final num number:
-      if (!number.isFinite) {
-        throw const FormatException('Non-finite text-engine number');
-      }
-      writer.ascii('$number ');
-    case final bool flag:
-      writer.ascii('$flag ');
-    case null:
-      writer.ascii('null ');
-    default:
-      throw const FormatException('Unsupported text-engine value');
+  writer._bytes.add(PsEngineCodec.encode(value: _sharedEngineValue(value), bareDictionary: bare));
+  if (!bare) {
+    writer.ascii(' ');
   }
 }
+
+/// Converts Photoshop's editing nodes into immutable shared serialization values.
+PsEngineValue _sharedEngineValue(Object? value) => switch (value) {
+  _PsdEngineDictionary(:final values) => PsEngineDictionary(values: {for (final MapEntry<String, Object?> entry in values.entries) entry.key: _sharedEngineValue(entry.value)}),
+  final List<Object?> values => PsEngineArray(values: [for (final Object? item in values) _sharedEngineValue(item)]),
+  _PsdEngineString(:final bytes) => PsEngineString(bytes: bytes),
+  _PsdEngineName(:final value) => PsEngineName(value: value),
+  final num number when number.isFinite => PsEngineToken(value: number.toString()),
+  final bool flag => PsEngineBoolean(value: flag),
+  null => const PsEngineNull(),
+  _ => throw const FormatException('Unsupported text-engine value'),
+};
 
 /// Rejects unsupported layout edits instead of leaving Photoshop's global model stale.
 void _validateGlobalTextEdit(PsdTextContent previous, PsdTextContent content) {

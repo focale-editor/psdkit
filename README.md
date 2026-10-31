@@ -83,6 +83,11 @@ for (final PsdLayer layer in document.layers) {
 }
 ```
 
+PsdKit shares the bounded Adobe EngineData grammar with AiKit through PsCore.
+Its existing text APIs, raw UTF-16 line endings, duplicate-key tolerance and
+unknown-field preservation remain unchanged. Default grammar limits are 128 MiB
+of data, one million values, 64 nesting levels and 64 MiB per string.
+
 Use `document.textContentFor(layer)` to include Txt2 optical kerning and
 OpenType settings. `document.withTextContent(layerIndex, content)` synchronizes
 an existing Photoshop text object in TySh and Txt2. The lower-level `withText`

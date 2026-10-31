@@ -20,8 +20,10 @@ final class _PsdTiffTranscoder {
   /// Container version controlling wide lengths and RLE row counts.
   final PsdVersion version;
 
-  /// Cursor and bounded end of the active region.
+  /// Cursor within the active region.
   int _offset = 0;
+
+  /// Exclusive bounded end of the active region.
   int _end;
 
   /// Nesting depth shared by descriptors and blocks.

@@ -149,7 +149,7 @@ void main() {
         ),
         throwsA(isA<PsFormatException>()),
       );
-    });
+    }, testOn: 'vm');
 
     test('uses Photoshop byte-plane prediction for 32-bit channels', () {
       final Uint8List samples = Uint8List.fromList(<int>[
@@ -202,7 +202,7 @@ void main() {
         ),
         orderedEquals(samples),
       );
-    });
+    }, testOn: 'vm');
 
     test('splits PackBits literals at exactly 128 bytes', () {
       final Uint8List samples = Uint8List.fromList(<int>[
