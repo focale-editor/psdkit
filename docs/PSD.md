@@ -549,17 +549,69 @@ Txt2 data selected by `TextIndex`, only when the stored text agrees. It resolves
 flags (`calt`, `frac`, `ordn`, `swsh`, `titl`, `salt`, `ornm`) and the
 `ss01`–`ss20` stylistic-set mask in `openTypeFeatures`. EngineData
 alone cannot distinguish optical from metrics kerning. UTF-16 ranges are split
-at both engines' style boundaries; stale Txt2 data is ignored.
+at both engines' style boundaries; stale text is flagged with
+`hasUnsupportedGeometry` so consumers can retain the rendered preview.
 
 `document.withTextContent(layerIndex, content)` updates TySh and the existing
 Txt2 object together. It refits run lengths and paragraph arrays, updates common
 character properties, kerning modes and supported OpenType flags, preserves opaque object and
 frame metadata, and removes cached glyph positions when text changes. It does
 not rebuild Photoshop's opaque layout/frame structures or render the layer.
-Shared or invalid TextIndex slots are rejected. Changes to frame geometry, grid settings, manual kerning amounts, paragraph formatting or character extensions without an established global mapping are also rejected rather than leaving contradictory text data. New optical-kerning or stylistic-set
-objects require an existing Photoshop Txt2 template; incomplete invented objects
-are not emitted. The lower-level TySh helpers remain available for standalone
+Shared or invalid TextIndex slots are rejected. Changes to frame geometry, grid settings, manual kerning amounts, paragraph formatting or character extensions without an established global mapping are also rejected rather than leaving contradictory text data. New objects use the complete-resource builder described below. The lower-level TySh helpers remain available for standalone
 text editing without global synchronization.
+
+### Paths, lists and variable fonts
+
+`PsdTextContent.path` resolves one continuous cubic baseline through the object's
+view/frame reference. Coordinates are local to TySh, including the native frame
+matrix. Each segment uses eight numbers; range markers are `segment + t`, not
+arc length. Null markers retain Photoshop defaults. Unsupported frame geometry,
+multiple frames or malformed paths set `hasUnsupportedGeometry`.
+
+`PsdTextParagraph.list` resolves predefined tags independently of resource order;
+its tier preserves the native nesting value. Unknown resources set
+`hasUnsupportedList`. Markers never become part of `content.text`. Existing
+synchronized edits preserve paths and lists; changing their layout still requires
+explicit regeneration rather than overwriting opaque producer metadata.
+
+For newly authored documents, register **every** live text layer in one builder:
+
+```dart
+final PsdGlobalTextBuilder engine = PsdGlobalTextBuilder();
+final int index = engine.add(content); // Check supports(content) before admission.
+final PsdTypeTool tool = PsdTypeTool.fromText(content: content, textIndex: index);
+final PsdGlobalTextEngineData? global = engine.build();
+// Add tool to its raster-preview layer and global to the document.
+```
+
+The builder writes fonts, default resources, style/paragraph runs, independent
+views and point/box/path frames, including empty view layout caches required by
+Photoshop 2025. It rejects unsupported character directions, manual kerning
+amounts, hanging composition and active text strokes. It does not render text.
+Do not replace an imported document's engine with a newly generated one merely
+to edit characters: use `document.withTextContent` to preserve opaque metadata.
+
+`PsdVariableFontInstance.tryParse(name)` recovers arbitrary variation coordinates
+such as `SFPro_110.000wdth_673.000wght`. Its `postScriptName` writes deterministic
+names preserving signed 16.16 coordinates within Adobe's 127-byte limit. Named
+instances need the original font's `fvar` metadata and are not guessed. The host
+must verify the name prefix, available font and axis ranges before promising
+editable rendering. See [Adobe Technical Note 5902](https://adobe-type-tools.github.io/font-tech-notes/pdfs/5902.AdobePSNameGeneration.pdf).
+
+The global boilerplate in `lib/src/text/global_template.dart` is the unmodified,
+sanitized Photoshop 2026 template from [Patchy](https://github.com/SethRobinson/Patchy/blob/3024dd7d75196f485e8d448e8f603cc3c0a0f2a1/src/psd/psd_text_engine_template.cpp),
+commit `3024dd7d75196f485e8d448e8f603cc3c0a0f2a1`, encoded as base64. Its SHA-256
+is recorded beside the constant; its MIT notice is retained in
+`third_party/patchy-LICENSE.txt`. Native list keys and empty-cache requirements
+are documented by that project's Photoshop COM probes in `docs/txt2.md`.
+
+`advanced_text_test.dart` uses the repository's Photoshop-authored Photocraft
+circle and open-wave fixtures and generated multi-object cases. A downloaded
+[Photopea issue 5545](https://github.com/photopea/photopea/issues/5545) PSD also
+confirmed the SF Pro arbitrary-instance spelling above; that attachment is not
+redistributed. Validation includes Focale adapter round trips and ag-psd 34.1.0
+reading emitted files. No direct Photoshop reopening or rendering parity is
+claimed, particularly for generated list-marker spacing.
 
 ## Photoshop layered TIFF
 

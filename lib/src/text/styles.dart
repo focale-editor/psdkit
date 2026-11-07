@@ -155,6 +155,9 @@ enum PsdTextJustification {
 
 /// Font metadata referenced by a Photoshop text style.
 final class PsdTextFont {
+  /// Arbitrary variable coordinates encoded in this font's PostScript name.
+  PsdVariableFontInstance? get variableInstance => PsdVariableFontInstance.tryParse(name);
+
   /// PostScript or Photoshop font name.
   final String name;
 

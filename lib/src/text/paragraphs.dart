@@ -36,6 +36,12 @@ final class PsdTextParagraphAdjustments {
 
 /// A UTF-16 code-unit range sharing one paragraph style.
 final class PsdTextParagraph {
+  /// Generated native list marker, resolved from the global text engine.
+  final PsdTextList? list;
+
+  /// Whether an active native list reference cannot be interpreted safely.
+  final bool hasUnsupportedList;
+
   /// Inclusive start offset in [PsdTextContent.text].
   final int start;
 
@@ -110,6 +116,8 @@ final class PsdTextParagraph {
 
   /// Creates a paragraph range.
   const PsdTextParagraph({
+    this.list,
+    this.hasUnsupportedList = false,
     required this.start,
     required this.length,
     required this.justification,
@@ -135,4 +143,34 @@ final class PsdTextParagraph {
     this.everyLineComposer = false,
     this.adjustments = const PsdTextParagraphAdjustments(),
   });
+
+  /// Copies global list semantics and ranges without losing local formatting.
+  PsdTextParagraph copyWith({int? start, int? length, PsdTextList? list, bool? hasUnsupportedList}) => PsdTextParagraph(
+    list: list ?? this.list,
+    hasUnsupportedList: hasUnsupportedList ?? this.hasUnsupportedList,
+    start: start ?? this.start,
+    length: length ?? this.length,
+    justification: justification,
+    firstLineIndent: firstLineIndent,
+    startIndent: startIndent,
+    endIndent: endIndent,
+    spaceBefore: spaceBefore,
+    spaceAfter: spaceAfter,
+    automaticHyphenation: automaticHyphenation,
+    hyphenatedWordSize: hyphenatedWordSize,
+    preHyphen: preHyphen,
+    postHyphen: postHyphen,
+    consecutiveHyphens: consecutiveHyphens,
+    zone: zone,
+    wordSpacing: wordSpacing,
+    letterSpacing: letterSpacing,
+    glyphSpacing: glyphSpacing,
+    automaticLeading: automaticLeading,
+    leadingType: leadingType,
+    hanging: hanging,
+    burasagari: burasagari,
+    kinsokuOrder: kinsokuOrder,
+    everyLineComposer: everyLineComposer,
+    adjustments: adjustments,
+  );
 }

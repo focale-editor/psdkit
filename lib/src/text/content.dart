@@ -78,6 +78,12 @@ final class PsdTextGridInfo {
 
 /// Semantic, application-friendly representation of a Photoshop text layer.
 final class PsdTextContent {
+  /// Baseline geometry resolved from the document's `Txt2` frame.
+  final PsdTextPath? path;
+
+  /// Whether the global frame has geometry that cannot be represented safely.
+  final bool hasUnsupportedGeometry;
+
   /// Plain text using carriage returns as Photoshop line separators.
   final String text;
 
@@ -135,6 +141,8 @@ final class PsdTextContent {
 
   /// Creates semantic text-layer contents.
   const PsdTextContent({
+    this.path,
+    this.hasUnsupportedGeometry = false,
     required this.text,
     required this.orientation,
     this.styleRuns = const <PsdTextStyleRun>[],
@@ -156,6 +164,8 @@ final class PsdTextContent {
 
   /// Copies content while replacing the requested properties.
   PsdTextContent copyWith({
+    PsdTextPath? path,
+    bool? hasUnsupportedGeometry,
     String? text,
     PsdTextOrientation? orientation,
     List<PsdTextStyleRun>? styleRuns,
@@ -174,6 +184,8 @@ final class PsdTextContent {
     double? subscriptPosition,
     double? smallCapSize,
   }) => PsdTextContent(
+    path: path ?? this.path,
+    hasUnsupportedGeometry: hasUnsupportedGeometry ?? this.hasUnsupportedGeometry,
     text: text ?? this.text,
     orientation: orientation ?? this.orientation,
     styleRuns: styleRuns ?? this.styleRuns,

@@ -92,13 +92,16 @@ final class PsdDocument {
     if (global != null && layers.where((value) => value.typeTool?.textIndex == typeTool.textIndex).length != 1) {
       throw StateError('TextIndex is shared by multiple layers');
     }
+    if (global == null && (content.path != null || content.hasUnsupportedGeometry || content.paragraphs.any((paragraph) => paragraph.list != null || paragraph.hasUnsupportedList))) {
+      throw StateError('Paths and lists require a complete Photoshop Txt2 engine');
+    }
     if (global == null &&
         content.styleRuns.any((run) => run.style.resolvedKerningMode == PsdTextKerning.optical || run.style.openTypeFeatures.entries.any((entry) => entry.key.startsWith('ss') && entry.value != 0))) {
       throw StateError('Optical kerning and stylistic sets require a Photoshop Txt2 template');
     }
     final List<PsdLayer> updated = [...layers]..[layerIndex] = layer.withTypeTool(typeTool.withContent(content));
     final PsdDocument result = copyPsdDocument(this, layers: updated);
-    return global == null ? result : result.withGlobalTextEngineData(global.withContent(typeTool.textIndex, content, previous: typeTool.content));
+    return global == null ? result : result.withGlobalTextEngineData(global.withContent(typeTool.textIndex, content, previous: global.contentFor(typeTool)));
   }
 
   /// Named document paths stored in image-resource ids 2000 through 2997.

@@ -43,10 +43,10 @@ Object? _globalPath(Object? value, List<String> keys) {
 
 /// Applies only current object data, splitting ranges at both engines' boundaries.
 PsdTextContent _applyGlobalText(PsdGlobalTextEngineData global, PsdTypeTool tool) {
-  final PsdTextContent content = tool.content;
+  PsdTextContent content = tool.content;
   final _PsdEngineDictionary root;
   try {
-    root = _parseGlobalEngine(global.data);
+    root = global._root;
   } on FormatException {
     return content;
   }
@@ -57,19 +57,29 @@ PsdTextContent _applyGlobalText(PsdGlobalTextEngineData global, PsdTypeTool tool
   }
   final Object? model = _globalPath(objects[index], ['0']);
   final String? text = _decodeEngineString(_globalPath(model, ['0']));
-  if (text == null || _withoutEngineTerminator(text) != content.text) {
+  if (text == null) {
     return content;
+  }
+  final String plain = _withoutEngineTerminator(text);
+  // Photoshop can leave only the terminator in the local Editor/Run arrays.
+  // Recover it only when the independent TySh descriptor agrees with Txt2.
+  final bool globalOnly = content.text.isEmpty && plain.isNotEmpty && _withoutEngineTerminator(tool.text) == plain;
+  if (globalOnly) {
+    content = tool.withText(plain).content;
+  }
+  if (plain != content.text) {
+    return content.copyWith(hasUnsupportedGeometry: true);
   }
   final List<Object?>? globalRuns = _list(_globalPath(model, ['6', '0']));
   if (globalRuns == null) {
-    return content;
+    return _applyGlobalFrame(root, objects[index], _applyGlobalLists(root, objects[index], content));
   }
   final List<PsdTextStyleRun> result = [];
   int offset = 0;
   for (final Object? run in globalRuns) {
     final int? length = _integer(_globalPath(run, ['1']));
     if (length == null || length < 0) {
-      return content;
+      return content.copyWith(hasUnsupportedGeometry: true);
     }
     final int end = (offset + length).clamp(offset, content.text.length);
     final _PsdEngineDictionary? style = _dictionary(_globalPath(run, ['0', '0', '6']));
@@ -82,7 +92,8 @@ PsdTextContent _applyGlobalText(PsdGlobalTextEngineData global, PsdTypeTool tool
           }
         }
       }
-      final PsdTextStyle base = content.styleAt(offset) ?? const PsdTextStyle();
+      final PsdTextStyle local = content.styleAt(offset) ?? content.styleRuns.firstOrNull?.style ?? const PsdTextStyle();
+      final PsdTextStyle base = globalOnly && style != null ? _readGlobalCharacterStyle(root, style, local) : local;
       final Map<String, int> features = {...base.openTypeFeatures};
       for (final MapEntry<String, String> feature in _globalOpenTypeKeys.entries) {
         if (_engineBoolean(style?[feature.key]) case final bool enabled) {
@@ -115,9 +126,9 @@ PsdTextContent _applyGlobalText(PsdGlobalTextEngineData global, PsdTypeTool tool
     }
   }
   if (offset != content.text.length) {
-    return content;
+    return content.copyWith(hasUnsupportedGeometry: true);
   }
-  return content.copyWith(styleRuns: List.unmodifiable(result));
+  return _applyGlobalFrame(root, objects[index], _applyGlobalLists(root, objects[index], content.copyWith(styleRuns: List.unmodifiable(result))));
 }
 
 /// Updates existing Photoshop structures without inventing incomplete text objects.
@@ -326,6 +337,7 @@ PsEngineValue _sharedEngineValue(Object? value) => switch (value) {
 /// Rejects unsupported layout edits instead of leaving Photoshop's global model stale.
 void _validateGlobalTextEdit(PsdTextContent previous, PsdTextContent content) {
   final bool layoutChanged =
+      !_sameTextPath(previous.path, content.path) ||
       previous.orientation != content.orientation ||
       previous.antiAlias != content.antiAlias ||
       previous.gridding != content.gridding ||
@@ -352,7 +364,7 @@ void _validateGlobalTextEdit(PsdTextContent previous, PsdTextContent content) {
     final _PsdEngineWriter second = _PsdEngineWriter();
     _writeParagraphProperties(first, old);
     _writeParagraphProperties(second, paragraph);
-    if (!_sameEngineBytes(first.takeBytes(), second.takeBytes())) {
+    if (old.list?.style != paragraph.list?.style || old.list?.tier != paragraph.list?.tier || !_sameEngineBytes(first.takeBytes(), second.takeBytes())) {
       throw UnsupportedError('Changing Txt2 paragraph formatting requires editing its retained structure');
     }
   }
@@ -416,4 +428,47 @@ bool _sameEngineBytes(Uint8List first, Uint8List second) {
     }
   }
   return true;
+}
+
+/// Compares semantic baselines from independently decoded snapshots.
+bool _sameTextPath(PsdTextPath? first, PsdTextPath? second) =>
+    identical(first, second) ||
+    first != null &&
+        second != null &&
+        first.start == second.start &&
+        first.end == second.end &&
+        first.reversed == second.reversed &&
+        first.controlPoints.length == second.controlPoints.length &&
+        first.controlPoints.indexed.every((entry) => entry.$2 == second.controlPoints[entry.$1]);
+
+/// Restores styles when Photoshop stores the story exclusively in Txt2.
+PsdTextStyle _readGlobalCharacterStyle(_PsdEngineDictionary root, _PsdEngineDictionary style, PsdTextStyle base) {
+  final List<Object?>? fonts = _list(_globalPath(root, ['0', '1', '0']));
+  final int? index = _integer(style['0']);
+  final String? name = fonts != null && index != null && index >= 0 && index < fonts.length ? _decodeEngineString(_globalPath(fonts[index], ['0', '0', '0'])) : null;
+  final _PsdEngineDictionary? paint = _dictionary(_globalPath(style, ['53', '0']));
+  return base.copyWith(
+    fontFamily: name,
+    fontSize: _number(style['1']),
+    fauxBold: _engineBoolean(style['2']),
+    fauxItalic: _engineBoolean(style['3']),
+    automaticLeading: _engineBoolean(style['4']),
+    lineHeight: _number(style['5']),
+    horizontalScale: _number(style['6']),
+    verticalScale: _number(style['7']),
+    tracking: _number(style['8']),
+    baselineShift: _number(style['9']),
+    fontCaps: _integer(style['12']),
+    fontBaseline: _integer(style['13']),
+    strikethrough: style['15'] == null ? null : _integer(style['15']) == 1,
+    underline: style['16'] == null ? null : _integer(style['16']) == 2,
+    ligatures: _engineBoolean(style['18']),
+    discretionaryLigatures: _engineBoolean(style['19']),
+    baselineDirection: _integer(style['35']),
+    tsume: _number(style['36']),
+    styleRunAlignment: _integer(style['37']),
+    language: _integer(style['38']),
+    noBreak: _engineBoolean(style['52']),
+    color: paint == null ? null : _readColor(_globalDictionary({'Type': paint['0'], 'Values': paint['1']})),
+  );
 }

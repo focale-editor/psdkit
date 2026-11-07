@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:pscore/pscore.dart';
@@ -9,11 +10,16 @@ part 'text/engine_editor.dart';
 part 'text/engine_encoder.dart';
 part 'text/engine_parser.dart';
 part 'text/engine_runs.dart';
+part 'text/global_builder.dart';
+part 'text/global_engine.dart';
+part 'text/global_template.dart';
 part 'text/legacy_type_tool.dart';
+part 'text/lists.dart';
 part 'text/paragraphs.dart';
+part 'text/path.dart';
 part 'text/styles.dart';
 part 'text/type_tool.dart';
-part 'text/global_engine.dart';
+part 'text/variable_font.dart';
 
 /// A slash-prefixed PostScript name found in decoded Adobe text-engine data.
 final class PsdTextEngineName {
@@ -30,10 +36,13 @@ final class PsdGlobalTextEngineData {
   final Uint8List data;
 
   /// Creates document-level text-engine data.
-  PsdGlobalTextEngineData({required Uint8List data}) : data = Uint8List.fromList(data);
+  PsdGlobalTextEngineData({required Uint8List data}) : data = Uint8List.fromList(data).asUnmodifiableView();
+
+  /// Parsed immutable-source tree shared by all objects in one document read.
+  late final _PsdEngineDictionary _root = _parseGlobalEngine(data);
 
   /// Decodes the PostScript-like payload into maps, lists, values, and names.
-  Object? get structure => _publicEngineValue(_parseGlobalEngine(data));
+  Object? get structure => _publicEngineValue(_root);
 
   /// Resolves exact kerning and OpenType flags when the indexed text is current.
   PsdTextContent contentFor(PsdTypeTool typeTool) => _applyGlobalText(this, typeTool);
