@@ -1,5 +1,10 @@
 # 📰 PsdKit changelog
 
+## v0.6.3
+Released on November 7, 2026.
+
+* **FEAT**: Added native text-path geometry, predefined paragraph lists and Adobe variable-font instance names. ([#3caaffe](https://github.com/focale-editor/psdkit/commit/3caaffe))
+
 ## v0.6.2
 Released on October 31, 2026.
 
